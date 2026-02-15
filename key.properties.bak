@@ -1,0 +1,5 @@
+storePassword=triqprocessor
+keyPassword=triqprocessor
+keyAlias=triqprocessor
+storeFile=../app/triqprocessor.keystore
+

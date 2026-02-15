@@ -1,0 +1,14 @@
+# Configuration for the internationalization (i18n) system.
+#
+# Indicates whether the localizations should be
+# generated in a synthetic package or in the current one.
+synthetic-package: false
+
+# Directory containing the .arb files.
+arb-dir: lib/l10n
+
+# Main file used as a template to generate localizations.
+template-arb-file: app_en.arb
+
+# Filename where the generated localization code will be saved.
+output-localization-file: app_localizations.dart
