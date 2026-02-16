@@ -108,7 +108,7 @@ class CommonTextField extends StatelessWidget {
             fillColor:
             enabled
                 ? AppColors.white
-                : (disabledBackgroundColor ?? AppColors.colorF8FBFE),
+                : (disabledBackgroundColor ?? AppColors.white),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.lightGrey),

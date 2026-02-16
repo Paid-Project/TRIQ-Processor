@@ -64,6 +64,7 @@ class ChangePasswordViewModel extends BaseViewModel {
       );
       _showSuccess(LanguageService.get("password_changed_successfully"));
       _clearForm();
+
     } catch (e) {
       _showError(e.toString());
     } finally {

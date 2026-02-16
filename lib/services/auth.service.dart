@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:manager/api_endpoints.dart';
 import 'package:manager/core/locator.dart';
 import 'package:manager/core/storage/storage.dart';
@@ -210,11 +212,25 @@ class AuthService {
     try {
       final response = await apiService.post(
         url: ApiEndpoints.resetNewPassword, // You need to add this endpoint
-        data: {isMobile?'phone':'email': email, 'otp': otp,'newPassword':newPassword, 'oldPassword': newPassword},
+        data: {isMobile?'phone':'email': email, 'newPassword':newPassword, 'oldPassword': oldPassword},
       );
 
 
       if (response.statusCode == 200||response.statusCode == 201) {
+        Fluttertoast.showToast(
+          msg: response.data['msg'],
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          toastLength: Toast.LENGTH_LONG,
+        );
+        // 1️⃣ Clear all local/hive data
+        await clearHive();
+
+        // 2️⃣ Navigate user to Login screen (remove all previous screens)
+        await _navigationService.clearStackAndShow(Routes.login);
+        print("asdasdasdas");
+
+
         return Right(true);
       } else {
         return Left(Failure(response.data['message']));

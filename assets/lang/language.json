@@ -10203,6 +10203,30 @@
     "Malay/Indonesian": "Pindai dari kamera",
     "Ukrainian": "Сканувати з камери"
   },
+  "camera": {
+    "English": "Camera",
+    "Hindi": "कैमरा",
+    "Gujarati": "કેમેરા",
+    "Chinese (Simplified)": "相机",
+    "Spanish": "Cámara",
+    "Japanese": "カメラ",
+    "German": "Kamera",
+    "French": "Caméra",
+    "Arabic": "كاميرا",
+    "Portuguese": "Câmera",
+    "Russian": "Камера",
+    "Bengali": "ক্যামেরা",
+    "Turkish": "Kamera",
+    "Italian": "Fotocamera",
+    "Korean": "카메라",
+    "Vietnamese": "Máy ảnh",
+    "Thai": "กล้อง",
+    "Dutch": "Camera",
+    "Polish": "Aparat",
+    "Indonesian": "Kamera",
+    "Ukrainian": "Камера"
+  },
+
   "open_camera_and_point_at_the_qr_code": {
     "English": "Open camera and point at the QR code",
     "Hindi": "कैमरा खोलें और QR कोड की ओर इशारा करें",

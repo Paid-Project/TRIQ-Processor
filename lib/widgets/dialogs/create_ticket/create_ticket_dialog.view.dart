@@ -252,54 +252,144 @@ class CreateTicketDialog extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
+                          //
+                          // Text(
+                          //   LanguageService.get('camera'),
+                          //   style: Theme.of(
+                          //     context1,
+                          //   ).textTheme.titleLarge?.copyWith(
+                          //     color: AppColors.black,
+                          //     fontWeight: FontWeight.w400,
+                          //   ),
+                          // ),
+                          // Column(
+                          //   crossAxisAlignment: CrossAxisAlignment.start,
+                          //   children: [
+                          //     GestureDetector(
+                          //       onTap: () => model.pickMediaFromCamera(),
+                          //       child: DottedBorder(
+                          //         color:
+                          //         model.attachmentsError != null
+                          //             ? AppColors.error
+                          //             : AppColors.lightGrey,
+                          //         strokeWidth: 1.5,
+                          //         dashPattern: [8, 4],
+                          //         borderType: BorderType.RRect,
+                          //         radius: Radius.circular(12),
+                          //         child: Container(
+                          //           width: double.infinity,
+                          //           padding: EdgeInsets.all(AppSizes.v16),
+                          //           child: Row(
+                          //             mainAxisAlignment:
+                          //             MainAxisAlignment.center,
+                          //             children: [
+                          //               Icon(
+                          //                 Icons.add_rounded,
+                          //                 size: 24,
+                          //                 color:
+                          //                 model.attachmentsError != null
+                          //                     ? AppColors.error
+                          //                     : AppColors.black,
+                          //               ),
+                          //               const SizedBox(width: 8),
+                          //               Text(
+                          //                 LanguageService.get('camera'),
+                          //                 style: TextStyle(
+                          //                   color:
+                          //                   model.attachmentsError != null
+                          //                       ? AppColors.error
+                          //                       : AppColors.black,
+                          //                   fontSize: 16,
+                          //                   fontWeight: FontWeight.w500,
+                          //                 ),
+                          //               ),
+                          //             ],
+                          //           ),
+                          //         ),
+                          //       ),
+                          //     ),
+                          //     if (model.attachmentsError != null) ...[
+                          //       const SizedBox(height: 8),
+                          //       Text(
+                          //         model.attachmentsError!,
+                          //         style: TextStyle(
+                          //           color: AppColors.error,
+                          //           fontSize: 12,
+                          //         ),
+                          //       ),
+                          //     ],
+                          //   ],
+                          // ),
+                          // const SizedBox(height: 16),
+                          Text(
+                            LanguageService.get('upload_media'),
 
+                            style: Theme.of(context1).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.textPrimary),
+                          ),
+                          // const SizedBox(height: 8),
+                          // Text(
+                          //   LanguageService.get('camera'),
+                          //   style: Theme.of(
+                          //     context1,
+                          //   ).textTheme.titleLarge?.copyWith(
+                          //     color: AppColors.black,
+                          //     fontWeight: FontWeight.w400,
+                          //   ),
+                          // ),
                           // Upload Media Section
-                          Column(
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              GestureDetector(
-                                onTap: () => model.pickMedia(),
-                                child: DottedBorder(
-                                  color:
-                                      model.attachmentsError != null
-                                          ? AppColors.error
-                                          : AppColors.lightGrey,
-                                  strokeWidth: 1.5,
-                                  dashPattern: [8, 4],
-                                  borderType: BorderType.RRect,
-                                  radius: Radius.circular(12),
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: EdgeInsets.all(AppSizes.v16),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.add_rounded,
-                                          size: 24,
-                                          color:
-                                              model.attachmentsError != null
-                                                  ? AppColors.error
-                                                  : AppColors.black,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          LanguageService.get('upload_media'),
-                                          style: TextStyle(
-                                            color:
-                                                model.attachmentsError != null
-                                                    ? AppColors.error
-                                                    : AppColors.black,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              IconButton(onPressed: () {
+model.pickMediaFromCamera();
+                              }, icon:Icon(Icons.camera_alt)),
+                              IconButton(onPressed: () {
+                                model.pickMedia();
+                              }, icon:Icon(Icons.perm_media)),
+                              // GestureDetector(
+                              //   onTap: () => model.pickMedia(),
+                              //   child: DottedBorder(
+                              //     color:
+                              //         model.attachmentsError != null
+                              //             ? AppColors.error
+                              //             : AppColors.lightGrey,
+                              //     strokeWidth: 1.5,
+                              //     dashPattern: [8, 4],
+                              //     borderType: BorderType.RRect,
+                              //     radius: Radius.circular(12),
+                              //     child: Container(
+                              //       width: double.infinity,
+                              //       padding: EdgeInsets.all(AppSizes.v16),
+                              //       child: Row(
+                              //         mainAxisAlignment:
+                              //             MainAxisAlignment.center,
+                              //         children: [
+                              //           Icon(
+                              //             Icons.add_rounded,
+                              //             size: 24,
+                              //             color:
+                              //                 model.attachmentsError != null
+                              //                     ? AppColors.error
+                              //                     : AppColors.black,
+                              //           ),
+                              //           const SizedBox(width: 8),
+                              //           Text(
+                              //             LanguageService.get('upload_media'),
+                              //             style: TextStyle(
+                              //               color:
+                              //                   model.attachmentsError != null
+                              //                       ? AppColors.error
+                              //                       : AppColors.black,
+                              //               fontSize: 16,
+                              //               fontWeight: FontWeight.w500,
+                              //             ),
+                              //           ),
+                              //         ],
+                              //       ),
+                              //     ),
+                              //   ),
+                              // ),
                               if (model.attachmentsError != null) ...[
                                 const SizedBox(height: 8),
                                 Text(

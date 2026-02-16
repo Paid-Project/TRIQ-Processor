@@ -72,6 +72,30 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
     }
   }
 
+  Future<void> pickMediaFromCamera() async {
+    try {
+      final result = await _filePickerService.takePhoto(
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 90,
+      );
+
+      result.fold(
+            (failure) {
+          AppLogger.error('Failed to pick media: ${failure.message}');
+          // Optional: toast/snackbar
+        },
+            (file) {
+          _attachments.value.add(file);
+          _attachmentsError.value = null;
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      AppLogger.error('Error picking media from camera: $e');
+    }
+  }
+
   void removeAttachment(int index) {
     if (index >= 0 && index < _attachments.value.length) {
       _attachments.value.removeAt(index);
