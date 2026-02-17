@@ -625,6 +625,7 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
         'unitName': unitNameController.text,
         'fullName': yourNameController.text,
         'designation': _designationType.value,
+        'countryCode':profileModel?.profile?.user?.countryCode,
         'phone': phoneController.text,
         'email': emailController.text,
         'processorType':_organizationType !='Others' ? _organizationType :"Others: ${otherDescriptionController.text}"

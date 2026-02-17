@@ -7,16 +7,16 @@ import 'package:get/get.dart';
 import '../../../resources/app_resources/app_resources.dart';
 import '../add_employee/add_employee.vm.dart';
 
-class CustomDesignationDropdown extends StatefulWidget {
+class CustomDepartmentDropdown extends StatefulWidget {
   final AddEmployeeViewModel viewModel;
   final bool isReadOnly;
-  const CustomDesignationDropdown({Key? key, required this.viewModel,  this.isReadOnly=true}) : super(key: key);
+  const CustomDepartmentDropdown({Key? key, required this.viewModel,  this.isReadOnly=true}) : super(key: key);
 
   @override
-  State<CustomDesignationDropdown> createState() => _CustomDesignationDropdownState();
+  State<CustomDepartmentDropdown> createState() => _CustomDepartmentDropdownState();
 }
 
-class _CustomDesignationDropdownState extends State<CustomDesignationDropdown> {
+class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
   final GlobalKey _fieldKey = GlobalKey();
   bool _isDropdownOpen = false;
   OverlayEntry? _overlayEntry;
@@ -97,13 +97,13 @@ class _CustomDesignationDropdownState extends State<CustomDesignationDropdown> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min, // Keep this! It's important for SingleChildScrollView
                         children: [
-                          ...widget.viewModel.designations.map((role) {
+                          ...widget.viewModel.myDepartment.map((role) {
                             return Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 InkWell(
                                   onTap: () {
-                                    widget.viewModel.updateSelectedDesignation(role);
+                                    widget.viewModel.updateSelectedDepartment(role);
                                     _closeDropdown();
                                   },
                                   child: Container(
@@ -117,25 +117,25 @@ class _CustomDesignationDropdownState extends State<CustomDesignationDropdown> {
                             );
                           }).toList(),
                           // Add Custom Role Button
-                          Padding(
-                            padding: EdgeInsets.all(AppSizes.h12),
-                            child: OutlinedButton(
-                              onPressed: () {
-                                _closeDropdown();
-                                widget.viewModel.showAddCustomRoleDialog(context);
-                              },
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: AppColors.primary),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppSizes.h45),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: AppSizes.h12),
-                              ),
-                              child: const Center(
-                                child: Text('Add Custom Role'),
-                              ),
-                            ),
-                          ),
+                          // Padding(
+                          //   padding: EdgeInsets.all(AppSizes.h12),
+                          //   child: OutlinedButton(
+                          //     onPressed: () {
+                          //       _closeDropdown();
+                          //       widget.viewModel.showCreateDepartmentDialog(context);
+                          //     },
+                          //     style: OutlinedButton.styleFrom(
+                          //       side: BorderSide(color: AppColors.primary),
+                          //       shape: RoundedRectangleBorder(
+                          //         borderRadius: BorderRadius.circular(AppSizes.h45),
+                          //       ),
+                          //       padding: EdgeInsets.symmetric(vertical: AppSizes.h12),
+                          //     ),
+                          //     child: const Center(
+                          //       child: Text('Add Custom Role'),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
@@ -167,12 +167,11 @@ class _CustomDesignationDropdownState extends State<CustomDesignationDropdown> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              (widget.viewModel.selectedDesignation?.name ?? 'Designation')
-                  .toUpperCase(),
-              // widget.viewModel.selectedDesignation?.name ?? 'Designation',
+        (widget.viewModel.selectedDepartment?.name ?? 'Department')
+            .toUpperCase(),
               style: TextStyle(
-                color: widget.viewModel.selectedDesignation?.name == null ? AppColors.textGrey : AppColors.textPrimary,
-                fontSize: 13
+                  color: widget.viewModel.selectedDepartment?.name == null ? AppColors.textGrey : AppColors.textPrimary,
+                  fontSize: 13
               ),
             ),
             Icon(

@@ -199,7 +199,7 @@ class ReviewTicketView extends StatelessWidget {
                     right: -4,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(2),
-                      child: Image.asset(AppImages.flag, height: 16, width: 16),
+                      child: Image.network(     ticketData.processorDetails?.countryCode?.flagUrlFromPhoneCode?? '+91'.flagUrlFromPhoneCode!, height: 16, width: 16),
                     ),
                   ),
                 ],

@@ -1009,9 +1009,9 @@ class _TicketDetailsDialogState extends State<TicketDetailsDialog> {
       final difference = now.difference(createdAt);
 
       if (difference.inDays > 0) {
-        return '${difference.inDays} ${LanguageService.get("days")} ${difference.inHours % 24} ${LanguageService.get("hours")}';
+        return '${difference.inDays}d ${difference.inHours % 24}h';
       } else if (difference.inHours > 0) {
-        return '${difference.inHours} ${LanguageService.get("hours")} ${difference.inMinutes % 60} ${LanguageService.get("minutes")}';
+        return '${difference.inHours}h ${difference.inMinutes % 60}m';
       } else {
         return '${difference.inMinutes} ${LanguageService.get("minutes")}';
       }

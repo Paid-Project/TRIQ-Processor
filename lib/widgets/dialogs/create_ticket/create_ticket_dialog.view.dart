@@ -6,6 +6,7 @@ import 'package:dotted_border/dotted_border.dart';
 
 import '../../../core/models/machine_supplier_model.dart';
 import '../../../resources/app_resources/app_resources.dart';
+import '../../../resources/multimedia_resources/resources.dart';
 import '../../../services/language.service.dart';
 import '../../../widgets/common_text_field.dart';
 import '../../../widgets/common/inline_dropdown_form_field.dart';
@@ -341,12 +342,28 @@ class CreateTicketDialog extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              IconButton(onPressed: () {
-model.pickMediaFromCamera();
-                              }, icon:Icon(Icons.camera_alt)),
-                              IconButton(onPressed: () {
-                                model.pickMedia();
-                              }, icon:Icon(Icons.perm_media)),
+                              // IconButton(onPressed: () {
+                              //
+                              // }, icon:Icon(Icons.camera_alt)),
+                              _buildAttachmentMenuItem(
+                                icon: AppImages.gallery,
+                                label: "",
+                                color: AppColors.bluebackground,
+                                onTap: () {
+                                  model.pickMedia();
+                                },
+                              ),
+                              _buildAttachmentMenuItem(
+                                icon: AppImages.camera,
+                                label: '',
+                                color: AppColors.greenbackground,
+                                onTap: () {
+                                  model.pickMediaFromCamera();
+                                },
+                              ),
+                              // IconButton(onPressed: () {
+                              //   model.pickMedia();
+                              // }, icon:Icon(Icons.perm_media)),
                               // GestureDetector(
                               //   onTap: () => model.pickMedia(),
                               //   child: DottedBorder(
@@ -644,6 +661,45 @@ model.pickMediaFromCamera();
     return uniqueItems.entries
         .map((entry) => {"value": entry.key, "display": entry.value})
         .toList();
+  }
+  Widget _buildAttachmentMenuItem({
+    required String icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.w12,
+          vertical: AppSizes.h12,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.v10),
+              ),
+              child: Center(
+                child: Image.asset(icon, width: 18, height: 18, color: color),
+              ),
+            ),
+            // SizedBox(width: AppSizes.w12),
+            // Text(
+            //   label,
+            //   style: TextStyle(
+            //     color: AppColors.textPrimary,
+            //     fontSize: AppSizes.f14,
+            //     fontWeight: FontWeight.bold,
+            //   ),
+            // ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildDropdownFormField(

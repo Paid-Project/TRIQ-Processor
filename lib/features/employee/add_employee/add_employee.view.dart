@@ -19,6 +19,7 @@ import '../../../core/models/employee.dart';
 import '../../../core/models/machine.dart';
 import '../../machines/machines_dropdown.dart';
 import '../../tasks/create_task/widgets/add_media_widget.dart';
+import '../department/department_dropdown.dart';
 import '../designation/designation_dropdown.dart';
 import 'employee_permission.view.dart';
 
@@ -379,73 +380,80 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                             AppGaps.h16,
                             _FormSection(
                               label: LanguageService.get('department'),
-                              child: CustomDropdownFormField<DepartmentModel>(
-                                hintText: LanguageService.get(
-                                  'select_department',
-                                ),
-                                value: viewModel.selectedDepartment,
-                                items: [
-                                  // Always show "Add New" option when list is empty or as first option
-                                  if (viewModel.myDepartment.isEmpty)
-                                    DropdownMenuItem<DepartmentModel>(
-                                      value: DepartmentModel(
-                                        id: 'new',
-                                        name: 'Add New Department',
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.add_circle_outline,
-                                            size: 20,
-                                            color: AppColors.primary,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            "Add New Department",
-                                            style: TextStyle(
-                                              color: AppColors.primary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ...viewModel.myDepartment.map((
-                                    DepartmentModel dept,
-                                  ) {
-                                    return DropdownMenuItem<DepartmentModel>(
-                                      value: dept,
-                                      child: Text(
-                                        dept.name ?? 'Unnamed Department',
-                                      ),
-                                    );
-                                  }).toList(),
-                                ],
-                                onChanged:
-                                    viewModel.isViewMode && viewModel.isPartialEdit==false
-                                        ? null
-                                        : (value) {
-                                          if (value?.id == 'new') {
-                                            // Call dialog without TeamListVM
-                                            viewModel
-                                                .showCreateDepartmentDialog(
-                                                  context,
-                                                );
-                                          } else {
-                                            viewModel.updateSelectedDepartment(
-                                              value,
-                                            );
-                                          }
-                                        },
-                                label: '',
-                                validator:
-                                    (value) =>
-                                        value == null || value.id == 'new'
-                                            ? LanguageService.get(
-                                              'Please Select Department',
-                                            )
-                                            : null,
+                              child: CustomDepartmentDropdown(
+                                viewModel: viewModel,
+                                isReadOnly: viewModel.isViewMode && viewModel.isPartialEdit==false,
                               ),
                             ),
+                            // _FormSection(
+                            //   label: LanguageService.get('department'),
+                            //   child: CustomDropdownFormField<DepartmentModel>(
+                            //     hintText: LanguageService.get(
+                            //       'select_department',
+                            //     ),
+                            //     value: viewModel.selectedDepartment,
+                            //     items: [
+                            //       // Always show "Add New" option when list is empty or as first option
+                            //       if (viewModel.myDepartment.isEmpty)
+                            //         DropdownMenuItem<DepartmentModel>(
+                            //           value: DepartmentModel(
+                            //             id: 'new',
+                            //             name: 'Add New Department',
+                            //           ),
+                            //           child: Row(
+                            //             children: [
+                            //               Icon(
+                            //                 Icons.add_circle_outline,
+                            //                 size: 20,
+                            //                 color: AppColors.primary,
+                            //               ),
+                            //               SizedBox(width: 8),
+                            //               Text(
+                            //                 "Add New Department",
+                            //                 style: TextStyle(
+                            //                   color: AppColors.primary,
+                            //                 ),
+                            //               ),
+                            //             ],
+                            //           ),
+                            //         ),
+                            //       ...viewModel.myDepartment.map((
+                            //         DepartmentModel dept,
+                            //       ) {
+                            //         return DropdownMenuItem<DepartmentModel>(
+                            //           value: dept,
+                            //           child: Text(
+                            //             dept.name ?? 'Unnamed Department',
+                            //           ),
+                            //         );
+                            //       }).toList(),
+                            //     ],
+                            //     onChanged:
+                            //         viewModel.isViewMode && viewModel.isPartialEdit==false
+                            //             ? null
+                            //             : (value) {
+                            //               if (value?.id == 'new') {
+                            //                 // Call dialog without TeamListVM
+                            //                 viewModel
+                            //                     .showCreateDepartmentDialog(
+                            //                       context,
+                            //                     );
+                            //               } else {
+                            //                 viewModel.updateSelectedDepartment(
+                            //                   value,
+                            //                 );
+                            //               }
+                            //             },
+                            //     label: '',
+                            //     validator:
+                            //         (value) =>
+                            //             value == null || value.id == 'new'
+                            //                 ? LanguageService.get(
+                            //                   'Please Select Department',
+                            //                 )
+                            //                 : null,
+                            //   ),
+                            // ),
                             AppGaps.h16,
                             _FormSection(
                               label: 'Designation',
