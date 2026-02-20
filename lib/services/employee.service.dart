@@ -48,10 +48,10 @@ class EmployeeService {
     return Left(Failure('Failed to get employees'));
   }
 
-  Future<ApiResponse<List<DesignationModel>>> getCustomDesignation() async {
+  Future<ApiResponse<List<DesignationModel>>> getCustomDesignation(departmentId) async {
     try {
       final response = await apiService.get(
-        url: '${ApiEndpoints.getCustomDesignation}',
+        url: '${ApiEndpoints.getCustomDesignation}?departmentId=$departmentId',
       );
 
       if (response.statusCode == 200 && response.data['status'] == 1) {

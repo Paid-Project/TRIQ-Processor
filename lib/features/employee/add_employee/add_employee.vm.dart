@@ -895,6 +895,8 @@ class AddEmployeeViewModel extends ReactiveViewModel {
       // showCreateDepartmentDialog(context, viewModel)
     } else if (location != null) {
       _selectedFactoryLocation.value = location;
+      _selectedDesignation = null;
+      fetchCustomDesignation();
     }
     if (_selectedDesignation != null &&
         _selectedFactoryLocation.value != null) {
@@ -949,8 +951,16 @@ class AddEmployeeViewModel extends ReactiveViewModel {
   }
 
   Future<void> fetchCustomDesignation() async {
+
+// 1. Pehle check karein ki data hai ya nahi
+    if (_designations.value.isNotEmpty) {
+      _designations.value.clear();
+
+      // Agar aap GetX use kar rahe hain, toh UI update ke liye refresh zaruri ho sakta hai
+      // _designations.refresh();
+    }
     try {
-      final response = await _employeeService.getCustomDesignation();
+      final response = await _employeeService.getCustomDesignation(_selectedFactoryLocation.value?.id);
       if (response.success && response.data != null) {
         _designations.value = response.data!;
       } else {}

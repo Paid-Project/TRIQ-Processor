@@ -15,6 +15,7 @@ abstract class ApiEndpoints {
   static const String image_base = 'https://live.triqinnovations.com/';
   static const String register = 'auth/register';
   static const String verifyEmail = 'auth/verify-email';
+  static const String loginWithOtp = 'auth/loginWithOtp';
   static const String forgotPassword = 'auth/forgot-password';
   static const String deleteUser = 'auth/delete-user/';
   static const String checkPassword = 'auth/check-password';
@@ -23,6 +24,7 @@ abstract class ApiEndpoints {
   static const String resetPassword = 'auth/reset-password';
   static const String resetNewPassword = 'auth/resetNewPassword';
   static const String googleLogin = 'auth/google-login';
+  static const String sendOtpForLogin = 'auth/sendOtpForLogin';
   static const String facebookLogin = 'auth/facebook-login';
   static const String logout = 'auth/logout';
   static const String send_email_varification = 'auth/send-verify-email';

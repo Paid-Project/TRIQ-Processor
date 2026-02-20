@@ -133,7 +133,8 @@ class AuthService {
   ResultFuture<bool> verifyPhone({
     required String phone,
     required String otp,
-  }) async {
+  })
+  async {
     try {
       final response = await apiService.post(
         url: ApiEndpoints.verifyEmail,
@@ -153,7 +154,70 @@ class AuthService {
     }
     return Left(Failure('Failed to verify email'));
   }
+  ResultFuture<User>verifyPhoneOrEmail({
+    required String phone,
+    required String otp,
+    required String type,
+  })
+  async {
+    try {
+      var data = {};
+      if(type=='email'){
+        data={'email': phone,  'otp': otp , 'type':type, 'role':'processor'};
+      }
+      else{
+        data={'phone': phone, 'otp': otp , 'type':type, 'role':'processor'};
+      }
 
+      final response = await apiService.post(
+        url: ApiEndpoints.loginWithOtp,
+        data: data,
+      );
+
+      if (response.data['success'] == true) {
+        try {
+          // Extract user data and token from response
+          final userData = response.data['user'] as Map<String, dynamic>;
+          final token = response.data['token'] as String?;
+
+          AppLogger.info(
+            'Login successful - Token: ${token != null ? 'Present' : 'Missing'}',
+          );
+          AppLogger.info('User data: $userData');
+
+          // Create user with token included
+          final user = User.fromJson(userData);
+          if (token != null) {
+            // Update user with token and save to storage
+            final userWithToken = user.copyWith(token: token);
+            await saveUser(userWithToken);
+            AppLogger.info('User saved successfully with token');
+
+            return Right(userWithToken);
+          }
+
+          AppLogger.info('User created successfully without token');
+
+          return Right(user);
+        } catch (e) {
+          AppLogger.error('Error processing login response: $e');
+          return Left(Failure('Error processing login response: $e'));
+        }
+      } else {
+        // Log the response for debugging
+        AppLogger.error('Login failed: ${response.data}');
+        return Left(Failure(response.data['message'] ?? 'Login failed'));
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+        return Left(
+          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
+        );
+      }
+    }
+    return Left(Failure('Failed to verify email'));
+  }
   ResultFuture<bool> forgotPassword({required String email}) async {
     try {
       final response = await apiService.post(
@@ -545,7 +609,34 @@ class AuthService {
     }
     return Left(Failure('Failed to send password reset OTP'));
   }
+  Future<Object> sendOtpWithLogin({required String value,required String type,required String countryCode}) async {
+    try {
+      var data={};
+      if(type=='email'){
+        data={'email': value, 'type': type};
+      }
+      else{
+        data={'phone': value, 'type': type,"countryCode":countryCode.replaceAll("+", "")};
+      }
 
+      final response = await apiService.post(
+        url: ApiEndpoints.sendOtpForLogin,
+        data: data,
+      );
+
+      if (response.data['success'] == true) {
+        return true;
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+        return Left(
+          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
+        );
+      }
+    }
+    return Left(Failure('User not found'));
+  }
   ResultFuture<bool> checkPassword({required String password}) async {
     try {
       final response = await apiService.post(

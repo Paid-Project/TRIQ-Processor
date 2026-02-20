@@ -190,11 +190,9 @@ class LoginView extends StatelessWidget {
       margin: EdgeInsets.symmetric(vertical: AppSizes.h10),
       child: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.lightGrey.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(AppSizes.v45),
-            ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            decoration: BoxDecoration(color: AppColors.lightGrey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(AppSizes.v45)),
             child: Row(
               children: [
                 Expanded(
@@ -204,10 +202,7 @@ class LoginView extends StatelessWidget {
                       padding: EdgeInsets.symmetric(vertical: AppSizes.h14),
                       decoration: BoxDecoration(
                         color: model.loginMode == LoginMode.phone ? AppColors.primary : Colors.transparent,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(AppSizes.v45),
-                          bottomLeft: Radius.circular(AppSizes.v45),
-                        ),
+                        borderRadius: BorderRadius.only(topLeft: Radius.circular(AppSizes.v45), bottomLeft: Radius.circular(AppSizes.v45)),
                       ),
                       child: Text(
                         LanguageService.get('login_with_phone'),
@@ -227,10 +222,7 @@ class LoginView extends StatelessWidget {
                       padding: EdgeInsets.symmetric(vertical: AppSizes.h14),
                       decoration: BoxDecoration(
                         color: model.loginMode == LoginMode.email ? AppColors.primary : Colors.transparent,
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(AppSizes.v45),
-                          bottomRight: Radius.circular(AppSizes.v45),
-                        ),
+                        borderRadius: BorderRadius.only(topRight: Radius.circular(AppSizes.v45), bottomRight: Radius.circular(AppSizes.v45)),
                       ),
                       child: Text(
                         LanguageService.get('login_with_email'),
@@ -330,15 +322,17 @@ class LoginView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // GestureDetector(
-                //   onTap: model.toggleOtpLogin,
-                //   child: Text(
-                //     LanguageService.get('login_with_otp'),
-                //     style: Theme.of(
-                //       context,
-                //     ).textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
-                //   ),
-                // ),
+                SizedBox(width:  AppSizes.h5),
+                GestureDetector(
+                  onTap: model.toggleOtpWithLogin,
+                  child: Text(
+                    LanguageService.get('login_with_otp'),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                Spacer(),
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
@@ -459,7 +453,8 @@ class LoginView extends StatelessWidget {
 
           // Verify Button
           ElevatedButton(
-            onPressed: model.isBusy ? null : model.verifyOtp,
+            onPressed: model.isBusy ? null :(model.isOTPWithLogin == true
+                ? model.verifyOtpWithLogin: model.verifyOtp),
             style: ElevatedButton.styleFrom(
               minimumSize: Size(double.infinity, AppSizes.h40),
               backgroundColor: AppColors.primary,
@@ -823,7 +818,8 @@ class LoginView extends StatelessWidget {
               ],
               SizedBox(height: AppSizes.h20),
               ElevatedButton(
-                onPressed: model.isBusyForgotPassword ? null : model.sendPasswordResetOtp,
+                onPressed: model.isBusyForgotPassword ? null :  (model.isOTPWithLogin == true
+              ? model.sendOtpWithLogin:model.sendPasswordResetOtp),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, AppSizes.h40),
                   backgroundColor: AppColors.primary,

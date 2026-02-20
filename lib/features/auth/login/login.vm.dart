@@ -65,7 +65,10 @@ class LoginViewModel extends ReactiveViewModel {
   LoginMode _forgotPasswordMode = LoginMode.phone;
 
   LoginMode get forgotPasswordMode => _forgotPasswordMode;
+  // Form validation
+  bool _isOTPWithLogin = false;
 
+  bool get isOTPWithLogin => _isOTPWithLogin;
   // Saved accounts state
   List<SavedAccount> _savedAccounts = [];
 
@@ -326,6 +329,7 @@ class LoginViewModel extends ReactiveViewModel {
   // Login mode switching
   void setLoginMode(LoginMode mode) {
     _loginMode = mode;
+
     _showOtpField = false;
     _showForgotPassword = false;
     _showOtpLogin = false;
@@ -349,7 +353,7 @@ class LoginViewModel extends ReactiveViewModel {
     _forgotPasswordMode = mode;
     forgotEmailController.clear();
     forgotPhoneController.clear();
-    // notifyListeners();
+    notifyListeners();
   }
 
   // Form state management
@@ -386,6 +390,17 @@ class LoginViewModel extends ReactiveViewModel {
     _showOtpLogin = !_showOtpLogin;
     _showForgotPassword = false;
     _forgotPasswordStep = ForgotPasswordStep.contact;
+    notifyListeners();
+    if (!_showOtpLogin) {
+      _resetShowOtpLogin();
+    }
+    notifyListeners();
+  }
+  void toggleOtpWithLogin() {
+    _showOtpLogin = !_showOtpLogin;
+    // _showForgotPassword = false;
+    _isOTPWithLogin  = true;
+    // _forgotPasswordStep = ForgotPasswordStep.contact;
     notifyListeners();
     if (!_showOtpLogin) {
       _resetShowOtpLogin();
@@ -500,7 +515,50 @@ class LoginViewModel extends ReactiveViewModel {
       setBusy(false);
     }
   }
+  Future<void> verifyOtpWithLogin() async {
 
+
+    if (otpController.text.length != 6) {
+      Fluttertoast.showToast(msg: 'Please enter complete OTP');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      String contact = _forgotPasswordMode == LoginMode.email ? forgotEmailController.text.trim() :"+${countryCode.isEmpty?"91":countryCode}"+ _forgotFullPhoneNumber;
+      final response = await authService.verifyPhoneOrEmail(otp: otpController.text,phone: contact,type:_forgotPasswordMode == LoginMode.email?"email":"phone", );
+
+      response.fold(
+            (failure) {
+          Fluttertoast.showToast(msg: failure.message);
+          _clearOtpDigits();
+        },
+            (user) async {
+          Fluttertoast.showToast(msg: 'OTP verified successfully');
+
+          await saveUser(user);
+          await _accountManager.saveCurrentUser(user);
+          navigateToStageView();
+
+          if (_forgotPasswordStep == ForgotPasswordStep.otp) {
+            _showOtpField = false;
+            _showForgotPassword = true;
+            _showOtpLogin = false;
+            _forgotPasswordStep = ForgotPasswordStep.newPassword;
+            _clearOtpDigits();
+            notifyListeners();
+            return;
+          }
+        },
+      );
+    } catch (e) {
+      AppLogger.error('OTP Verification Error: $e');
+      Fluttertoast.showToast(msg: 'Invalid OTP. Please try again.');
+      _clearOtpDigits(); // Clear OTP on error
+    } finally {
+      setBusy(false);
+    }
+  }
   Future<void> resendOtp() async {
     if (!canResendOtp) return;
     _clearOtpDigits();
@@ -545,7 +603,38 @@ class LoginViewModel extends ReactiveViewModel {
       notifyListeners();
     }
   }
+  Future<void> sendOtpWithLogin() async {
+    if (forgotPasswordFormKey.currentState?.validate() != true) {
+      return;
+    }
 
+    _isBusyForgotPassword = true;
+    notifyListeners();
+
+    try {
+      // print("Contacts Svh:- $_forgotPasswordMode");
+      String contact = _forgotPasswordMode == LoginMode.email ?  forgotEmailController.text.trim():_forgotFullPhoneNumber;
+
+
+      final response = await authService.sendOtpWithLogin(value: contact, type: _forgotPasswordMode == LoginMode.email?'email':'phone',countryCode: countryCode);
+
+      if (response == true) {
+        _showOtpField = true;
+        _showOtpLogin = false;
+        _showForgotPassword = false;
+        _forgotPasswordStep = ForgotPasswordStep.contact;
+        Fluttertoast.showToast(msg: 'OTP sent successfully');
+        notifyListeners();
+      } else {
+        Fluttertoast.showToast(msg: 'Failed to send OTP');
+      }
+    } catch (e) {
+      AppLogger.error('Send OTP for login error: $e');
+    } finally {
+      _isBusyForgotPassword = false;
+      notifyListeners();
+    }
+  }
   Future<void> resetPassword() async {
     if (forgotPasswordFormKey.currentState?.validate() != true) {
       return;
