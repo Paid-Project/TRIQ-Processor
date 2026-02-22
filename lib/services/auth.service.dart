@@ -158,6 +158,7 @@ class AuthService {
     required String phone,
     required String otp,
     required String type,
+    required String countryCode,
   })
   async {
     try {
@@ -166,7 +167,7 @@ class AuthService {
         data={'email': phone,  'otp': otp , 'type':type, 'role':'processor'};
       }
       else{
-        data={'phone': phone, 'otp': otp , 'type':type, 'role':'processor'};
+        data={"countryCode":countryCode,'phone': phone, 'otp': otp , 'type':type, 'role':'processor'};
       }
 
       final response = await apiService.post(

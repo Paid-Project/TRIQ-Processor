@@ -33,7 +33,8 @@ class LoginViewModel extends ReactiveViewModel {
 
   // Google Sign-In instance
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
+  final firebase_auth.FirebaseAuth _firebaseAuth =
+      firebase_auth.FirebaseAuth.instance;
 
   // Form controllers
   final formKey = GlobalKey<FormState>();
@@ -44,17 +45,30 @@ class LoginViewModel extends ReactiveViewModel {
   final TextEditingController forgotEmailController = TextEditingController();
   final TextEditingController forgotOtpController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController forgotPhoneController = TextEditingController();
 
   // OTP controllers for individual digits
-  final List<TextEditingController> otpDigitControllers = List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> otpFocusNodes = List.generate(6, (index) => FocusNode());
+  final List<TextEditingController> otpDigitControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> otpFocusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
 
   // Forgot password OTP controllers for individual digits
-  final List<TextEditingController> forgotOtpDigitControllers = List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> forgotOtpFocusNodes = List.generate(6, (index) => FocusNode());
+  final List<TextEditingController> forgotOtpDigitControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> forgotOtpFocusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
 
   // Login mode state
   LoginMode _loginMode = LoginMode.email;
@@ -152,7 +166,9 @@ class LoginViewModel extends ReactiveViewModel {
     }
 
     for (int i = 0; i < forgotOtpDigitControllers.length; i++) {
-      forgotOtpDigitControllers[i].addListener(() => _updateForgotOtpFromDigits());
+      forgotOtpDigitControllers[i].addListener(
+        () => _updateForgotOtpFromDigits(),
+      );
     }
 
     notifyListeners();
@@ -195,13 +211,15 @@ class LoginViewModel extends ReactiveViewModel {
 
   // Update OTP controller from individual digit controllers
   void _updateOtpFromDigits() {
-    String otp = otpDigitControllers.map((controller) => controller.text).join();
+    String otp =
+        otpDigitControllers.map((controller) => controller.text).join();
     otpController.text = otp;
     _updateFormValidity();
   }
 
   void _updateForgotOtpFromDigits() {
-    String otp = forgotOtpDigitControllers.map((controller) => controller.text).join();
+    String otp =
+        forgotOtpDigitControllers.map((controller) => controller.text).join();
     forgotOtpController.text = otp;
   }
 
@@ -396,10 +414,11 @@ class LoginViewModel extends ReactiveViewModel {
     }
     notifyListeners();
   }
+
   void toggleOtpWithLogin() {
     _showOtpLogin = !_showOtpLogin;
     // _showForgotPassword = false;
-    _isOTPWithLogin  = true;
+    _isOTPWithLogin = true;
     // _forgotPasswordStep = ForgotPasswordStep.contact;
     notifyListeners();
     if (!_showOtpLogin) {
@@ -432,15 +451,21 @@ class LoginViewModel extends ReactiveViewModel {
 
     if (_loginMode == LoginMode.email) {
       if (_showOtpField) {
-        isValid = emailController.text.isNotEmpty && otpController.text.length == 6;
+        isValid =
+            emailController.text.isNotEmpty && otpController.text.length == 6;
       } else {
-        isValid = emailController.text.isNotEmpty && passwordController.text.isNotEmpty;
+        isValid =
+            emailController.text.isNotEmpty &&
+            passwordController.text.isNotEmpty;
       }
     } else if (_loginMode == LoginMode.phone) {
       if (_showOtpField) {
-        isValid = phoneController.text.isNotEmpty && otpController.text.length == 6;
+        isValid =
+            phoneController.text.isNotEmpty && otpController.text.length == 6;
       } else {
-        isValid = phoneController.text.isNotEmpty && passwordController.text.isNotEmpty;
+        isValid =
+            phoneController.text.isNotEmpty &&
+            passwordController.text.isNotEmpty;
       }
     }
 
@@ -452,7 +477,7 @@ class LoginViewModel extends ReactiveViewModel {
 
   String get fullPhoneNumber => _fullPhoneNumber;
 
-  String _countryCode = '';
+  String _countryCode = '91';
 
   String get countryCode => _countryCode;
 
@@ -476,9 +501,12 @@ class LoginViewModel extends ReactiveViewModel {
     // notifyListeners();
   }
 
+  set countryCode(String value) {
+    _countryCode = value;
+    notifyListeners(); // agar Provider use kar rahe ho
+  }
+
   Future<void> verifyOtp() async {
-
-
     if (otpController.text.length != 6) {
       Fluttertoast.showToast(msg: 'Please enter complete OTP');
       return;
@@ -486,8 +514,14 @@ class LoginViewModel extends ReactiveViewModel {
 
     setBusy(true);
     try {
-      String contact = _forgotPasswordMode == LoginMode.email ? forgotEmailController.text.trim() : _forgotFullPhoneNumber;
-      final response = await authService.verifyPhone(otp: otpController.text,phone: contact);
+      String contact =
+          _forgotPasswordMode == LoginMode.email
+              ? forgotEmailController.text.trim()
+              : _forgotFullPhoneNumber;
+      final response = await authService.verifyPhone(
+        otp: otpController.text,
+        phone: contact,
+      );
 
       response.fold(
         (failure) {
@@ -515,9 +549,8 @@ class LoginViewModel extends ReactiveViewModel {
       setBusy(false);
     }
   }
+
   Future<void> verifyOtpWithLogin() async {
-
-
     if (otpController.text.length != 6) {
       Fluttertoast.showToast(msg: 'Please enter complete OTP');
       return;
@@ -525,15 +558,23 @@ class LoginViewModel extends ReactiveViewModel {
 
     setBusy(true);
     try {
-      String contact = _forgotPasswordMode == LoginMode.email ? forgotEmailController.text.trim() :"+${countryCode.isEmpty?"91":countryCode}"+ _forgotFullPhoneNumber;
-      final response = await authService.verifyPhoneOrEmail(otp: otpController.text,phone: contact,type:_forgotPasswordMode == LoginMode.email?"email":"phone", );
+      String contact =
+          _forgotPasswordMode == LoginMode.email
+              ? forgotEmailController.text.trim()
+              : _forgotFullPhoneNumber;
+      final response = await authService.verifyPhoneOrEmail(
+        otp: otpController.text,
+        phone: contact,
+        type: _forgotPasswordMode == LoginMode.email ? "email" : "phone",
+        countryCode: countryCode,
+      );
 
       response.fold(
-            (failure) {
+        (failure) {
           Fluttertoast.showToast(msg: failure.message);
           _clearOtpDigits();
         },
-            (user) async {
+        (user) async {
           Fluttertoast.showToast(msg: 'OTP verified successfully');
 
           await saveUser(user);
@@ -559,6 +600,7 @@ class LoginViewModel extends ReactiveViewModel {
       setBusy(false);
     }
   }
+
   Future<void> resendOtp() async {
     if (!canResendOtp) return;
     _clearOtpDigits();
@@ -576,9 +618,16 @@ class LoginViewModel extends ReactiveViewModel {
     notifyListeners();
 
     try {
-      String contact = _forgotPasswordMode == LoginMode.email ? forgotEmailController.text.trim() : _forgotFullPhoneNumber;
+      String contact =
+          _forgotPasswordMode == LoginMode.email
+              ? forgotEmailController.text.trim()
+              : _forgotFullPhoneNumber;
 
-      final response = await authService.sendPasswordResetOtp(email: contact,isMobile: _forgotPasswordMode == LoginMode.phone,countryCode: forgotCountryCode);
+      final response = await authService.sendPasswordResetOtp(
+        email: contact,
+        isMobile: _forgotPasswordMode == LoginMode.phone,
+        countryCode: forgotCountryCode,
+      );
 
       response.fold(
         (failure) {
@@ -593,18 +642,17 @@ class LoginViewModel extends ReactiveViewModel {
           notifyListeners();
         },
       );
-
-    }
-    catch (e) {
+    } catch (e) {
       AppLogger.error('Password reset OTP error: $e');
-    }
-    finally {
+    } finally {
       _isBusyForgotPassword = false;
       notifyListeners();
     }
   }
-  Future<void> sendOtpWithLogin() async {
-    if (forgotPasswordFormKey.currentState?.validate() != true) {
+
+  Future<void> sendOtpWithLogin({bool skipValidation = false}) async {
+    if (!skipValidation &&
+        forgotPasswordFormKey.currentState?.validate() != true) {
       return;
     }
 
@@ -613,10 +661,16 @@ class LoginViewModel extends ReactiveViewModel {
 
     try {
       // print("Contacts Svh:- $_forgotPasswordMode");
-      String contact = _forgotPasswordMode == LoginMode.email ?  forgotEmailController.text.trim():_forgotFullPhoneNumber;
+      String contact =
+          _forgotPasswordMode == LoginMode.email
+              ? forgotEmailController.text.trim()
+              : _forgotFullPhoneNumber;
 
-
-      final response = await authService.sendOtpWithLogin(value: contact, type: _forgotPasswordMode == LoginMode.email?'email':'phone',countryCode: countryCode);
+      final response = await authService.sendOtpWithLogin(
+        value: contact,
+        type: _forgotPasswordMode == LoginMode.email ? 'email' : 'phone',
+        countryCode: countryCode,
+      );
 
       if (response == true) {
         _showOtpField = true;
@@ -635,6 +689,7 @@ class LoginViewModel extends ReactiveViewModel {
       notifyListeners();
     }
   }
+
   Future<void> resetPassword() async {
     if (forgotPasswordFormKey.currentState?.validate() != true) {
       return;
@@ -647,7 +702,9 @@ class LoginViewModel extends ReactiveViewModel {
 
       // Get OTP from forgot password OTP controllers instead of login OTP controllers
       String getForgotPasswordOtp() {
-        return forgotOtpDigitControllers.map((controller) => controller.text).join();
+        return forgotOtpDigitControllers
+            .map((controller) => controller.text)
+            .join();
       }
 
       final response = await authService.resetPassword(
@@ -658,11 +715,14 @@ class LoginViewModel extends ReactiveViewModel {
       );
 
       response.fold(
-            (failure) {
+        (failure) {
           Fluttertoast.showToast(msg: failure.message);
         },
         (success) {
-          Fluttertoast.showToast(msg: 'Password reset successfully! Please login with your new password.');
+          Fluttertoast.showToast(
+            msg:
+                'Password reset successfully! Please login with your new password.',
+          );
           _resetForgotPasswordState();
           _showForgotPassword = false;
           setLoginMode(LoginMode.email);
@@ -672,7 +732,9 @@ class LoginViewModel extends ReactiveViewModel {
       );
     } catch (e) {
       AppLogger.error('Password reset error: $e');
-      Fluttertoast.showToast(msg: 'Failed to reset password. Please try again.');
+      Fluttertoast.showToast(
+        msg: 'Failed to reset password. Please try again.',
+      );
     } finally {
       _isBusyForgotPassword = false;
       notifyListeners();
@@ -698,14 +760,17 @@ class LoginViewModel extends ReactiveViewModel {
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
-      final firebase_auth.AuthCredential credential = firebase_auth.GoogleAuthProvider.credential(
+      final firebase_auth.AuthCredential credential = firebase_auth
+          .GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final firebase_auth.UserCredential authResult = await _firebaseAuth.signInWithCredential(credential);
+      final firebase_auth.UserCredential authResult = await _firebaseAuth
+          .signInWithCredential(credential);
 
       final User? user = await _convertFirebaseUserToAppUser(authResult.user);
 
@@ -769,13 +834,22 @@ class LoginViewModel extends ReactiveViewModel {
   //   }
   // }
 
-  Future<User?> _convertFirebaseUserToAppUser(firebase_auth.User? firebaseUser) async {
+  Future<User?> _convertFirebaseUserToAppUser(
+    firebase_auth.User? firebaseUser,
+  ) async {
     if (firebaseUser == null) return null;
 
-    return User(id: firebaseUser.uid, email: firebaseUser.email ?? '', name: firebaseUser.displayName ?? '');
+    return User(
+      id: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      name: firebaseUser.displayName ?? '',
+    );
   }
 
-  Future<User?> _convertFacebookUserToAppUser(firebase_auth.User? firebaseUser, Map<String, dynamic> facebookData) async {
+  Future<User?> _convertFacebookUserToAppUser(
+    firebase_auth.User? firebaseUser,
+    Map<String, dynamic> facebookData,
+  ) async {
     if (firebaseUser == null) return null;
 
     return User(
@@ -881,9 +955,16 @@ class LoginViewModel extends ReactiveViewModel {
     setBusy(true);
 
     try {
-      String contact = _loginMode == LoginMode.email ? emailController.text : _fullPhoneNumber;
+      String contact =
+          _loginMode == LoginMode.email
+              ? emailController.text
+              : _fullPhoneNumber;
 
-      final response = await authService.sendOtp(value: contact,type: _loginMode == LoginMode.email?'email':'phone', countryCode: countryCode);
+      final response = await authService.sendOtp(
+        value: contact,
+        type: _loginMode == LoginMode.email ? 'email' : 'phone',
+        countryCode: countryCode,
+      );
 
       if (response == true) {
         _showOtpField = true;
@@ -905,23 +986,37 @@ class LoginViewModel extends ReactiveViewModel {
     // } else {
     //   await verifyOtp();
     // }
-   final res= await login();
-    res.fold((failure) {
-      Fluttertoast.showToast(msg: failure.message);
-    }, (user) async {
-      await saveUser(user);
-      await _accountManager.saveCurrentUser(user);
-      navigateToStageView();
-    });
+    final res = await login();
+    res.fold(
+      (failure) {
+        Fluttertoast.showToast(msg: failure.message);
+      },
+      (user) async {
+        await saveUser(user);
+        await _accountManager.saveCurrentUser(user);
+        navigateToStageView();
+      },
+    );
   }
 
   ResultFuture<User> login() async {
     AppLogger.warning("login");
-    return await authService.login(value: _loginMode == LoginMode.phone?phoneController.text:emailController.text, password: passwordController.text, role: "processor",isMobile: _loginMode == LoginMode.phone);
+    return await authService.login(
+      value:
+          _loginMode == LoginMode.phone
+              ? phoneController.text
+              : emailController.text,
+      password: passwordController.text,
+      role: "processor",
+      isMobile: _loginMode == LoginMode.phone,
+    );
   }
 
   ResultFuture<User> googleLogin() async {
-    return await authService.googleLogin(email: emailController.text, token: passwordController.text);
+    return await authService.googleLogin(
+      email: emailController.text,
+      token: passwordController.text,
+    );
   }
 
   // Facebook login method that calls your backend

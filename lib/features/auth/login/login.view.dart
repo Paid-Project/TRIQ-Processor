@@ -25,7 +25,6 @@ class LoginView extends StatelessWidget {
       disposeViewModel: false,
       builder: (BuildContext context, LoginViewModel model, Widget? child) {
         return Scaffold(
-
           backgroundColor: AppColors.white,
           body: Container(
             color: AppColors.white,
@@ -38,22 +37,25 @@ class LoginView extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        if (model.showOtpLogin || model.showForgotPassword || model.showOtpField)
+                        if (model.showOtpLogin ||
+                            model.showForgotPassword ||
+                            model.showOtpField)
                           _buildBackButton(context, model)
                         else
                           SizedBox(height: AppSizes.h45),
                         _buildHeaderSection(context, model),
                         SizedBox(height: AppSizes.h5),
                         _buildMainContent(context, model),
+
                         // if (!model.showForgotPassword &&
                         //     !model.showOtpLogin &&
                         //     (model.loginMode == LoginMode.email || model.loginMode == LoginMode.phone) &&
                         //     !model.showOtpField)
                         //   _buildSocialLoginSection(context, model),
-
                         if (!model.showForgotPassword &&
                             !model.showOtpLogin &&
-                            (model.loginMode == LoginMode.email || model.loginMode == LoginMode.phone) &&
+                            (model.loginMode == LoginMode.email ||
+                                model.loginMode == LoginMode.phone) &&
                             !model.showOtpField) ...[
                           _buildSignUpPrompt(context, model),
                           _buildTermsAndConditionsCheckbox(context),
@@ -91,7 +93,12 @@ class LoginView extends StatelessWidget {
             color: Colors.grey[200], // Light grey background
             shape: BoxShape.circle, // Makes it circular
           ),
-          child: Image.asset(AppImages.back, height: 20, width: 20, color: AppColors.textPrimary),
+          child: Image.asset(
+            AppImages.back,
+            height: 20,
+            width: 20,
+            color: AppColors.textPrimary,
+          ),
         ),
       ),
     );
@@ -100,11 +107,9 @@ class LoginView extends StatelessWidget {
   Widget _buildMainContent(BuildContext context, LoginViewModel model) {
     if (model.showForgotPassword) {
       return _buildForgotPasswordSection(context, model);
-    }
-    else if (model.showOtpField) {
+    } else if (model.showOtpField) {
       return _buildOtpVerificationSection(context, model);
-    }
-    else if (model.showOtpLogin) {
+    } else if (model.showOtpLogin) {
       return _buildOtpLoginSection(context, model);
     } else {
       return _buildLoginForm(context, model);
@@ -192,7 +197,10 @@ class LoginView extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            decoration: BoxDecoration(color: AppColors.lightGrey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(AppSizes.v45)),
+            decoration: BoxDecoration(
+              color: AppColors.lightGrey.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(AppSizes.v45),
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -201,14 +209,23 @@ class LoginView extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: AppSizes.h14),
                       decoration: BoxDecoration(
-                        color: model.loginMode == LoginMode.phone ? AppColors.primary : Colors.transparent,
-                        borderRadius: BorderRadius.only(topLeft: Radius.circular(AppSizes.v45), bottomLeft: Radius.circular(AppSizes.v45)),
+                        color:
+                            model.loginMode == LoginMode.phone
+                                ? AppColors.primary
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(AppSizes.v45),
+                          bottomLeft: Radius.circular(AppSizes.v45),
+                        ),
                       ),
                       child: Text(
                         LanguageService.get('login_with_phone'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: model.loginMode == LoginMode.phone ? AppColors.white : AppColors.textSecondary,
+                          color:
+                              model.loginMode == LoginMode.phone
+                                  ? AppColors.white
+                                  : AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -221,14 +238,23 @@ class LoginView extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: AppSizes.h14),
                       decoration: BoxDecoration(
-                        color: model.loginMode == LoginMode.email ? AppColors.primary : Colors.transparent,
-                        borderRadius: BorderRadius.only(topRight: Radius.circular(AppSizes.v45), bottomRight: Radius.circular(AppSizes.v45)),
+                        color:
+                            model.loginMode == LoginMode.email
+                                ? AppColors.primary
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(AppSizes.v45),
+                          bottomRight: Radius.circular(AppSizes.v45),
+                        ),
                       ),
                       child: Text(
                         LanguageService.get('login_with_email'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: model.loginMode == LoginMode.email ? AppColors.white : AppColors.textSecondary,
+                          color:
+                              model.loginMode == LoginMode.email
+                                  ? AppColors.white
+                                  : AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -256,7 +282,10 @@ class LoginView extends StatelessWidget {
                       ),
                       decoration: InputDecoration(
                         labelText: LanguageService.get('phone_number'),
-                        labelStyle: TextStyle(color: AppColors.textGrey, fontSize: 13),
+                        labelStyle: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 13,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppSizes.v12),
                           borderSide: BorderSide(color: AppColors.lightGrey),
@@ -267,7 +296,10 @@ class LoginView extends StatelessWidget {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppSizes.v12),
-                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                       initialCountryCode: 'IN',
@@ -276,7 +308,9 @@ class LoginView extends StatelessWidget {
                       },
                       validator: (phone) {
                         if (phone == null || phone.number.isEmpty) {
-                          return LanguageService.get('please_enter_phone_number');
+                          return LanguageService.get(
+                            'please_enter_phone_number',
+                          );
                         }
                         return null;
                       },
@@ -288,7 +322,11 @@ class LoginView extends StatelessWidget {
                     controller: model.emailController,
                     label: LanguageService.get('email_address'),
                     keyboardType: TextInputType.emailAddress,
-                    validator: (value) => value?.isEmpty == true ? LanguageService.get('please_enter_email') : null,
+                    validator:
+                        (value) =>
+                            value?.isEmpty == true
+                                ? LanguageService.get('please_enter_email')
+                                : null,
                   ),
                   SizedBox(height: AppSizes.h5),
                 ],
@@ -301,10 +339,16 @@ class LoginView extends StatelessWidget {
                     controller: model.passwordController,
                     label: LanguageService.get('password'),
                     obscureText: model.obscurePassword,
-                    validator: (value) => value?.isEmpty == true ? LanguageService.get('please_enter_password') : null,
+                    validator:
+                        (value) =>
+                            value?.isEmpty == true
+                                ? LanguageService.get('please_enter_password')
+                                : null,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        model.obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        model.obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: AppColors.gray,
                       ),
                       onPressed: model.togglePassword,
@@ -322,14 +366,15 @@ class LoginView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                SizedBox(width:  AppSizes.h5),
+                SizedBox(width: AppSizes.h5),
                 GestureDetector(
                   onTap: model.toggleOtpWithLogin,
                   child: Text(
                     LanguageService.get('login_with_otp'),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 Spacer(),
@@ -342,7 +387,10 @@ class LoginView extends StatelessWidget {
                       style: GoogleFonts.lato(
                         textStyle: Theme.of(
                           context,
-                        ).textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -373,22 +421,31 @@ class LoginView extends StatelessWidget {
                 // Remove default elevation since we're using custom shadow
                 shadowColor: Colors.transparent,
                 // Remove default shadow
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v45)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.v45),
+                ),
               ),
               child:
                   model.isBusy
                       ? SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          color: AppColors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                       : Text(
                         model.showOtpField
                             ? LanguageService.get('verify_otp')
-                            : (model.loginMode == LoginMode.phone && !model.showOtpField)
+                            : (model.loginMode == LoginMode.phone &&
+                                !model.showOtpField)
                             ? LanguageService.get('login')
                             : LanguageService.get('login'),
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
             ),
           ),
@@ -397,7 +454,10 @@ class LoginView extends StatelessWidget {
     );
   }
 
-  Widget _buildOtpVerificationSection(BuildContext context, LoginViewModel model) {
+  Widget _buildOtpVerificationSection(
+    BuildContext context,
+    LoginViewModel model,
+  ) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: AppSizes.h20),
       child: Column(
@@ -407,16 +467,21 @@ class LoginView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(6, (index) {
               return Container(
-                width: Get.width/7.5,
+                width: Get.width / 7.5,
                 height: 55,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppSizes.v8)),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppSizes.v8),
+                ),
                 child: TextFormField(
                   controller: model.otpDigitControllers[index],
                   focusNode: model.otpFocusNodes[index],
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   maxLength: 1,
-                  decoration: InputDecoration(border: InputBorder.none, counterText: ''),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    counterText: '',
+                  ),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   onChanged: (value) => model.onOtpDigitChanged(index, value),
                 ),
@@ -438,12 +503,17 @@ class LoginView extends StatelessWidget {
               // ),
               if (model.canResendOtp)
                 GestureDetector(
-                  onTap: model.sendPasswordResetOtp,
+                  onTap: () {
+                    model.isOTPWithLogin
+                        ? model.sendOtpWithLogin(skipValidation: true)
+                        : model.sendPasswordResetOtp();
+                  },
                   child: Text(
                     LanguageService.get('resend_otp'),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
@@ -453,24 +523,36 @@ class LoginView extends StatelessWidget {
 
           // Verify Button
           ElevatedButton(
-            onPressed: model.isBusy ? null :(model.isOTPWithLogin == true
-                ? model.verifyOtpWithLogin: model.verifyOtp),
+            onPressed:
+                model.isBusy
+                    ? null
+                    : (model.isOTPWithLogin == true
+                        ? model.verifyOtpWithLogin
+                        : model.verifyOtp),
             style: ElevatedButton.styleFrom(
               minimumSize: Size(double.infinity, AppSizes.h40),
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v45)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.v45),
+              ),
             ),
             child:
                 model.isBusy
                     ? SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        color: AppColors.white,
+                        strokeWidth: 2,
+                      ),
                     )
                     : Text(
                       LanguageService.get('verify_otp'),
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
           ),
         ],
@@ -478,9 +560,10 @@ class LoginView extends StatelessWidget {
     );
   }
 
-  Widget _buildForgotPasswordSection(BuildContext context, LoginViewModel model) {
-
-
+  Widget _buildForgotPasswordSection(
+    BuildContext context,
+    LoginViewModel model,
+  ) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: AppSizes.h20),
       child: Form(
@@ -566,7 +649,10 @@ class LoginView extends StatelessWidget {
                     ),
                     decoration: InputDecoration(
                       labelText: LanguageService.get('phone_number'),
-                      labelStyle: TextStyle(color: AppColors.textGrey, fontSize: 13),
+                      labelStyle: TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 13,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSizes.v12),
                         borderSide: BorderSide(color: AppColors.lightGrey),
@@ -577,7 +663,10 @@ class LoginView extends StatelessWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSizes.v12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
+                        borderSide: BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
                       ),
                     ),
                     initialCountryCode: 'IN',
@@ -592,37 +681,55 @@ class LoginView extends StatelessWidget {
                     },
                   ),
                 ),
-              ]
-              else ...[
+              ] else ...[
                 _buildTextFormField(
                   context,
                   controller: model.forgotEmailController,
                   label: LanguageService.get('email_address'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value?.isEmpty == true ? LanguageService.get('please_enter_email') : null,
+                  validator:
+                      (value) =>
+                          value?.isEmpty == true
+                              ? LanguageService.get('please_enter_email')
+                              : null,
                   prefixIcon: Icons.email_outlined,
                 ),
               ],
 
               SizedBox(height: AppSizes.h20),
               ElevatedButton(
-                onPressed: model.isBusyForgotPassword ? null : model.sendPasswordResetOtp,
+                onPressed:
+                    model.isBusyForgotPassword
+                        ? null
+                        : model.sendPasswordResetOtp,
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, AppSizes.h20),
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v45)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.v45),
+                  ),
                 ),
-                child: model.isBusyForgotPassword
+                child:
+                    model.isBusyForgotPassword
                         ? SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
+                          ),
                         )
-                        : Text(LanguageService.get('send_otp'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              )
-
-            ] else if (model.forgotPasswordStep == ForgotPasswordStep.newPassword) ...[
+                        : Text(
+                          LanguageService.get('send_otp'),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+              ),
+            ] else if (model.forgotPasswordStep ==
+                ForgotPasswordStep.newPassword) ...[
               // New Password Fields
               _buildTextFormField(
                 context,
@@ -630,14 +737,20 @@ class LoginView extends StatelessWidget {
                 label: LanguageService.get('new_password'),
                 obscureText: model.obscureNewPassword,
                 validator: (value) {
-                  if (value?.isEmpty == true) return LanguageService.get('please_enter_new_password');
-                  if (value!.length < 6) return LanguageService.get('password_must_be_at_least_6_characters');
+                  if (value?.isEmpty == true)
+                    return LanguageService.get('please_enter_new_password');
+                  if (value!.length < 6)
+                    return LanguageService.get(
+                      'password_must_be_at_least_6_characters',
+                    );
                   return null;
                 },
                 prefixIcon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    model.obscureNewPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    model.obscureNewPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     color: AppColors.gray,
                   ),
                   onPressed: model.toggleNewPassword,
@@ -650,7 +763,8 @@ class LoginView extends StatelessWidget {
                 label: LanguageService.get('confirm_password'),
                 obscureText: model.obscureConfirmPassword,
                 validator: (value) {
-                  if (value?.isEmpty == true) return LanguageService.get('please_confirm_password');
+                  if (value?.isEmpty == true)
+                    return LanguageService.get('please_confirm_password');
                   if (value != model.newPasswordController.text) {
                     return LanguageService.get('passwords_do_not_match');
                   }
@@ -660,7 +774,9 @@ class LoginView extends StatelessWidget {
                 prefixIcon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    model.obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    model.obscureConfirmPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     color: AppColors.gray,
                   ),
                   onPressed: model.toggleConfirmPassword,
@@ -668,23 +784,32 @@ class LoginView extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.h30),
               ElevatedButton(
-                onPressed: model.isBusyForgotPassword ? null : model.resetPassword,
+                onPressed:
+                    model.isBusyForgotPassword ? null : model.resetPassword,
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, AppSizes.h50),
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.v12),
+                  ),
                 ),
                 child:
                     model.isBusyForgotPassword
                         ? SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                         : Text(
                           LanguageService.get('create_password'),
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
               ),
             ],
@@ -692,7 +817,6 @@ class LoginView extends StatelessWidget {
         ),
       ),
     );
-
   }
 
   Widget _buildOtpLoginSection(BuildContext context, LoginViewModel model) {
@@ -714,11 +838,15 @@ class LoginView extends StatelessWidget {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => model.setForgotPasswordMode(LoginMode.phone),
+                        onTap:
+                            () => model.setForgotPasswordMode(LoginMode.phone),
                         child: Container(
                           padding: EdgeInsets.symmetric(vertical: AppSizes.h14),
                           decoration: BoxDecoration(
-                            color: model.forgotPasswordMode == LoginMode.phone ? AppColors.primary : Colors.transparent,
+                            color:
+                                model.forgotPasswordMode == LoginMode.phone
+                                    ? AppColors.primary
+                                    : Colors.transparent,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(AppSizes.v45),
                               bottomLeft: Radius.circular(AppSizes.v45),
@@ -740,11 +868,15 @@ class LoginView extends StatelessWidget {
                     ),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => model.setForgotPasswordMode(LoginMode.email),
+                        onTap:
+                            () => model.setForgotPasswordMode(LoginMode.email),
                         child: Container(
                           padding: EdgeInsets.symmetric(vertical: AppSizes.h14),
                           decoration: BoxDecoration(
-                            color: model.forgotPasswordMode == LoginMode.email ? AppColors.primary : Colors.transparent,
+                            color:
+                                model.forgotPasswordMode == LoginMode.email
+                                    ? AppColors.primary
+                                    : Colors.transparent,
                             borderRadius: BorderRadius.only(
                               topRight: Radius.circular(AppSizes.v45),
                               bottomRight: Radius.circular(AppSizes.v45),
@@ -781,7 +913,10 @@ class LoginView extends StatelessWidget {
                     ),
                     decoration: InputDecoration(
                       labelText: LanguageService.get('phone_number'),
-                      labelStyle: TextStyle(color: AppColors.textGrey, fontSize: 13),
+                      labelStyle: TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 13,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSizes.v12),
                         borderSide: BorderSide(color: AppColors.lightGrey),
@@ -792,10 +927,16 @@ class LoginView extends StatelessWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSizes.v12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
+                        borderSide: BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
                       ),
                     ),
                     initialCountryCode: 'IN',
+                    onCountryChanged: (country) {
+                      model.countryCode = country.dialCode.toString();
+                    },
                     onChanged: (phone) {
                       model.updateForgotPhoneNumber(phone);
                     },
@@ -813,32 +954,49 @@ class LoginView extends StatelessWidget {
                   controller: model.forgotEmailController,
                   label: LanguageService.get('email_address'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value?.isEmpty == true ? LanguageService.get('please_enter_email') : null,
+                  validator:
+                      (value) =>
+                          value?.isEmpty == true
+                              ? LanguageService.get('please_enter_email')
+                              : null,
                 ),
               ],
               SizedBox(height: AppSizes.h20),
               ElevatedButton(
-                onPressed: model.isBusyForgotPassword ? null :  (model.isOTPWithLogin == true
-              ? model.sendOtpWithLogin:model.sendPasswordResetOtp),
+                onPressed:
+                    model.isBusyForgotPassword
+                        ? null
+                        : (model.isOTPWithLogin == true
+                            ? model.sendOtpWithLogin
+                            : model.sendPasswordResetOtp),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, AppSizes.h40),
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v45)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.v45),
+                  ),
                 ),
                 child:
                     model.isBusyForgotPassword
                         ? SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                         : Text(
                           LanguageService.get('send_otp'),
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
               ),
-            ] else if (model.forgotPasswordStep == ForgotPasswordStep.newPassword) ...[
+            ] else if (model.forgotPasswordStep ==
+                ForgotPasswordStep.newPassword) ...[
               // New Password Fields
               _buildTextFormField(
                 context,
@@ -846,14 +1004,20 @@ class LoginView extends StatelessWidget {
                 label: LanguageService.get('new_password'),
                 obscureText: model.obscureNewPassword,
                 validator: (value) {
-                  if (value?.isEmpty == true) return LanguageService.get('please_enter_new_password');
-                  if (value!.length < 6) return LanguageService.get('password_must_be_at_least_6_characters');
+                  if (value?.isEmpty == true)
+                    return LanguageService.get('please_enter_new_password');
+                  if (value!.length < 6)
+                    return LanguageService.get(
+                      'password_must_be_at_least_6_characters',
+                    );
                   return null;
                 },
                 prefixIcon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    model.obscureNewPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    model.obscureNewPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     color: AppColors.gray,
                   ),
                   onPressed: model.toggleNewPassword,
@@ -866,7 +1030,8 @@ class LoginView extends StatelessWidget {
                 label: LanguageService.get('confirm_password'),
                 obscureText: model.obscureConfirmPassword,
                 validator: (value) {
-                  if (value?.isEmpty == true) return LanguageService.get('please_confirm_password');
+                  if (value?.isEmpty == true)
+                    return LanguageService.get('please_confirm_password');
                   if (value != model.newPasswordController.text) {
                     return LanguageService.get('passwords_do_not_match');
                   }
@@ -875,7 +1040,9 @@ class LoginView extends StatelessWidget {
                 prefixIcon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    model.obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    model.obscureConfirmPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     color: AppColors.gray,
                   ),
                   onPressed: model.toggleConfirmPassword,
@@ -883,19 +1050,25 @@ class LoginView extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.h30),
               ElevatedButton(
-                onPressed: model.isBusyForgotPassword ? null : model.resetPassword,
+                onPressed:
+                    model.isBusyForgotPassword ? null : model.resetPassword,
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, AppSizes.h40),
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v45)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.v45),
+                  ),
                 ),
                 child:
                     model.isBusyForgotPassword
                         ? CircularProgressIndicator(color: AppColors.white)
                         : Text(
                           LanguageService.get('create_password'),
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
               ),
             ],
@@ -917,7 +1090,9 @@ class LoginView extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: AppSizes.w16),
                 child: Text(
                   LanguageService.get('or'),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
               Expanded(child: Divider(color: AppColors.lightGrey)),
@@ -974,11 +1149,16 @@ class LoginView extends StatelessWidget {
           textAlign: TextAlign.center,
           text: TextSpan(
             text: LanguageService.get('dont_have_account'),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             children: [
               TextSpan(
                 text: " ${LanguageService.get('sign_up')}",
-                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -1010,7 +1190,9 @@ class LoginView extends StatelessWidget {
               textAlign: TextAlign.center,
               text: TextSpan(
                 text: "${LanguageService.get('i_agree_to_the')} ",
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
                 children: [
                   TextSpan(
                     text: LanguageService.get('terms_of_service'),
@@ -1018,10 +1200,13 @@ class LoginView extends StatelessWidget {
                       color: AppColors.primary,
                       decoration: TextDecoration.underline,
                     ),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        _openUrl('https://www.freeprivacypolicy.com/live/38ff3e0d-37fd-440f-a2a0-a92c7c14fc89');
-                      },
+                    recognizer:
+                        TapGestureRecognizer()
+                          ..onTap = () {
+                            _openUrl(
+                              'https://www.freeprivacypolicy.com/live/38ff3e0d-37fd-440f-a2a0-a92c7c14fc89',
+                            );
+                          },
                   ),
                   TextSpan(text: "${LanguageService.get('and')} "),
                   TextSpan(
@@ -1030,10 +1215,13 @@ class LoginView extends StatelessWidget {
                       color: AppColors.primary,
                       decoration: TextDecoration.underline,
                     ),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        _openUrl('https://www.freeprivacypolicy.com/live/4fbd2c88-6839-4292-9a10-8c331bd89deb');
-                      },
+                    recognizer:
+                        TapGestureRecognizer()
+                          ..onTap = () {
+                            _openUrl(
+                              'https://www.freeprivacypolicy.com/live/4fbd2c88-6839-4292-9a10-8c331bd89deb',
+                            );
+                          },
                   ),
                 ],
               ),
@@ -1081,11 +1269,17 @@ class LoginView extends StatelessWidget {
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppSizes.v12),
-            borderSide: BorderSide(color: AppColors.lightGrey.withValues(alpha: 0.5)),
+            borderSide: BorderSide(
+              color: AppColors.lightGrey.withValues(alpha: 0.5),
+            ),
           ),
           filled: !enabled,
-          fillColor: enabled ? null : AppColors.lightGrey.withValues(alpha: 0.1),
-          contentPadding: EdgeInsets.symmetric(horizontal: AppSizes.w12, vertical: AppSizes.h12),
+          fillColor:
+              enabled ? null : AppColors.lightGrey.withValues(alpha: 0.1),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppSizes.w12,
+            vertical: AppSizes.h12,
+          ),
         ),
         validator: validator,
         onFieldSubmitted: onFieldSubmitted,
@@ -1114,7 +1308,11 @@ class LoginView extends StatelessWidget {
         child: Center(
           child:
               icon != null
-                  ? Icon(icon, size: 32, color: iconColor ?? AppColors.textPrimary)
+                  ? Icon(
+                    icon,
+                    size: 32,
+                    color: iconColor ?? AppColors.textPrimary,
+                  )
                   : iconPath != null
                   ? SvgPicture.asset(iconPath, height: 28, width: 28)
                   : Icon(Icons.login, size: 24, color: AppColors.primary),
