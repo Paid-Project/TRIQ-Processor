@@ -336,14 +336,14 @@ class ProfileView extends StatelessWidget {
             onTap: () => Get.to(() => FeedbackView()),
             animationDelay: 900.ms,
           ),
-          // _buildDivider(),
-          // _buildMenuItem(
-          //   imagePath: AppImages.inviteContact,
-          //   title: LanguageService.get("invite_a_contact"),
-          //   iconColor: const Color(0xFF4CAF50),
-          //   onTap: () => _showInviteContactDialog(context),
-          //   animationDelay: 1000.ms,
-          // ),
+          _buildDivider(),
+          _buildMenuItem(
+            imagePath: AppImages.inviteContact,
+            title: LanguageService.get("invite_a_contact"),
+            iconColor: const Color(0xFF4CAF50),
+            onTap: () => _showInviteContactDialog(context, model),
+            animationDelay: 1000.ms,
+          ),
           _buildDivider(),
           _buildMenuItem(
             imagePath: AppImages.logout,
@@ -551,7 +551,7 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  void _showInviteContactDialog(BuildContext context) {
+  void _showInviteContactDialog(BuildContext context, ProfileViewModel model) {
     Get.dialog(
       Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 12),
@@ -599,29 +599,36 @@ class ProfileView extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Share options row
+              // Share options row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildShareOption(
+                    onTap:() => model.openWhatsApp() ,
                     AppImages.whatsapp,
                     "whatsapp",
                     color: AppColors.emeraldGreen,
                   ),
                   _buildShareOption(
+                    onTap:() => model.shareDriveLink() ,
                     AppImages.weChat,
                     "wechat",
                     color: AppColors.leafGreen,
                   ),
                   _buildShareOption(
+                    onTap: () => model.shareViaEmail(),
                     AppImages.email,
                     "email",
                     color: AppColors.redbackground,
                   ),
+
                   _buildShareOption(
+                    onTap: () => model.shareDriveLink(),
                     AppImages.message,
                     "message",
                     color: AppColors.turquoiseBlue,
                   ),
+
                 ],
               ),
               const SizedBox(height: 20),
@@ -657,7 +664,9 @@ class ProfileView extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'https://yourwebsite.com/',
+                        model.inviteLink,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -672,7 +681,7 @@ class ProfileView extends StatelessWidget {
                       label: LanguageService.get("copy"),
                       onPressed: () async {
                         await Clipboard.setData(
-                          const ClipboardData(text: 'https://yourwebsite.com/'),
+                          ClipboardData(text: model.inviteLink),
                         );
                         Fluttertoast.showToast(
                           msg: LanguageService.get("link_copied_to_clipboard"),
@@ -702,12 +711,10 @@ class ProfileView extends StatelessWidget {
     String imagePath,
     String label, {
     required Color color,
+        void Function()? onTap
   }) {
     return GestureDetector(
-      onTap: () {
-        // TODO: Implement share functionality for each platform
-        print('Share via $label');
-      },
+      onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(10),
         decoration: BoxDecoration(

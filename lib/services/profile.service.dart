@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:manager/api_endpoints.dart';
 import 'package:manager/core/locator.dart';
 import 'package:manager/core/models/profile_model.dart';
+import 'package:manager/core/models/widgets/invite_model.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:manager/services/api.service.dart';
 
@@ -12,7 +13,7 @@ class ProfileService {
 
   // Global ProfileModel stored in memory
   ProfileModel? _globalProfileModel;
-
+  InviteModel? _inviteData;
   // Track if profile has been initialized
   bool _isInitialized = false;
 
@@ -23,7 +24,7 @@ class ProfileService {
 
   // Check if profile is initialized
   bool get isInitialized => _isInitialized;
-
+  InviteModel? get inviteData => _inviteData;
   // Initialize profile data - always fetch from API
   Future<void> initializeProfile() async {
     // Only initialize once
@@ -41,7 +42,38 @@ class ProfileService {
     _isInitialized = true;
     AppLogger.info('Profile initialization completed');
   }
+  Future<void> getInvitePeopleAPI() async {
+    try {
+      final response = await apiService.get(url: ApiEndpoints.links);
+      print("response:-$response");
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseData;
+        if (response.data is String) {
+          responseData = jsonDecode(response.data);
+        } else if (response.data is Map<String, dynamic>) {
+          responseData = response.data;
+        } else {
+          AppLogger.error('Invalid response format');
+          return;
+        }
 
+        // Parse profile data
+        InviteModel invitePeople;
+        invitePeople = InviteModel.fromJson(responseData);
+
+        // if((profile.profile?.chatLanguage ?? "").isNotEmpty) {
+        //   saveSelectedChatLanguage(profile.profile?.chatLanguage ?? "en");
+        // }
+
+        _inviteData = invitePeople;
+        AppLogger.info('Profile fetched from API');
+      } else {
+        AppLogger.error('Failed to fetch profile: ${response.statusMessage}');
+      }
+    } catch (e) {
+      AppLogger.error('Error fetching profile from API: $e');
+    }
+  }
   // Fetch profile data from API
   Future<void> _fetchFromAPI() async {
     try {

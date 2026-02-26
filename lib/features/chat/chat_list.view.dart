@@ -95,9 +95,9 @@ class _ChatListViewState extends State<ChatListView>
   }
 
   PreferredSizeWidget _buildAppBar(
-    BuildContext context,
-    ChatListViewModel model,
-  ) {
+      BuildContext context,
+      ChatListViewModel model,
+      ) {
     return GradientAppBar(
       titleSpacing: 0,
       leading: IconButton(
@@ -182,124 +182,124 @@ class _ChatListViewState extends State<ChatListView>
           },
           itemBuilder:
               (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'in_progress',
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        if (_statusFilter == 'in_progress')
-                          Icon(Icons.check, color: AppColors.primary, size: 20),
-                        if (_statusFilter == 'in_progress') SizedBox(width: 8),
-                        Text(
-                          'In Progress',
-                          style: TextStyle(
-                            color:
-                                _statusFilter == 'in_progress'
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight:
-                                _statusFilter == 'in_progress'
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                          ),
-                        ),
-                      ],
+            PopupMenuItem<String>(
+              value: 'in_progress',
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    if (_statusFilter == 'in_progress')
+                      Icon(Icons.check, color: AppColors.primary, size: 20),
+                    if (_statusFilter == 'in_progress') SizedBox(width: 8),
+                    Text(
+                      'In Progress',
+                      style: TextStyle(
+                        color:
+                        _statusFilter == 'in_progress'
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight:
+                        _statusFilter == 'in_progress'
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                PopupMenuDivider(height: 0),
-                PopupMenuItem<String>(
-                  value: 'on_hold',
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        if (_statusFilter == 'on_hold')
-                          Icon(Icons.check, color: AppColors.primary, size: 20),
-                        if (_statusFilter == 'on_hold') SizedBox(width: 8),
-                        Text(
-                          'On Hold',
-                          style: TextStyle(
-                            color:
-                                _statusFilter == 'on_hold'
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight:
-                                _statusFilter == 'on_hold'
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                          ),
-                        ),
-                      ],
+              ),
+            ),
+            PopupMenuDivider(height: 0),
+            PopupMenuItem<String>(
+              value: 'on_hold',
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    if (_statusFilter == 'on_hold')
+                      Icon(Icons.check, color: AppColors.primary, size: 20),
+                    if (_statusFilter == 'on_hold') SizedBox(width: 8),
+                    Text(
+                      'On Hold',
+                      style: TextStyle(
+                        color:
+                        _statusFilter == 'on_hold'
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight:
+                        _statusFilter == 'on_hold'
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                PopupMenuDivider(height: 0),
-                PopupMenuItem<String>(
-                  value: 'latest',
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        if (_sortFilter == 'latest' && _statusFilter == 'all')
-                          Icon(Icons.check, color: AppColors.primary, size: 20),
-                        if (_sortFilter == 'latest' && _statusFilter == 'all')
-                          SizedBox(width: 8),
-                        Text(
-                          'Latest to Oldest',
-                          style: TextStyle(
-                            color:
-                                (_sortFilter == 'latest' &&
-                                        _statusFilter == 'all')
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight:
-                                (_sortFilter == 'latest' &&
-                                        _statusFilter == 'all')
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                          ),
-                        ),
-                      ],
+              ),
+            ),
+            PopupMenuDivider(height: 0),
+            PopupMenuItem<String>(
+              value: 'latest',
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    if (_sortFilter == 'latest' && _statusFilter == 'all')
+                      Icon(Icons.check, color: AppColors.primary, size: 20),
+                    if (_sortFilter == 'latest' && _statusFilter == 'all')
+                      SizedBox(width: 8),
+                    Text(
+                      'Latest to Oldest',
+                      style: TextStyle(
+                        color:
+                        (_sortFilter == 'latest' &&
+                            _statusFilter == 'all')
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight:
+                        (_sortFilter == 'latest' &&
+                            _statusFilter == 'all')
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                PopupMenuDivider(height: 0),
-                PopupMenuItem<String>(
-                  value: 'oldest',
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        if (_sortFilter == 'oldest' && _statusFilter == 'all')
-                          Icon(Icons.check, color: AppColors.primary, size: 20),
-                        if (_sortFilter == 'oldest' && _statusFilter == 'all')
-                          SizedBox(width: 8),
-                        Text(
-                          'Oldest to Latest',
-                          style: TextStyle(
-                            color:
-                                (_sortFilter == 'oldest' &&
-                                        _statusFilter == 'all')
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight:
-                                (_sortFilter == 'oldest' &&
-                                        _statusFilter == 'all')
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                          ),
-                        ),
-                      ],
+              ),
+            ),
+            PopupMenuDivider(height: 0),
+            PopupMenuItem<String>(
+              value: 'oldest',
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    if (_sortFilter == 'oldest' && _statusFilter == 'all')
+                      Icon(Icons.check, color: AppColors.primary, size: 20),
+                    if (_sortFilter == 'oldest' && _statusFilter == 'all')
+                      SizedBox(width: 8),
+                    Text(
+                      'Oldest to Latest',
+                      style: TextStyle(
+                        color:
+                        (_sortFilter == 'oldest' &&
+                            _statusFilter == 'all')
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight:
+                        (_sortFilter == 'oldest' &&
+                            _statusFilter == 'all')
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
+            ),
+          ],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -320,153 +320,140 @@ class _ChatListViewState extends State<ChatListView>
       },
       builder:
           (context, model, child) => Scaffold(
-            appBar: _buildAppBar(context, model),
-            body: Container(
-              color: AppColors.white,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    // Animated search bar
-                    SlideTransition(
-                      position: _slideAnimation,
-                      child:
-                          _isSearchVisible
-                              ? _buildSearchBar(context, model)
-                              : const SizedBox.shrink(),
-                    ),
-                    // Tab Bar
-                    Container(
-                      color: AppColors.white,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.w20,
-                        vertical: AppSizes.h16,
-                      ),
-                      child: CustomSlidingSegmentedControl<int>(
-                        height: 40,
-                        innerPadding: EdgeInsets.zero,
-                        initialValue: selectedTabIndex,
-                        decoration: BoxDecoration(
-                          color: AppColors.lightGrey.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(AppSizes.v45),
-                        ),
-                        padding: AppSizes.v4,
-                        isStretch: true,
-                        children: {
-                          0: Text(
-                            LanguageService.get("tickets"),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color:
-                                  selectedTabIndex == 0
-                                      ? AppColors.white
-                                      : AppColors.black,
-                            ),
-                          ),
-                          1: Text(
-                            LanguageService.get("departmental"),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color:
-                                  selectedTabIndex == 1
-                                      ? AppColors.white
-                                      : AppColors.black,
-                            ),
-                          ),
-                          2: Text(
-                            LanguageService.get("external"),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color:
-                                  selectedTabIndex == 2
-                                      ? AppColors.white
-                                      : AppColors.black,
-                            ),
-                          ),
-                        },
-                        fromMax: true,
-                        thumbDecoration: BoxDecoration(
-                          borderRadius: _dynamicBorder,
-                          color: AppColors.primary,
-                        ),
-                        onValueChanged: (int value) {
-                          model.setTab(value);
-                          setState(() {
-                            selectedTabIndex = value;
-                            // Update dynamic border radius based on selected segment
-                            switch (value) {
-                              case 0:
-                                _dynamicBorder = BorderRadius.only(
-                                  topLeft: Radius.circular(AppSizes.v45),
-                                  bottomLeft: Radius.circular(AppSizes.v45),
-                                );
-                                break;
-                              case 1:
-                                _dynamicBorder = BorderRadius.circular(0);
-                                break;
-                              case 2:
-                                _dynamicBorder = BorderRadius.only(
-                                  topRight: Radius.circular(AppSizes.v45),
-                                  bottomRight: Radius.circular(AppSizes.v45),
-                                );
-                                break;
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                    // Tab Content
-                    Expanded(
-                      child: Container(
-                        color: AppColors.scaffoldBackground,
-                        child:
-                            model.isLoading
-                                ? Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.primary,
-                                  ),
-                                )
-                                : _buildFilteredChatList(context, model),
-                      ),
-                    ),
-                  ],
+        appBar: _buildAppBar(context, model),
+        body: Container(
+          color: AppColors.white,
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Animated search bar
+                SlideTransition(
+                  position: _slideAnimation,
+                  child:
+                  _isSearchVisible
+                      ? _buildSearchBar(context, model)
+                      : const SizedBox.shrink(),
                 ),
-              ),
+                // Tab Bar
+                Container(
+                  color: AppColors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.w20,
+                    vertical: AppSizes.h16,
+                  ),
+                  child: CustomSlidingSegmentedControl<int>(
+                    height: 40,
+                    innerPadding: EdgeInsets.zero,
+                    initialValue: selectedTabIndex,
+                    decoration: BoxDecoration(
+                      color: AppColors.lightGrey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(AppSizes.v45),
+                    ),
+                    padding: AppSizes.v4,
+                    isStretch: true,
+                    children: {
+                      0: Text(
+                        LanguageService.get("tickets"),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color:
+                          selectedTabIndex == 0
+                              ? AppColors.white
+                              : AppColors.black,
+                        ),
+                      ),
+                      1: Text(
+                        LanguageService.get("departmental"),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color:
+                          selectedTabIndex == 1
+                              ? AppColors.white
+                              : AppColors.black,
+                        ),
+                      ),
+                      2: Text(
+                        LanguageService.get("external"),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color:
+                          selectedTabIndex == 2
+                              ? AppColors.white
+                              : AppColors.black,
+                        ),
+                      ),
+                    },
+                    fromMax: true,
+                    thumbDecoration: BoxDecoration(
+                      borderRadius: _dynamicBorder,
+                      color: AppColors.primary,
+                    ),
+                    onValueChanged: (int value) {
+                      model.setTab(value);
+                      setState(() {
+                        selectedTabIndex = value;
+                        // Update dynamic border radius based on selected segment
+                        switch (value) {
+                          case 0:
+                            _dynamicBorder = BorderRadius.only(
+                              topLeft: Radius.circular(AppSizes.v45),
+                              bottomLeft: Radius.circular(AppSizes.v45),
+                            );
+                            break;
+                          case 1:
+                            _dynamicBorder = BorderRadius.circular(0);
+                            break;
+                          case 2:
+                            _dynamicBorder = BorderRadius.only(
+                              topRight: Radius.circular(AppSizes.v45),
+                              bottomRight: Radius.circular(AppSizes.v45),
+                            );
+                            break;
+                        }
+                      });
+                    },
+                  ),
+                ),
+                // Tab Content
+                Expanded(
+                  child: Container(
+                    color: AppColors.scaffoldBackground,
+                    child:
+                    model.isLoading
+                        ? Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
+                        : _buildFilteredChatList(context, model),
+                  ),
+                ),
+              ],
             ),
-            // floatingActionButton:
-            //     model.currentTab == 'external'
-            //         ? FloatingActionButton(
-            //           shape: RoundedRectangleBorder(
-            //             borderRadius: BorderRadius.circular(AppSizes.v50),
-            //           ),
-            //
-            //           backgroundColor: AppColors.primary,
-            //           child: Icon(Icons.add),
-            //           onPressed: () {
-            //             showCustomAddMenuDialog(
-            //               alignment: Alignment.bottomRight,
-            //               context: context,
-            //               dialogTitle: 'Add New Contact'.lang,
-            //               itemLenth: 2,
-            //               menuItems: [
-            //                 CustomMenuItem(
-            //                   onTap: () {
-            //                     model.onScanFromCamera(context);
-            //                   },
-            //                 ),
-            //                 CustomMenuItem(
-            //                   onTap: () {
-            //                     model.onSearchByPhone(context);
-            //                   },
-            //                 ),
-            //               ],
-            //             );
-            //           },
-            //         )
-            //         : null,
           ),
+        ),
+        // floatingActionButton: model.currentTab=='external'?FloatingActionButton(
+        //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v50)),
+        //
+        //     backgroundColor: AppColors.primary,
+        //     child: Icon(Icons.add),
+        //     onPressed: (){
+        //       showCustomAddMenuDialog(
+        //
+        //           alignment:Alignment.bottomRight,
+        //           context: context, dialogTitle: 'Add New Contact'.lang, itemLenth:2, menuItems: [
+        //         CustomMenuItem(onTap: (){
+        //           model.onScanFromCamera(context);
+        //         }),
+        //         CustomMenuItem(onTap: (){
+        //           model.onSearchByPhone(context);
+        //         })
+        //       ]);
+        //     }):null,
+      ),
     );
   }
 
@@ -599,26 +586,26 @@ class _ChatListViewState extends State<ChatListView>
             horizontal: AppSizes.w16,
           ),
           suffixIcon:
-              _searchController.text.isNotEmpty
-                  ? IconButton(
-                    icon: Icon(Icons.clear, color: AppColors.gray),
-                    onPressed: () {
-                      _searchController.clear();
-                      model.clearSearch();
-                    },
-                  )
-                  : null,
+          _searchController.text.isNotEmpty
+              ? IconButton(
+            icon: Icon(Icons.clear, color: AppColors.gray),
+            onPressed: () {
+              _searchController.clear();
+              model.clearSearch();
+            },
+          )
+              : null,
         ),
       ),
     );
   }
 
   Widget _buildEmptyState(
-    BuildContext context,
-    String title,
-    String subtitle,
-    IconData icon,
-  ) {
+      BuildContext context,
+      String title,
+      String subtitle,
+      IconData icon,
+      ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -694,19 +681,20 @@ class _ChatListViewState extends State<ChatListView>
   }
 
   Widget _buildChatItem(
-    BuildContext context,
-    ChatListViewModel model,
-    ChatListModel chatRoom,
-  ) {
+      BuildContext context,
+      ChatListViewModel model,
+      ChatListModel chatRoom,
+      ) {
     final chatTitle = _getChatTitle(chatRoom);
     // final lastMessage = _getLastMessagePreview(chatRoom);
     final subText = _getSubText(chatRoom);
     final ticketNumber =
-        chatRoom.ticket?.ticketNumber != null
-            ? "#${chatRoom.ticket?.ticketNumber ?? ''}"
-            : '';
+    chatRoom.ticket?.ticketNumber != null
+        ? "#${chatRoom.ticket?.ticketNumber ?? ''}"
+        : '';
     final status = chatRoom.ticket?.status ?? 'Unknown';
-    final chatWithName = chatRoom.chatWith?.fullName.toString().capitalizeWords ?? 'Unknown';
+    final chatWithName =
+        chatRoom.chatWith?.fullName?.toString().capitalizeWords ?? 'Unknown';
 
     return InkWell(
       onTap: () {
@@ -723,18 +711,19 @@ class _ChatListViewState extends State<ChatListView>
           MaterialPageRoute(
             builder:
                 (context) => ChatView(
-                  contactName: chatWithName,
-                  contactNumber: ticketNumber,
-                  contactInitials:
-                      chatWithName.isNotEmpty
-                          ? chatWithName.substring(0, 1).toUpperCase()
-                          : 'U',
-                  roomId: roomId,
-                  ticketId: chatRoom.ticket?.id,
-                  ticketStatus: chatRoom.ticket?.status,
-                  flag: chatRoom.chatWith?.flag?.prefixWithBaseUrl,
-                  screen: screen,
-                ),
+              contactName: chatWithName,
+              contactNumber: ticketNumber,
+              contactInitials:
+              chatWithName.isNotEmpty
+                  ? chatWithName.substring(0, 1).toUpperCase()
+                  : 'U',
+              roomId: roomId,
+              ticketId: chatRoom.ticket?.id,
+              ticketStatus: chatRoom.ticket?.status,
+              updatedAt: chatRoom.ticket?.updatedAt?.formatReadableDate(),
+              flag: chatRoom.chatWith?.flag?.prefixWithBaseUrl,
+              screen: screen,
+            ),
           ),
         );
       },
@@ -762,13 +751,23 @@ class _ChatListViewState extends State<ChatListView>
                           style: Theme.of(
                             context,
                           ).textTheme.titleMedium?.copyWith(
-                            color: AppColors.black,
+                            color: AppColors.primary,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      // if (chatRoom.ticket?.status == "On Hold") _buildCountdownTimer(chatRoom, model),
+                      // SizedBox(width: 10),
+                      // Container(
+                      //   padding: EdgeInsets.symmetric(horizontal: AppSizes.w8, vertical: AppSizes.h2),
+                      //   decoration: BoxDecoration(
+                      //     color: _getStatusColor(status).withValues(alpha: 0.1),
+                      //     borderRadius: BorderRadius.circular(AppSizes.v6),
+                      //   ),
+                      //   child: Text(status, style: TextStyle(color: _getStatusColor(status), fontSize: AppSizes.v12)),
+                      // ),
                       if (model.currentTab == 'ticket') ...[
                         if (chatRoom.ticket?.status == "On Hold")
                           _buildCountdownTimer(chatRoom, model),
@@ -794,26 +793,41 @@ class _ChatListViewState extends State<ChatListView>
                         ),
                       ],
 
-                      if (model.currentTab != 'ticket')...[
+                      if (model.currentTab != 'ticket') ...[
                         Row(
                           children: [
-
-                            Text(_formatTimestamp(chatRoom.lastMessage?.createdAt??DateTime.now()), style: TextStyle(color:AppColors.gray, fontSize: AppSizes.v12)),
-                            if(( (chatRoom.unreadCount??0) > 0))
+                            Text(
+                              _formatTimestamp(
+                                chatRoom.lastMessage?.createdAt ??
+                                    DateTime.now(),
+                              ),
+                              style: TextStyle(
+                                color: AppColors.gray,
+                                fontSize: AppSizes.v12,
+                              ),
+                            ),
+                            if (((chatRoom.unreadCount ?? 0) > 0))
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: AppSizes.w5, vertical: AppSizes.h2),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSizes.w5,
+                                  vertical: AppSizes.h2,
+                                ),
                                 decoration: BoxDecoration(
-                                    color: context.theme.primaryColor,
-                                    shape: BoxShape.circle
+                                  color: context.theme.primaryColor,
+                                  shape: BoxShape.circle,
                                   // borderRadius: BorderRadius.circular(AppSizes.v70),
                                 ),
-                                child: Text((chatRoom.unreadCount??0).toString(), style: TextStyle(color:AppColors.white, fontSize: AppSizes.v12)),
+                                child: Text(
+                                  (chatRoom.unreadCount ?? 0).toString(),
+                                  style: TextStyle(
+                                    color: AppColors.white,
+                                    fontSize: AppSizes.v12,
+                                  ),
+                                ),
                               ),
-
                           ],
-                        )
-                      ]
-
+                        ),
+                      ],
                     ],
                   ),
                   SizedBox(height: 2),
@@ -824,19 +838,19 @@ class _ChatListViewState extends State<ChatListView>
                         child: Text(
                           subText,
                           style:
-                              (chatRoom.unreadCount ?? 0) > 0
-                                  ? TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.black,
-                                    fontWeight: FontWeight.bold,
-                                    overflow: TextOverflow.ellipsis,
-                                  )
-                                  : TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textGrey,
-                                    fontWeight: FontWeight.w500,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                          (chatRoom.unreadCount ?? 0) > 0
+                              ? TextStyle(
+                            fontSize: 12,
+                            color: AppColors.black,
+                            fontWeight: FontWeight.bold,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                              : TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textGrey,
+                            fontWeight: FontWeight.w500,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                       Text(
@@ -859,9 +873,9 @@ class _ChatListViewState extends State<ChatListView>
   }
 
   String _formatTimestamp(DateTime timestamp) {
-
     return DateFormat('h:mm a').format(timestamp);
   }
+
   Color _getStatusColor(String? status) {
     if (status == null) return Colors.grey;
 
@@ -892,18 +906,35 @@ class _ChatListViewState extends State<ChatListView>
       return chat.lastMessage?.content ??
           "Chat with ${chat.chatWith!.fullName!}";
     } else if (chat.chatWith?.fullName != null) {
-      return "Chat with ${chat.chatWith!.fullName!}";
+      return "Chat with ${chat.chatWith!.fullName?.toString().capitalizeWords}";
     }
     return LanguageService.get("no_messages_yet");
   }
 
   String _getSubText(ChatListModel chat) {
-    if (chat.ticket != null && chat.ticket?.id != null) {
-      String text = chat.ticket?.updatedAt?.formatReadableDate() ?? '';
-      return "Pending Since $text";
-    } else if (chat.ticket?.id == null) {
-      return "${chat.chatWith?.email}";
+    final ticket = chat.ticket;
+    final status = ticket?.status?.trim().toLowerCase();
+    final updatedAt = ticket?.updatedAt?.formatReadableDate();
+
+    // 🎯 If ticket exists and is resolved
+    if (ticket != null && ticket.id != null && status == "resolved") {
+      return updatedAt != null && updatedAt.isNotEmpty
+          ? "Resolved In $updatedAt"
+          : "Resolved";
     }
+
+    // 🎯 If ticket exists but not resolved
+    if (ticket != null && ticket.id != null) {
+      return updatedAt != null && updatedAt.isNotEmpty
+          ? "Pending Since $updatedAt"
+          : "Pending";
+    }
+
+    // 🎯 If no ticket, show email
+    if (chat.chatWith?.email != null && chat.chatWith!.email!.isNotEmpty) {
+      return chat.chatWith!.email!;
+    }
+
     return LanguageService.get("no_messages_yet");
   }
 

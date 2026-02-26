@@ -52,6 +52,9 @@ abstract class ApiEndpoints {
   static const String getAllChats = 'chat/getAllChats';
   static const String getAllChatMessages = 'chat/messages';
   static const String uploadChatFile = 'chat/upload/chat';
+  static const String editMessages = 'chat/messages';
+  static const String deleteMessages = 'chat/deleteMessages';
+
   // static const String chatRooms = 'chat/rooms';
   // static const String externalChatRooms = 'auth/rooms-external';
   static const String createIndividualChatRoom = 'chat/room-create-individual';
@@ -104,7 +107,7 @@ abstract class ApiEndpoints {
   static const String getProfile = 'profile/get-profile';
   static const String getProfileDetails = 'profile/get-profiledetails';
   static const String updateProfile = 'profile/update-profile';
-
+  static const String links = 'links';
   // Notification endpoints
   static const String sendOrganizationRequest = 'notification/sendorganizationrequest';
   static const String getNotifications = 'notification/getnotification';

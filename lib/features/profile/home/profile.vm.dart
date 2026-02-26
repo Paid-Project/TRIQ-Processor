@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:manager/core/models/profile_model.dart';
 import 'package:manager/routes/routes.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/locator.dart';
 import '../../../core/models/hive/user/user.dart' as hive_user;
@@ -27,9 +29,15 @@ class ProfileViewModel extends ReactiveViewModel {
   final _isLoading = ReactiveValue<bool>(false);
   bool get isLoading => _isLoading.value;
 
+  String get inviteLink =>
+      _profileService.inviteData?.data?.manufacturerUrl ?? '';
   void init() {
      _profileService.refreshProfile();
+     refreshInvite();
      loadProfileData();
+  }
+  Future<void> refreshInvite() async {
+    _profileService.getInvitePeopleAPI();
   }
 
   Future<void> loadProfileData() async {
@@ -68,7 +76,65 @@ class ProfileViewModel extends ReactiveViewModel {
     await _profileService.refreshProfile();
     await loadProfileData();
   }
+  Future<void> openWhatsApp() async {
+    final link = _profileService.inviteData?.data?.manufacturerUrl ?? '';
+    if (link.isEmpty) {
+      Fluttertoast.showToast(
+        msg: 'Invite link not available',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+    final String message =
+        "Hi 👋\n\nPlease download our app using this link:\n$link";
 
+    final Uri url = Uri.parse(
+      "https://wa.me/?text=${Uri.encodeComponent(message)}",
+    );
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+  void shareDriveLink() {
+    final link = _profileService.inviteData?.data?.processorUrl ?? '';
+    if (link.isEmpty) {
+      Fluttertoast.showToast(
+        msg: 'Invite link not available',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+    Share.share(
+      "Hi 👋\n\nPlease download our app using this link:\n\n$link",
+      subject: "Invite - Download App",
+    );
+  }
+  Future<void> shareViaEmail() async {
+    final link = _profileService.inviteData?.data?.processorUrl ?? '';
+
+    if (link.isEmpty) {
+      Fluttertoast.showToast(
+        msg: 'Invite link not available',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: '', // yaha specific email bhi de sakte ho
+      queryParameters: {
+        'subject': 'Invite - Download App',
+        'body': "Hi 👋\n\nPlease download our app using this link:\n\n$link",
+      },
+    );
+
+    await launchUrl(emailUri);
+  }
   void navigateToLoginView() async {
     hive_user.User currentUser = getUser();
 

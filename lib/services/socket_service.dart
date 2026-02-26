@@ -77,12 +77,15 @@ class SocketService {
     required String content,
     String? event,
     List<Map<String, dynamic>> attachments = const [],
+    String? replyTo,
   }) {
     final payload = {
       "roomId": roomId,
       "content": content,
       "attachments":
-      attachments, // each: {"type": "image|video|document", "url": "...", "name": "..."}
+      attachments,
+      "replyTo": replyTo ?? null,
+      // each: {"type": "image|video|document", "url": "...", "name": "..."}
     };
 
     print("📤 Sending message with payload: $payload");
@@ -92,7 +95,18 @@ class SocketService {
     _socket?.emit(event??"sendMessage", payload);
     print("📤 Message emitted successfully");
   }
+  void reactToMessage({
+    required String messageId,
+    required String emoji,
+  }) {
+    final payload = {
+      "messageId": messageId,
+      "emoji": emoji,
+    };
 
+    print("❤️ Reacting to message: $payload");
+    _socket?.emit("reactMessage", payload);
+  }
   /// Listen for new messages
   void onNewMessage(Function(dynamic) handler,[String? event]) {
     print("🔌 Setting up newMessage listener");

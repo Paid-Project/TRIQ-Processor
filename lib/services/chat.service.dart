@@ -180,8 +180,59 @@ class ChatService {
       return Left(Failure('Failed to get all chats: $e'));
     }
   }
+  Future<Map<String, dynamic>> editChat({
+    required String messageId,
+    required String content,
+  }) async {
+    try {
+      print("🎯 editChat called with:qqq ");
+      final response = await _apiService.post(
+        url: '${ApiEndpoints.editMessages}/$messageId',
+        data: {
+          "content": content,
+        },
+      );
+      print("🎯 editChat called with: ${response.statusCode == 200}");
+      if (response.statusCode == 200) {
 
+      } else {
 
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+
+      }}
+    return {
+      'success': false,
+      'message': 'Something went wrong',
+    };
+  }
+  Future<Map<String, dynamic>> deleteChat({
+    required String messageId,
+
+  }) async {
+    try {
+      final response = await _apiService.post(
+        url: '${ApiEndpoints.deleteMessages}/$messageId',
+
+      );
+      print("🎯 deleteChat called with: ${response.statusCode == 200}");
+      if (response.statusCode == 200) {
+
+      } else {
+
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+
+      }}
+    return {
+      'success': false,
+      'message': 'Something went wrong',
+    };
+  }
   /// Upload files for chat
   ResultFuture<Map<String, dynamic>> uploadChatFiles(
       List<String> filePaths,

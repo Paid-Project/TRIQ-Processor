@@ -31,8 +31,8 @@ import 'ticket_details.vm.dart';
 
 class TicketDetailsView extends StatelessWidget {
   final String? ticketId;
-
-  TicketDetailsView({super.key, this.ticketId});
+  final bool isEmbedded;
+  TicketDetailsView({super.key, this.ticketId,  this.isEmbedded = false});
 
   bool isInitScreenDone=false;
   @override
@@ -42,6 +42,14 @@ class TicketDetailsView extends StatelessWidget {
       onViewModelReady: (TicketDetailsViewModel model) => model.init(ticketId: ticketId),
       disposeViewModel: false,
       builder: (BuildContext context, TicketDetailsViewModel model, Widget? child) {
+        if (isEmbedded) {
+          return Column(
+            children: [
+              Expanded(child: _buildBody(context, model)),
+              if (!model.isLoading) _buildBottomActionBar(context, model),
+            ],
+          );
+        }
         return Scaffold(
           appBar: _buildAppBar(context, model),
           body: _buildBody(context, model),
@@ -78,8 +86,9 @@ class TicketDetailsView extends StatelessWidget {
 
     return Container(
       color: AppColors.snowDrift,
-      height: double.maxFinite,
+      height:isEmbedded ? null : double.maxFinite,
       child: SingleChildScrollView(
+        physics: isEmbedded ? const ClampingScrollPhysics() : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1156,8 +1165,8 @@ print("status:- ${ model.ticketDetails?.ticketDetails?.status?.toLowerCase()}");
                   padding: EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: Text(
-                  model.ticketDetails?.ticketDetails?.status?.toLowerCase() == "resolved" 
-                      ? LanguageService.get('see_chat_record') 
+                  model.ticketDetails?.ticketDetails?.status?.toLowerCase() == "resolved"
+                      ? LanguageService.get('see_chat_record')
                       : LanguageService.get('chat_now'),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
