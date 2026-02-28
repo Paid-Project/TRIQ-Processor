@@ -129,7 +129,7 @@ abstract class ApiEndpoints {
   static const String searchEmployee = 'employee/searchEmployee';
   static const String getEmployeeById = 'employee/getEmployeeById';
   static const String updateEmployeeById = 'employee/update/';
-  static const String getCustomDesignation = 'designation/getAllDesignation';
+  static const String getCustomDesignation = 'designation/getAllDesignationByDepartment';
   static const String addCustomDesignation = 'designation/add';
   static const String getEligibleReportToList = 'employee/getEligibleReportToList';
   static const String getEmployeeHierarchy = 'employee/getEmployeeHierarchy';

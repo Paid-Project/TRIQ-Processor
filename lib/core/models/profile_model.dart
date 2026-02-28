@@ -40,6 +40,7 @@ class ProfileModel {
 
 /// This class represents the nested 'profile' object.
 class Profile {
+  bool? autoChatLanguage;
   String? id;
   User? user;
   String? unitName; // <-- REMOVED
@@ -56,6 +57,7 @@ class Profile {
   String? message;
 
   Profile({
+    this.autoChatLanguage,
     this.id,
     this.user,
     this.unitName, // <-- REMOVED
@@ -73,6 +75,7 @@ class Profile {
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
+    autoChatLanguage: json['AutoChatLanguage'],
     id: json["_id"],
     user: json["user"] == null ? null : User.fromJson(json["user"]),
     unitName: json["unitName"], // <-- REMOVED
@@ -90,6 +93,7 @@ class Profile {
   );
 
   Map<String, dynamic> toJson() => {
+    "AutoChatLanguage":autoChatLanguage,
     "_id": id,
     "user": user?.toJson(),
     "unitName": unitName, // <-- REMOVED

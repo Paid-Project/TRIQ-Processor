@@ -960,7 +960,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
       // _designations.refresh();
     }
     try {
-      final response = await _employeeService.getCustomDesignation(_selectedFactoryLocation.value?.id);
+      final response = await _employeeService.getCustomDesignation(_selectedFactoryLocation.value?.id??"6993060ed2804aa2bf435afb");
       if (response.success && response.data != null) {
         _designations.value = response.data!;
       } else {}

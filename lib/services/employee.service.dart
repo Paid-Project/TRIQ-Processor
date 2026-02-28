@@ -51,7 +51,7 @@ class EmployeeService {
   Future<ApiResponse<List<DesignationModel>>> getCustomDesignation(departmentId) async {
     try {
       final response = await apiService.get(
-        url: '${ApiEndpoints.getCustomDesignation}?departmentId=$departmentId',
+        url: '${ApiEndpoints.getCustomDesignation}/$departmentId',
       );
 
       if (response.statusCode == 200 && response.data['status'] == 1) {

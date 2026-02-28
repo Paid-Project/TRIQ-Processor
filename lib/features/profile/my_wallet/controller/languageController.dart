@@ -14,34 +14,137 @@ import '../../../../services/profile.service.dart';
 import '../../../../widgets/dialogs/loader/loader_dialog.view.dart';
 
 class LanguageController extends GetxController {
-  var selectedLanguageCode = ''.obs;
   var searchQuery = ''.obs;
   var isLoading = false.obs;
+  var selectedLanguageCode = ''.obs;
+  RxBool isAutoTranslateEnabled = false.obs;
 
-  ValueNotifier<LanguageModel> selectedChatLanguage = ValueNotifier(LanguageModel(name: 'English', displayName: 'English', code: 'English', flag: '🇺🇸'));
+  ValueNotifier<LanguageModel> selectedChatLanguage = ValueNotifier(
+    LanguageModel(
+      name: 'English',
+      displayName: 'English',
+      code: 'English',
+      flag: '🇺🇸',
+    ),
+  );
 
   final List<LanguageModel> languages = [
-    LanguageModel(name: 'English', displayName: 'English', code: 'en', flag: '🇺🇸'),
-    LanguageModel(name: 'English (UK)', displayName: 'English (UK)', code: 'en-GB', flag: '🇬🇧'),
-    LanguageModel(name: 'Hindi', displayName: 'हिन्दी', code: 'hi', flag: '🇮🇳'),
-    LanguageModel(name: 'Chinese (Simplified)', displayName: '中文（简体）', code: 'zh', flag: '🇨🇳'),
-    LanguageModel(name: 'Spanish', displayName: 'Español', code: 'es', flag: '🇪🇸'),
-    LanguageModel(name: 'Japanese', displayName: '日本語', code: 'ja', flag: '🇯🇵'),
-    LanguageModel(name: 'German', displayName: 'Deutsch', code: 'de', flag: '🇩🇪'),
-    LanguageModel(name: 'French', displayName: 'Français', code: 'fr', flag: '🇫🇷'),
-    LanguageModel(name: 'Arabic', displayName: 'العربية', code: 'ar', flag: '🇸🇦'),
-    LanguageModel(name: 'Portuguese', displayName: 'Português', code: 'pt', flag: '🇵🇹'),
-    LanguageModel(name: 'Russian', displayName: 'Русский', code: 'ru', flag: '🇷🇺'),
-    LanguageModel(name: 'Bengali', displayName: 'বাংলা', code: 'bn', flag: '🇧🇩'),
-    LanguageModel(name: 'Turkish', displayName: 'Türkçe', code: 'tr', flag: '🇹🇷'),
-    LanguageModel(name: 'Italian', displayName: 'Italiano', code: 'it', flag: '🇮🇹'),
+    LanguageModel(
+      name: 'English',
+      displayName: 'English',
+      code: 'en',
+      flag: '🇺🇸',
+    ),
+    LanguageModel(
+      name: 'English (UK)',
+      displayName: 'English (UK)',
+      code: 'en-GB',
+      flag: '🇬🇧',
+    ),
+    LanguageModel(
+      name: 'Hindi',
+      displayName: 'हिन्दी',
+      code: 'hi',
+      flag: '🇮🇳',
+    ),
+    LanguageModel(
+      name: 'Chinese (Simplified)',
+      displayName: '中文（简体）',
+      code: 'zh',
+      flag: '🇨🇳',
+    ),
+    LanguageModel(
+      name: 'Spanish',
+      displayName: 'Español',
+      code: 'es',
+      flag: '🇪🇸',
+    ),
+    LanguageModel(
+      name: 'Japanese',
+      displayName: '日本語',
+      code: 'ja',
+      flag: '🇯🇵',
+    ),
+    LanguageModel(
+      name: 'German',
+      displayName: 'Deutsch',
+      code: 'de',
+      flag: '🇩🇪',
+    ),
+    LanguageModel(
+      name: 'French',
+      displayName: 'Français',
+      code: 'fr',
+      flag: '🇫🇷',
+    ),
+    LanguageModel(
+      name: 'Arabic',
+      displayName: 'العربية',
+      code: 'ar',
+      flag: '🇸🇦',
+    ),
+    LanguageModel(
+      name: 'Portuguese',
+      displayName: 'Português',
+      code: 'pt',
+      flag: '🇵🇹',
+    ),
+    LanguageModel(
+      name: 'Russian',
+      displayName: 'Русский',
+      code: 'ru',
+      flag: '🇷🇺',
+    ),
+    LanguageModel(
+      name: 'Bengali',
+      displayName: 'বাংলা',
+      code: 'bn',
+      flag: '🇧🇩',
+    ),
+    LanguageModel(
+      name: 'Turkish',
+      displayName: 'Türkçe',
+      code: 'tr',
+      flag: '🇹🇷',
+    ),
+    LanguageModel(
+      name: 'Italian',
+      displayName: 'Italiano',
+      code: 'it',
+      flag: '🇮🇹',
+    ),
     LanguageModel(name: 'Korean', displayName: '한국어', code: 'ko', flag: '🇰🇷'),
-    LanguageModel(name: 'Vietnamese', displayName: 'Tiếng Việt', code: 'vi', flag: '🇻🇳'),
+    LanguageModel(
+      name: 'Vietnamese',
+      displayName: 'Tiếng Việt',
+      code: 'vi',
+      flag: '🇻🇳',
+    ),
     LanguageModel(name: 'Thai', displayName: 'ไทย', code: 'th', flag: '🇹🇭'),
-    LanguageModel(name: 'Dutch', displayName: 'Nederlands', code: 'nl', flag: '🇳🇱'),
-    LanguageModel(name: 'Polish', displayName: 'Polski', code: 'pl', flag: '🇵🇱'),
-    LanguageModel(name: 'Malay/Indonesian', displayName: 'Bahasa Melayu / Bahasa Indonesia', code: 'ms', flag: '🇮🇩'),
-    LanguageModel(name: 'Ukrainian', displayName: 'Українська', code: 'uk', flag: '🇺🇦'),
+    LanguageModel(
+      name: 'Dutch',
+      displayName: 'Nederlands',
+      code: 'nl',
+      flag: '🇳🇱',
+    ),
+    LanguageModel(
+      name: 'Polish',
+      displayName: 'Polski',
+      code: 'pl',
+      flag: '🇵🇱',
+    ),
+    LanguageModel(
+      name: 'Malay/Indonesian',
+      displayName: 'Bahasa Melayu / Bahasa Indonesia',
+      code: 'ms',
+      flag: '🇮🇩',
+    ),
+    LanguageModel(
+      name: 'Ukrainian',
+      displayName: 'Українська',
+      code: 'uk',
+      flag: '🇺🇦',
+    ),
   ];
 
   @override
@@ -49,6 +152,19 @@ class LanguageController extends GetxController {
     super.onInit();
     _loadCurrentLanguage();
     _loadChatLanguage();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    await _profileService.refreshProfile();
+    print(
+      "_profileService.globalProfileModel?.profile:- ${_profileService.globalProfileModel?.profile?.id}",
+    );
+    isAutoTranslateEnabled.value =
+        _profileService.globalProfileModel?.profile?.autoChatLanguage ?? false;
+    print(
+      "_profileService.globalProfileModel?.profile autoChatLanguage:- ${_profileService.globalProfileModel?.profile?.autoChatLanguage}",
+    );
   }
 
   void _loadCurrentLanguage() {
@@ -61,7 +177,7 @@ class LanguageController extends GetxController {
     String selectedChatLanguageCode = getChatSelectedLanguage();
 
     languages.forEach((lang) {
-      if(selectedChatLanguageCode == lang.code) {
+      if (selectedChatLanguageCode == lang.code) {
         chatLang = lang;
       }
     });
@@ -72,12 +188,16 @@ class LanguageController extends GetxController {
   List<LanguageModel> get filteredLanguages =>
       searchQuery.value.isEmpty
           ? languages
-          : languages.where((lang) => lang.name.toLowerCase().contains(searchQuery.value.toLowerCase())).toList();
+          : languages
+          .where(
+            (lang) => lang.name.toLowerCase().contains(
+          searchQuery.value.toLowerCase(),
+        ),
+      )
+          .toList();
 
-  void selectLanguage(LanguageModel lang) {
+  Future<void> selectLanguage(LanguageModel lang) async {
     selectedLanguageCode.value = lang.name;
-    // Trigger UI update
-    update();
   }
 
   void selectChatLanguage(LanguageModel lang) {
@@ -100,13 +220,13 @@ class LanguageController extends GetxController {
       final userService = locator<UserService>();
       userService.updateSelectedLanguage(selectedLanguageCode.value);
 
-      AppLogger.info('Language saved successfully: ${selectedLanguageCode.value}');
+      AppLogger.info(
+        'Language saved successfully: ${selectedLanguageCode.value}',
+      );
 
-      // Show success message
-      Fluttertoast.showToast(msg: 'Language changed to ${selectedLanguageCode.value}. App will restart...');
-
-
-      // Restart the manager
+      // // Show success message
+      // Fluttertoast.showToast(msg: 'Language changed to ${selectedLanguageCode.value}. App will restart...');
+      //
       Restart.restartApp();
     } catch (e) {
       AppLogger.error('Error saving language: $e');
@@ -120,7 +240,6 @@ class LanguageController extends GetxController {
 
   final _dialogService = locator<DialogService>();
   final _profileService = locator<ProfileService>();
-
 
   Future<void> saveChatLanguage() async {
     final response = await _dialogService.showCustomDialog(
@@ -136,12 +255,41 @@ class LanguageController extends GetxController {
             Get.back();
           } catch (e) {
             AppLogger.error('Error sending feedback: $e');
-            Fluttertoast.showToast(msg: 'Error selecting Language: $e', backgroundColor: Colors.red);
+            Fluttertoast.showToast(
+              msg: 'Error selecting Language: $e',
+              backgroundColor: Colors.red,
+            );
             return false;
           }
         },
       ),
     );
+  }
+
+  Future<void> autoTranslateChatLanguage() async {
+    final response = await _dialogService.showCustomDialog(
+      variant: DialogType.loader,
+      data: LoaderDialogAttributes(
+        task: () async {
+          try {
+            final updateData = {
+              'AutoChatLanguage': isAutoTranslateEnabled.value,
+            };
+            await _profileService.updateProfileData(updateData);
+            // saveSelectedChatLanguage(selectedChatLanguage.value.code);
+            Get.back();
+          } catch (e) {
+            AppLogger.error('Error sending feedback: $e');
+            Fluttertoast.showToast(
+              msg: 'Error selecting Language: $e',
+              backgroundColor: Colors.red,
+            );
+            return false;
+          }
+        },
+      ),
+    );
+    print("AutoChatLanguage:-${response}");
   }
 }
 
@@ -151,5 +299,10 @@ class LanguageModel {
   final String flag;
   final String displayName;
 
-  LanguageModel({required this.name, required this.code, required this.flag, required this.displayName});
+  LanguageModel({
+    required this.name,
+    required this.code,
+    required this.flag,
+    required this.displayName,
+  });
 }

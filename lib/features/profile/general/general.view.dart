@@ -114,60 +114,65 @@ class GeneralSettingView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 25),
+                    // Obx(() =>
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySuperLight.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(13),
+                        border: Border.all(
+                          color: AppColors.textGrey.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              LanguageService.get(
+                                'auto_translate_messages_received_in_chat',
+                              ),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.black,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          Obx(() => Switch(
+                            value: controller.isAutoTranslateEnabled.value,
+                            onChanged: (value) async {
 
-                    // Container(
-                    //   decoration: BoxDecoration(
-                    //     color: AppColors.primarySuperLight.withValues(alpha: 0.04),
-                    //     borderRadius: BorderRadius.circular(13),
-                    //     border: Border.all(
-                    //       color: AppColors.textGrey.withValues(alpha: 0.1),
-                    //     ),
-                    //   ),
-                    //   padding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                    //   child: Row(
-                    //     children: [
-                    //       Expanded(
-                    //         child: Text(
-                    //           LanguageService.get(
-                    //             'auto_translate_messages_received_in_chat',
-                    //           ),
-                    //           style: TextStyle(
-                    //             fontWeight: FontWeight.w500,
-                    //             color: AppColors.black,
-                    //             fontSize: 12,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //       Switch(
-                    //         value: true,
-                    //         onChanged: (value) {},
-                    //         activeColor: AppColors.primary,
-                    //         inactiveThumbColor: AppColors.gray,
-                    //         inactiveTrackColor: AppColors.violetBlue.withValues(
-                    //           alpha: 0.1,
-                    //         ),
-                    //         trackOutlineColor: WidgetStateProperty.all(
-                    //           Colors.transparent,
-                    //         ),
-                    //         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    //         splashRadius: 0,
-                    //       ),
-                    //     ],
-                    //   ),
+
+                              controller.isAutoTranslateEnabled.value = value;
+
+                              await controller.autoTranslateChatLanguage();
+                            },
+                            activeColor: AppColors.primary,
+                            inactiveThumbColor: AppColors.gray,
+                            inactiveTrackColor:
+                            AppColors.violetBlue.withValues(alpha: 0.1),
+                            trackOutlineColor:
+                            WidgetStateProperty.all(Colors.transparent),
+                            materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                            splashRadius: 0,
+                          ))
+                        ],
+                      ),
+                    ),
                     // ),
-                    //
-                    // const SizedBox(height: 10),
-                    //
-                    // Text(
-                    //   LanguageService.get(
-                    //     'after_it_is_enabled_text_in_chats_will_be_translated_into_the_selected_language',
-                    //   ),
-                    //   style: TextStyle(
-                    //     fontWeight: FontWeight.w400,
-                    //     color: AppColors.textGrey,
-                    //     fontSize: 10,
-                    //   ),
-                    // ),
+                    const SizedBox(height: 10),
+
+                    Text(
+                      LanguageService.get(
+                        'after_it_is_enabled_text_in_chats_will_be_translated_into_the_selected_language',
+                      ),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textGrey,
+                        fontSize: 10,
+                      ),
+                    ),
                   ],
                 ),
               );
