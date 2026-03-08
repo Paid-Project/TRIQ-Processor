@@ -9,11 +9,11 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-}
+//val keystoreProperties = Properties()
+//val keystorePropertiesFile = rootProject.file("key.properties")
+//if (keystorePropertiesFile.exists()) {
+//    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+//}
 
 android {
     namespace = "com.triqinnovationsProcessor.app"
@@ -39,24 +39,30 @@ android {
         multiDexEnabled = true
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as? String ?: ""
-            keyAlias = keystoreProperties["keyAlias"] as? String ?: ""
-            keyPassword = keystoreProperties["keyPassword"] as? String ?: ""
-        }
-    }
+//    signingConfigs {
+//        create("release") {
+//            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+//            storePassword = keystoreProperties["storePassword"] as? String ?: ""
+//            keyAlias = keystoreProperties["keyAlias"] as? String ?: ""
+//            keyPassword = keystoreProperties["keyPassword"] as? String ?: ""
+//        }
+//    }
 
     buildTypes {
+//        release {
+//            isMinifyEnabled = true
+//            isShrinkResources = true
+//            signingConfig = signingConfigs.getByName("release")
+//        }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+
+            isMinifyEnabled = false
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("debug")
         }
 
         debug {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

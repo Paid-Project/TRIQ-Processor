@@ -66,6 +66,13 @@ class OrganizationHomeViewModel extends ReactiveViewModel {
     loadNotificationCount();
   }
 
+
+  Future<void> refreshProfile()async{
+    fetchProfileData();
+    // fetchDashboardData();
+    initNotifications();
+    loadNotificationCount();
+  }
   initNotifications() async {
     final oldToken = getUser().fcmToken;
     final notificationService = NotificationService();

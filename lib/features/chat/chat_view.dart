@@ -1908,89 +1908,8 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
             controller: model.messageController,
             placeholder: 'Write Message',
             onTapOutside: (event) {},
-            // onFieldSubmitted: (value) => model.sendMessage(),
-            prefixIcon: PopupMenuButton<String>(
-              onSelected: (value) => _handleAttachmentAction(value, model),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.v23),
-                side: BorderSide(
-                  color: AppColors.textGrey.withValues(alpha: 0.1),
-                ),
-              ),
-              elevation: 0,
-              position: PopupMenuPosition.over,
-              // offset: Offset(0, -370),
-              offset: Offset(0, -180),
-              menuPadding: EdgeInsets.zero,
-              color: AppColors.white,
-              itemBuilder:
-                  (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'file',
-                  height: 34,
-                  child: _buildAttachmentMenuItem(
-                    icon: AppImages.file,
-                    label: 'File',
-                    color: AppColors.violetBlue,
-                    onTap: () {},
-                  ),
-                ),
-                PopupMenuDivider(height: 0.5),
-                PopupMenuItem<String>(
-                  value: 'gallery',
-                  height: 34,
-                  child: _buildAttachmentMenuItem(
-                    icon: AppImages.gallery,
-                    label: 'Album',
-                    color: AppColors.bluebackground,
-                    onTap: () {},
-                  ),
-                ),
-                PopupMenuDivider(height: 0.5),
-                PopupMenuItem<String>(
-                  value: 'camera',
-                  height: 34,
-                  child: _buildAttachmentMenuItem(
-                    icon: AppImages.camera,
-                    label: 'Camera',
-                    color: AppColors.greenbackground,
-                    onTap: () {},
-                  ),
-                ),
-                // PopupMenuDivider(height: 0.5),
-                // PopupMenuItem<String>(
-                //   value: 'location',
-                //   height: 34,
-                //   child: _buildAttachmentMenuItem(
-                //     icon: AppImages.location,
-                //     label: 'Location',
-                //     color: AppColors.redbackground,
-                //     onTap: () {},
-                //   ),
-                // ),
-                // PopupMenuDivider(height: 0.5),
-                // PopupMenuItem<String>(
-                //   value: 'video_call',
-                //   height: 34,
-                //   child: _buildAttachmentMenuItem(
-                //     icon: AppImages.video,
-                //     label: 'Video Call',
-                //     color: AppColors.backgroundlightgreen,
-                //     onTap: () {},
-                //   ),
-                // ),
-                // PopupMenuDivider(height: 0.5),
-                // PopupMenuItem<String>(
-                //   value: 'voice_call',
-                //   height: 34,
-                //   child: _buildAttachmentMenuItem(
-                //     icon: AppImages.phone,
-                //     label: 'Voice Call',
-                //     color: AppColors.colorFFB141,
-                //     onTap: () {},
-                //   ),
-                // ),
-              ],
+            prefixIcon: GestureDetector(
+              onTap: model.toggleAttachment,
               child: Container(
                 margin: EdgeInsets.all(8),
                 padding: EdgeInsets.all(5),
@@ -2004,8 +1923,106 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   height: 20,
                   color: AppColors.primaryDark,
                 ),
-              ),
+              ) ,
             ),
+            // // onFieldSubmitted: (value) => model.sendMessage(),
+            // prefixIcon: PopupMenuButton<String>(
+            //   onSelected: (value) => _handleAttachmentAction(value, model),
+            //   shape: RoundedRectangleBorder(
+            //     borderRadius: BorderRadius.circular(AppSizes.v23),
+            //     side: BorderSide(
+            //       color: AppColors.textGrey.withValues(alpha: 0.1),
+            //     ),
+            //   ),
+            //   elevation: 0,
+            //   position: PopupMenuPosition.over,
+            //   // offset: Offset(0, -370),
+            //   offset: Offset(0, -180),
+            //   menuPadding: EdgeInsets.zero,
+            //   color: AppColors.white,
+            //   itemBuilder:
+            //       (BuildContext context) => [
+            //     PopupMenuItem<String>(
+            //       value: 'file',
+            //       height: 34,
+            //       child: _buildAttachmentMenuItem(
+            //         icon: AppImages.file,
+            //         label: 'File',
+            //         color: AppColors.violetBlue,
+            //         onTap: () {},
+            //       ),
+            //     ),
+            //     PopupMenuDivider(height: 0.5),
+            //     PopupMenuItem<String>(
+            //       value: 'gallery',
+            //       height: 34,
+            //       child: _buildAttachmentMenuItem(
+            //         icon: AppImages.gallery,
+            //         label: 'Album',
+            //         color: AppColors.bluebackground,
+            //         onTap: () {},
+            //       ),
+            //     ),
+            //     PopupMenuDivider(height: 0.5),
+            //     PopupMenuItem<String>(
+            //       value: 'camera',
+            //       height: 34,
+            //       child: _buildAttachmentMenuItem(
+            //         icon: AppImages.camera,
+            //         label: 'Camera',
+            //         color: AppColors.greenbackground,
+            //         onTap: () {},
+            //       ),
+            //     ),
+            //     // PopupMenuDivider(height: 0.5),
+            //     // PopupMenuItem<String>(
+            //     //   value: 'location',
+            //     //   height: 34,
+            //     //   child: _buildAttachmentMenuItem(
+            //     //     icon: AppImages.location,
+            //     //     label: 'Location',
+            //     //     color: AppColors.redbackground,
+            //     //     onTap: () {},
+            //     //   ),
+            //     // ),
+            //     // PopupMenuDivider(height: 0.5),
+            //     // PopupMenuItem<String>(
+            //     //   value: 'video_call',
+            //     //   height: 34,
+            //     //   child: _buildAttachmentMenuItem(
+            //     //     icon: AppImages.video,
+            //     //     label: 'Video Call',
+            //     //     color: AppColors.backgroundlightgreen,
+            //     //     onTap: () {},
+            //     //   ),
+            //     // ),
+            //     // PopupMenuDivider(height: 0.5),
+            //     // PopupMenuItem<String>(
+            //     //   value: 'voice_call',
+            //     //   height: 34,
+            //     //   child: _buildAttachmentMenuItem(
+            //     //     icon: AppImages.phone,
+            //     //     label: 'Voice Call',
+            //     //     color: AppColors.colorFFB141,
+            //     //     onTap: () {},
+            //     //   ),
+            //     // ),
+            //   ],
+            //   child: Container(
+            //     margin: EdgeInsets.all(8),
+            //     padding: EdgeInsets.all(5),
+            //     decoration: BoxDecoration(
+            //       color: AppColors.lightGrey.withValues(alpha: 0.2),
+            //       borderRadius: BorderRadius.circular(10),
+            //     ),
+            //     child: Image.asset(
+            //       AppImages.attachment,
+            //       width: 20,
+            //       height: 20,
+            //       color: AppColors.primaryDark,
+            //     ),
+            //   ),
+            // ),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -2148,247 +2165,268 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
         return Scaffold(
           appBar: _buildAppBar(context, model),
           backgroundColor: AppColors.white,
-          body: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+          body: Stack(
             children: [
-
-              PendingStatusCard(
-                title: widget.updatedAt ?? "N/A",
-                ticketNumber: widget.contactNumber,
-                status: widget.ticketStatus,
-                onToggle: (isExpanded) {
-                  setState(() {
-                    model.isTicketDetailsExpanded = isExpanded;
-                  });
-                },
-              ),
-              if (model.isTicketDetailsExpanded)
-                Expanded(
-                  child: TicketDetailsView(
-                    ticketId: widget.ticketId,
-                    isEmbedded: true,
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  PendingStatusCard(
+                    title: widget.updatedAt ?? "N/A",
+                    ticketNumber: widget.contactNumber,
+                    status: widget.ticketStatus,
+                    child: TicketDetailsView(
+                      ticketId: widget.ticketId,
+                      isEmbedded: true,
+                    ),
                   ),
-                )
-              else ...[
-                // Animated search bar
-                SlideTransition(
-                  position: _slideAnimation,
-                  child:
-                  model.isSearchMode
-                      ? _buildSearchBar(model)
-                      : const SizedBox.shrink(),
-                ),
-                // Messages list
-                Flexible(
-                  child:
-                  model.isLoading
-                      ? ListView.builder(
-                    controller: model.scrollController,
-                    padding: EdgeInsets.only(top: AppSizes.h8),
-                    itemCount: 6,
-                    itemBuilder: (context, index) {
-                      return MessageBubbleShimmer(
-                        isSentByMe: index % 2 == 0,
-                      );
-                    },
-                  )
-                      : NotificationListener<ScrollNotification>(
-                    onNotification: (ScrollNotification scrollInfo) {
-                      if (scrollInfo is ScrollUpdateNotification) {
-                        // Check if user scrolled to the bottom (for loading more messages)
-                        // Since list is reversed, bottom is where older messages are
-                        if (scrollInfo.metrics.pixels >=
-                            scrollInfo.metrics.maxScrollExtent -
-                                100 &&
-                            model.hasMoreMessages &&
-                            !model.isLoadingMore) {
-                          model.loadMoreMessages();
-                        }
-                      }
-                      return false;
-                    },
-                    child: ListView.builder(
-                      controller: model.scrollController,
-                      reverse: true,
-                      padding: EdgeInsets.only(
-                        top: AppSizes.h10,
-                        bottom: 20,
-                      ),
-                      itemCount:
+                  // PendingStatusCard(
+                  //   title: widget.updatedAt ?? "N/A",
+                  //   ticketNumber: widget.contactNumber,
+                  //   status: widget.ticketStatus,
+                  //   onToggle: (isExpanded) {
+                  //     setState(() {
+                  //       model.isTicketDetailsExpanded = isExpanded;
+                  //     });
+                  //   },
+                  // ),
+                  if (model.isTicketDetailsExpanded)
+                    SizedBox(height: 10,)
+                  //   Expanded(
+                  //     child: TicketDetailsView(
+                  //       ticketId: widget.ticketId,
+                  //       isEmbedded: true,
+                  //     ),
+                  //   )
+                  else ...[
+                    // Animated search bar
+                    SlideTransition(
+                      position: _slideAnimation,
+                      child:
                       model.isSearchMode
-                          ? model.filteredMessages.length
-                          : model.messages.length +
-                          1 +
-                          (model.isLoadingMore ? 1 : 0),
-                      // +1 for loading indicator
-                      itemBuilder: (context, index) {
-                        // Show loading indicator at the bottom (visually top) when loading more
-                        if (!model.isSearchMode &&
-                            model.isLoadingMore &&
-                            index == 0) {
-                          return _buildLoadingIndicator();
-                        }
-
-                        // Adjust index for loading indicator
-                        final adjustedIndex =
-                        model.isLoadingMore ? index - 1 : index;
-
-                        if (!model.isSearchMode &&
-                            adjustedIndex == 0) {
-                          return SizedBox();
-                        }
-
-                        final message =
-                        model.isSearchMode
-                            ? model
-                            .filteredMessages[adjustedIndex]
-                            : model.messages[adjustedIndex - 1];
-                        return _buildMessageBubble(message, model);
-                      },
+                          ? _buildSearchBar(model)
+                          : const SizedBox.shrink(),
                     ),
-                  ),
-                ),
-              ],
-              // Image preview
-              _buildImagePreview(model),
-              // Reply preview bar (WhatsApp style)
-              if (model.replyMessage != null)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.lightGrey.withValues(alpha: 0.3),
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.primary.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 3,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryDark,
-                          borderRadius: BorderRadius.circular(2),
+                    // Messages list
+                    Flexible(
+                      child:
+                      model.isLoading
+                          ? ListView.builder(
+                        controller: model.scrollController,
+                        padding: EdgeInsets.only(top: AppSizes.h8),
+                        itemCount: 6,
+                        itemBuilder: (context, index) {
+                          return MessageBubbleShimmer(
+                            isSentByMe: index % 2 == 0,
+                          );
+                        },
+                      )
+                          : NotificationListener<ScrollNotification>(
+                        onNotification: (ScrollNotification scrollInfo) {
+                          if (scrollInfo is ScrollUpdateNotification) {
+                            // Check if user scrolled to the bottom (for loading more messages)
+                            // Since list is reversed, bottom is where older messages are
+                            if (scrollInfo.metrics.pixels >=
+                                scrollInfo.metrics.maxScrollExtent -
+                                    100 &&
+                                model.hasMoreMessages &&
+                                !model.isLoadingMore) {
+                              model.loadMoreMessages();
+                            }
+                          }
+                          return false;
+                        },
+                        child: ListView.builder(
+                          controller: model.scrollController,
+                          reverse: true,
+                          padding: EdgeInsets.only(
+                            top: AppSizes.h10,
+                            bottom: 20,
+                          ),
+                          itemCount:
+                          model.isSearchMode
+                              ? model.filteredMessages.length
+                              : model.messages.length +
+                              1 +
+                              (model.isLoadingMore ? 1 : 0),
+                          // +1 for loading indicator
+                          itemBuilder: (context, index) {
+                            // Show loading indicator at the bottom (visually top) when loading more
+                            if (!model.isSearchMode &&
+                                model.isLoadingMore &&
+                                index == 0) {
+                              return _buildLoadingIndicator();
+                            }
+
+                            // Adjust index for loading indicator
+                            final adjustedIndex =
+                            model.isLoadingMore ? index - 1 : index;
+
+                            if (!model.isSearchMode &&
+                                adjustedIndex == 0) {
+                              return SizedBox();
+                            }
+
+                            final message =
+                            model.isSearchMode
+                                ? model
+                                .filteredMessages[adjustedIndex]
+                                : model.messages[adjustedIndex - 1];
+                            return _buildMessageBubble(message, model);
+                          },
                         ),
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              model.replyMessage!.sender.fullName,
+                    ),
+                  ],
+                  // Image preview
+                  _buildImagePreview(model),
+                  // Reply preview bar (WhatsApp style)
+                  if (model.replyMessage != null)
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightGrey.withValues(alpha: 0.3),
+                        border: Border(
+                          top: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 3,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryDark,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  model.replyMessage!.sender.fullName,
+                                  style: TextStyle(
+                                    color: AppColors.primaryDark,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  model.replyMessage!.content,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => model.cancelReply(),
+                            child: Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Edit mode banner
+                  if (model.isEditMode)
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        border: Border(
+                          top: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_rounded,
+                            size: 16,
+                            color: AppColors.primaryDark,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Editing message',
                               style: TextStyle(
                                 color: AppColors.primaryDark,
                                 fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 2),
-                            Text(
-                              model.replyMessage!.content,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => model.cancelReply(),
-                        child: Padding(
-                          padding: EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.close,
-                            size: 18,
-                            color: AppColors.textGrey,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Edit mode banner
-              if (model.isEditMode)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.primary.withValues(alpha: 0.2),
-                        width: 1,
+                          GestureDetector(
+                            onTap: () => model.cancelEdit(),
+                            child: Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.edit_rounded,
-                        size: 16,
-                        color: AppColors.primaryDark,
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Editing message',
-                          style: TextStyle(
-                            color: AppColors.primaryDark,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => model.cancelEdit(),
-                        child: Padding(
-                          padding: EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.close,
-                            size: 18,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              // Message input or status message
-              if (!model.isTicketDetailsExpanded)
-              ValueListenableBuilder<String>(
-                valueListenable: model.ticketDetailsViewModel.currentOpenTicketStatus,
+                  // Message input or status message
+                  if (!model.isTicketDetailsExpanded)
+                  ValueListenableBuilder<String>(
+                    valueListenable: model.ticketDetailsViewModel.currentOpenTicketStatus,
 
-                builder: (context, status, _) {
+                    builder: (context, status, _) {
 
-                  String status_new=(status==''?(widget.ticketStatus??''):model.ticketDetailsViewModel.currentOpenTicketStatus.value).toLowerCase();
+                      String status_new=(status==''?(widget.ticketStatus??''):model.ticketDetailsViewModel.currentOpenTicketStatus.value).toLowerCase();
 
-                  AppLogger.info('''
+                      AppLogger.info('''
                     currentOpenTicketStatus = ${model.ticketDetailsViewModel.currentOpenTicketStatus.value}\n
                     ticketStatus = ${widget.ticketStatus}\n
                     status = $status_new\n
                     ''');
-                  if (status_new == "resolved") {
-                    return SizedBox();
-                  }
-                  else if (status_new == "on hold") {
-                    return _buildTicketStatusMessage("Ticket is on Hold", AppColors.error);
-                  }
-                  else if (status_new == "waiting for accept") {
-                    return _buildTicketStatusMessage("Ticket Waiting for Accept", AppColors.warning);
-                  }
-                  else {
-                    return _buildMessageInput(model);
-                  }
-                },
-              )
+                      if (status_new == "resolved") {
+                        return SizedBox();
+                      }
+                      else if (status_new == "on hold") {
+                        return _buildTicketStatusMessage("Ticket is on Hold", AppColors.error);
+                      }
+                      else if (status_new == "waiting for accept") {
+                        return _buildTicketStatusMessage("Ticket Waiting for Accept", AppColors.warning);
+                      }
+                      else {
+                        return _buildMessageInput(model);
+                      }
+                    },
+                  )
+                ],
+              ),
+              if (model.showAttachment)
+                Positioned(
+                  bottom: 80,
+                  left: 16,
+                  right: 16,
+                  child: AttachmentSheet(model: model),
+                ),
+
             ],
           ),
         );
@@ -2474,6 +2512,7 @@ class PendingStatusCard extends StatefulWidget {
   final String title;
   final String? ticketNumber;
   final String? status;
+  final Widget? child;
   final ValueChanged<bool>? onToggle;
 
   const PendingStatusCard({
@@ -2481,6 +2520,7 @@ class PendingStatusCard extends StatefulWidget {
     required this.title,
     this.ticketNumber,
     this.status,
+    this.child,
     this.onToggle,
   });
 
@@ -2502,8 +2542,15 @@ class _PendingStatusCardState extends State<PendingStatusCard>
         color:
         _isResolved
             ? AppColors.success.withValues(alpha: 0.08)
-            : AppColors.whisperGray,
+            : AppColors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 10,
+            spreadRadius: 2,
+          )
+        ],
       ),
       child: Column(
         children: [
@@ -2570,6 +2617,193 @@ class _PendingStatusCardState extends State<PendingStatusCard>
               ),
             ),
           ),
+          if (_isExpanded && widget.child != null)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: widget.child!,
+            ),
+        ],
+      ),
+    );
+  }
+}
+class AttachmentSheet extends StatelessWidget {
+  final ChatViewModel model;
+
+  const AttachmentSheet({super.key, required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(bottom: AppSizes.f10),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 10,
+          )
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28),bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+
+          /// drag handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade400,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+
+          /// GRID
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            childAspectRatio: 0.8,
+            // childAspectRatio: 0.65,
+            // mainAxisSpacing: 12,
+            // crossAxisSpacing: 12,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+
+              _buildAttachmentMenuItem(
+                icon: AppImages.file,
+                label: 'File',
+                color: AppColors.violetBlue,
+                onTap: () {
+                  model.toggleAttachmentSelect(false);
+                  // Navigator.pop(context);
+                  model.pickMultipleMediaFromAlbum();
+                },
+              ),
+
+              _buildAttachmentMenuItem(
+                icon: AppImages.gallery,
+                label: 'Album',
+                color: AppColors.bluebackground,
+                onTap: () {
+                  model.toggleAttachmentSelect(false);
+                  // Navigator.pop(context);
+                  model.pickMultipleMediaFromAlbum();
+                },
+              ),
+
+              _buildAttachmentMenuItem(
+                icon: AppImages.camera,
+                label: 'Camera',
+                color: AppColors.greenbackground,
+                onTap: () {
+
+                  model.toggleAttachmentSelect(false);
+                  model.pickImageFromCamera();
+                },
+              ),
+
+              _buildAttachmentMenuItem(
+                icon: AppImages.location,
+                label: 'Location',
+                color: AppColors.redbackground,
+                onTap: () {},
+              ),
+
+              _buildAttachmentMenuItem(
+                icon: AppImages.video,
+                label: 'Video Call',
+                color: AppColors.backgroundlightgreen,
+                onTap: () {},
+              ),
+
+              _buildAttachmentMenuItem(
+                icon: AppImages.phone,
+                label: 'Voice Call',
+                color: AppColors.colorFFB141,
+                onTap: () {},
+              ),
+
+              _buildAttachmentMenuItem(
+                icon: AppImages.microphone,
+                label: "Audio",
+                color: Colors.deepPurple,
+                onTap: () {},
+              ),
+            ],
+          ),
+
+          // const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+  Widget _buildAttachmentMenuItem({
+    required String icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Image.asset(
+              icon,
+              width: 20,
+              height: 20,
+              color: color,
+            ),
+          ),
+
+          SizedBox(height: 4),
+
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          )
+        ],
+      ),
+    );
+  }
+  Widget _attachmentItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 25),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(label, style: const TextStyle(fontSize: 10))
         ],
       ),
     );

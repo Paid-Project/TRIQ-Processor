@@ -39,7 +39,10 @@ class _OrganizationHomeViewState extends State<OrganizationHomeView> {
       onViewModelReady: (OrganizationHomeViewModel model) => model.init(),
       disposeViewModel: false,
       builder: (BuildContext context, OrganizationHomeViewModel model, Widget? child) {
-        return Scaffold(
+        return
+          RefreshIndicator(
+              onRefresh: model.refreshProfile,
+              child: Scaffold(
           backgroundColor: AppColors.transparent,
           appBar: _buildHeader(context, model),
           body: Container(
@@ -72,7 +75,7 @@ class _OrganizationHomeViewState extends State<OrganizationHomeView> {
               ),
             ),
           ),
-        );
+        ));
       },
     );
   }
@@ -128,13 +131,12 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              greeting.toUpperCase(),
-                              style: TextStyle(color: AppColors.white.withValues(alpha: 0.9), fontSize: 12, fontWeight: FontWeight.w400),
-                            ),
-                          ],
+                        Text(
+                          greeting.toUpperCase(),
+                          style: TextStyle(color: AppColors.white.withValues(alpha: 0.9), fontSize: 12, fontWeight: FontWeight.w400),
+
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 4),
                         Row(
@@ -153,27 +155,27 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                     ),
                   ),
 
-                  // Spacer(),
+                  Spacer(),
                   // Unit selector
-                  // _buildDropdownFormField(
-                  //   context,
-                  //   value: selectedUnit,
-                  //   label: LanguageService.get('unit'),
-                  //   items: [
-                  //     {"value": "Unit 1", "display": "Unit 1"},
-                  //     {"value": "Unit 2", "display": "Unit 2"},
-                  //     {"value": "Unit 3", "display": "Unit 3"},
-                  //     {"value": "+ Add New", "display": LanguageService.get('add_new')},
-                  //   ],
-                  //   onChanged: (String? newValue) {
-                  //     if (newValue != null) {
-                  //       setState(() {
-                  //         selectedUnit = newValue;
-                  //       });
-                  //     }
-                  //   },
-                  //   validator: null,
-                  // ),
+                  _buildDropdownFormField(
+                    context,
+                    value: selectedUnit,
+                    label: LanguageService.get('unit'),
+                    items: [
+                      {"value": "Unit 1", "display": "Unit 1"},
+                      {"value": "Unit 2", "display": "Unit 2"},
+                      {"value": "Unit 3", "display": "Unit 3"},
+                      {"value": "+ Add New", "display": LanguageService.get('add_new')},
+                    ],
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedUnit = newValue;
+                        });
+                      }
+                    },
+                    validator: null,
+                  ),
 
                   SizedBox(width: 12),
 
@@ -309,20 +311,20 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
         route: Routes.machineSupplier,
       ),
       DashboardCardData(title: LanguageService.get('my_teams'), icon: AppImages.myTeam, color: AppColors.greenbackground, route: Routes.teams),
-      // DashboardCardData(
-      //   title: LanguageService.get('pi_invoice'),
-      //   icon: AppImages.piInvoice,
-      //   color: AppColors.darkGreenBack,
-      //   route: Routes.invoice,
-      //   isComingSoon: true,
-      // ),
-      // DashboardCardData(
-      //   title: LanguageService.get('glass_flow_system'),
-      //   icon: AppImages.glassFlowSystem,
-      //   color: AppColors.forestGreen,
-      //   route: Routes.glassFlowSystem,
-      //   isComingSoon: true,
-      // ),
+      DashboardCardData(
+        title: LanguageService.get('pi_invoice'),
+        icon: AppImages.piInvoice,
+        color: AppColors.darkGreenBack,
+        route: Routes.invoice,
+        isComingSoon: true,
+      ),
+      DashboardCardData(
+        title: LanguageService.get('glass_flow_system'),
+        icon: AppImages.glassFlowSystem,
+        color: AppColors.forestGreen,
+        route: Routes.glassFlowSystem,
+        isComingSoon: true,
+      ),
     ];
   }
 
@@ -362,30 +364,30 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
   List<DashboardCardData> _getSecondaryFeaturesForProcessor() {
     // Processor-specific secondary features: Analytics Dashboard, Machine Overview, Installation Tracker, Feedback Survey
     return [
-      // DashboardCardData(
-      //   title: LanguageService.get('analytics_dashboard'),
-      //   icon: AppImages.analyticsDashboard,
-      //   color: AppColors.amberOrange,
-      //   route: Routes.analytics,
-      // ),
+      DashboardCardData(
+        title: LanguageService.get('analytics_dashboard'),
+        icon: AppImages.analyticsDashboard,
+        color: AppColors.amberOrange,
+        route: Routes.analytics,
+      ),
       DashboardCardData(
         title: LanguageService.get('machine_overview'),
         icon: AppImages.machineRecords,
         color: AppColors.crimsonRed,
         route: Routes.machineOverview,
       ),
-      // DashboardCardData(
-      //   title: LanguageService.get('installation_tracker'),
-      //   icon: AppImages.installationTracker,
-      //   color: AppColors.indigoBlue,
-      //   route: Routes.installation,
-      // ),
-      // DashboardCardData(
-      //   title: LanguageService.get('feedback_survey'),
-      //   icon: AppImages.feedbackSurvey,
-      //   color: AppColors.oliveGreen,
-      //   route: Routes.feedbackSurvey,
-      // ),
+      DashboardCardData(
+        title: LanguageService.get('installation_tracker'),
+        icon: AppImages.installationTracker,
+        color: AppColors.indigoBlue,
+        route: Routes.installation,
+      ),
+      DashboardCardData(
+        title: LanguageService.get('feedback_survey'),
+        icon: AppImages.feedbackSurvey,
+        color: AppColors.oliveGreen,
+        route: Routes.feedbackSurvey,
+      ),
     ];
   }
 
@@ -661,57 +663,91 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
     }
   }
 
+
   Widget _buildDropdownFormField(
-    BuildContext context, {
-    required String? value,
-    required String label,
-    required List<Map<String, String>> items,
-    required Function(String?) onChanged,
-  }) {
+      BuildContext context, {
+        required String? value,
+        required String label,
+        required List<Map<String, String>> items,
+        required Function(String?) onChanged,
+        String? Function(String?)? validator,
+      }) {
     return Container(
       padding: EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(8),
-        boxShadow: [BoxShadow(color: AppColors.black.withValues(alpha: 0.1), blurRadius: 4, offset: Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isDense: true,
           value: value,
-          hint: Text(label, style: TextStyle(color: AppColors.gray, fontSize: 10)),
+          hint: Text(
+            label,
+            style: TextStyle(color: AppColors.gray, fontSize: 10),
+          ),
           onChanged: onChanged,
-          style: TextStyle(color: AppColors.black, fontWeight: FontWeight.w600, fontSize: 10),
-          icon: Icon(Icons.keyboard_arrow_down, color: AppColors.black.withValues(alpha: 0.7), size: 16),
+          style: TextStyle(
+            color: AppColors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 10,
+          ),
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            color: AppColors.black.withValues(alpha: 0.7),
+            size: 16,
+          ),
           dropdownColor: AppColors.white,
           elevation: 0,
           borderRadius: BorderRadius.circular(8),
           items:
-              items.map<DropdownMenuItem<String>>((item) {
-                bool isAddNew = item['value'] == '+ Add New';
-                bool isSelected = item['value'] == value;
+          items.map<DropdownMenuItem<String>>((item) {
+            bool isAddNew = item['value'] == '+ Add New';
+            bool isSelected = item['value'] == value;
 
-                return DropdownMenuItem<String>(
-                  value: item['value'],
-                  child:
-                      isAddNew
-                          ? Row(
-                            children: [
-                              Icon(Icons.add, color: AppColors.primary, size: 16),
-                              SizedBox(width: 8),
-                              Text(item['display']!, style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 10)),
-                            ],
-                          )
-                          : Text(
-                            item['display']!,
-                            style: TextStyle(
-                              color: isSelected ? AppColors.black : AppColors.gray,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              fontSize: 10,
-                            ),
-                          ),
-                );
-              }).toList(),
+            return DropdownMenuItem<String>(
+              value: item['value'],
+              child:
+              isAddNew
+                  ? Row(
+                children: [
+                  Icon(
+                    Icons.add,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    item['display']!,
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              )
+                  : Text(
+                item['display']!,
+                style: TextStyle(
+                  color:
+                  isSelected ? AppColors.black : AppColors.gray,
+                  fontWeight:
+                  isSelected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  fontSize: 10,
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );

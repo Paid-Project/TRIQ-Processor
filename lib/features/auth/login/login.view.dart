@@ -46,7 +46,7 @@ class LoginView extends StatelessWidget {
                         _buildHeaderSection(context, model),
                         SizedBox(height: AppSizes.h5),
                         _buildMainContent(context, model),
-
+                        _buildSignUpPrompt(context, model),
                         // if (!model.showForgotPassword &&
                         //     !model.showOtpLogin &&
                         //     (model.loginMode == LoginMode.email || model.loginMode == LoginMode.phone) &&
@@ -57,7 +57,7 @@ class LoginView extends StatelessWidget {
                             (model.loginMode == LoginMode.email ||
                                 model.loginMode == LoginMode.phone) &&
                             !model.showOtpField) ...[
-                          _buildSignUpPrompt(context, model),
+                          // _buildSignUpPrompt(context, model),
                           _buildTermsAndConditionsCheckbox(context),
                           SizedBox(height: AppSizes.h20),
                         ],
@@ -948,6 +948,23 @@ class LoginView extends StatelessWidget {
                     },
                   ),
                 ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: model.toggleForgotPassword,
+                    child: Text(
+                      LanguageService.get('forgot_password'),
+                      style: GoogleFonts.lato(
+                        textStyle: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ] else ...[
                 _buildTextFormField(
                   context,
@@ -959,6 +976,24 @@ class LoginView extends StatelessWidget {
                           value?.isEmpty == true
                               ? LanguageService.get('please_enter_email')
                               : null,
+                ),
+                SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: model.toggleForgotPassword,
+                    child: Text(
+                      LanguageService.get('forgot_password'),
+                      style: GoogleFonts.lato(
+                        textStyle: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
               SizedBox(height: AppSizes.h20),

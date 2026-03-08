@@ -863,6 +863,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
               contactName: chatWithName,
               contactNumber: ticketNumber,
               contactInitials: contactInitials,
+              updatedAt: ticket.status?.toLowerCase() =="resolved"? ticket.createdAt?.formatReadableDate():ticket.createdAt?.formatReadableDate(),
               roomId: roomId,
               ticketStatus: ticketStatus,
               ticketId: ticket.id,

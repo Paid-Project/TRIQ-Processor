@@ -45,7 +45,9 @@ class TicketDetailsView extends StatelessWidget {
         if (isEmbedded) {
           return Column(
             children: [
-              Expanded(child: _buildBody(context, model)),
+              Container(
+                  height: MediaQuery.of(context).size.height * 0.45,
+                  child: _buildBody(context, model)),
               if (!model.isLoading) _buildBottomActionBar(context, model),
             ],
           );

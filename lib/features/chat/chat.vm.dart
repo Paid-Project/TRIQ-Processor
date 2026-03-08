@@ -88,7 +88,8 @@ class ChatViewModel extends ReactiveViewModel {
   final TicketsListViewModel ticketDetailsViewModel = locator<TicketsListViewModel>();
   // Messages list
   final List<ChatMessageModel> _messages = [];
-
+  bool _showAttachment  = false;
+  bool get showAttachment  => _showAttachment ;
   List<ChatMessageModel> get messages => _messages.toList();
 
   // Getters
@@ -142,7 +143,15 @@ class ChatViewModel extends ReactiveViewModel {
       "newMessage": "newMessage",
     },
   };
+  void toggleAttachment() {
+    _showAttachment = !_showAttachment;
+    notifyListeners();
+  }
 
+  void toggleAttachmentSelect(bool select) {
+    _showAttachment = select;
+    notifyListeners();
+  }
   /// Handle new incoming messages
   void _handleNewMessage(dynamic data) {
     print("🎯 _handleNewMessage called with: $data");

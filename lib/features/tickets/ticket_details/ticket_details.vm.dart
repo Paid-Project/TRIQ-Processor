@@ -85,7 +85,7 @@ print("-------hellohellooo--------------${result}");
     final roomId = _ticketDetails!.chatRoom?.id ?? '';
     final ticketStatus = _ticketDetails!.ticketDetails?.status ?? '';
     final userRole = _ticketDetails?.role;
-
+print("object1111111:- ${ ticketDetails?.ticketDetails?.status?.toLowerCase() }");
     // Navigate to chat screen and wait for result
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
@@ -93,9 +93,11 @@ print("-------hellohellooo--------------${result}");
             (context) => ChatView(
               contactName: chatWithName,
               contactNumber: ticketNumber,
+              updatedAt:  ticketDetails?.ticketDetails?.status?.toLowerCase() == "resolved" ?_ticketDetails!.ticketDetails!.createdAt?.formatReadableDate():_ticketDetails!.ticketDetails!.resolvedAt?.formatReadableDate(),
               contactInitials: contactInitials,
               roomId: roomId,
               ticketId: _ticketId,
+
               ticketStatus: ticketStatus,
               userRole: userRole,
             ),
