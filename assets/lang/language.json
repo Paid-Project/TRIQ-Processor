@@ -4045,6 +4045,28 @@
     "Malay/Indonesian": "Preferensi bahasa",
     "Ukrainian": "Мовні налаштування"
   },
+  "login_with_password": {
+    "English": "Login With Password",
+    "Hindi": "पासवर्ड से लॉगिन करें",
+    "Chinese (Simplified)": "使用密码登录",
+    "Spanish": "Iniciar sesión con contraseña",
+    "Japanese": "パスワードでログイン",
+    "German": "Mit Passwort anmelden",
+    "French": "Se connecter avec un mot de passe",
+    "Arabic": "تسجيل الدخول بكلمة المرور",
+    "Portuguese": "Entrar com senha",
+    "Russian": "Войти с паролем",
+    "Bengali": "পাসওয়ার্ড দিয়ে লগইন করুন",
+    "Turkish": "Şifre ile giriş yap",
+    "Italian": "Accedi con password",
+    "Korean": "비밀번호로 로그인",
+    "Vietnamese": "Đăng nhập bằng mật khẩu",
+    "Thai": "เข้าสู่ระบบด้วยรหัสผ่าน",
+    "Dutch": "Inloggen met wachtwoord",
+    "Polish": "Zaloguj się hasłem",
+    "Malay/Indonesian": "Masuk dengan kata sandi",
+    "Ukrainian": "Увійти з паролем"
+  },
   "update_profile": {
     "English": "Update Profile",
     "Hindi": "प्रोफाइल अपडेट करें",

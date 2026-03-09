@@ -949,11 +949,19 @@ class LoginView extends StatelessWidget {
                   ),
                 ),
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   child: GestureDetector(
-                    onTap: model.toggleForgotPassword,
+                    onTap:() {
+                      if (model.showForgotPassword) {
+                        model.toggleForgotPassword();
+                      } else if (model.showOtpLogin) {
+                        model.toggleOtpLogin();
+                      } else if (model.showOtpField) {
+                        model.setLoginMode(LoginMode.email);
+                      }
+                    },
                     child: Text(
-                      LanguageService.get('forgot_password'),
+                      LanguageService.get('login_with_password'),
                       style: GoogleFonts.lato(
                         textStyle: Theme.of(
                           context,
@@ -979,11 +987,19 @@ class LoginView extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   child: GestureDetector(
-                    onTap: model.toggleForgotPassword,
+                    onTap:() {
+                      if (model.showForgotPassword) {
+                        model.toggleForgotPassword();
+                      } else if (model.showOtpLogin) {
+                        model.toggleOtpLogin();
+                      } else if (model.showOtpField) {
+                        model.setLoginMode(LoginMode.email);
+                      }
+                    },
                     child: Text(
-                      LanguageService.get('forgot_password'),
+                      LanguageService.get('login_with_password'),
                       style: GoogleFonts.lato(
                         textStyle: Theme.of(
                           context,
