@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:manager/api_endpoints.dart';
@@ -12,24 +14,46 @@ import '../core/utils/failures.dart';
 class DashboardService {
   final apiService = locator<ApiService>();
 
-  ResultFuture<Dashboard> getDashboardData() async {
+  ResultFuture<DashboardModel> getDashboardData() async {
     try {
       final response = await apiService.get(url: ApiEndpoints.dashboard);
+      final dynamic rawResponse = response.data;
+      final Map<String, dynamic> responseData =
+      rawResponse is String
+          ? Map<String, dynamic>.from(jsonDecode(rawResponse) as Map)
+          : rawResponse is Map
+          ? Map<String, dynamic>.from(rawResponse)
+          : <String, dynamic>{};
 
-      if (response.data['success'] == true && response.data['data'] != null) {
-        // The actual data is nested under the 'data' key
-        return Right(Dashboard.fromJson(response.data['data']));
-      } else {
+      final dynamic nestedData = responseData['data'];
+      final Map<String, dynamic> dashboardData =
+      nestedData is Map
+          ? Map<String, dynamic>.from(nestedData)
+          : responseData;
+
+      final bool hasDashboardKeys =
+          dashboardData.containsKey('ticket') ||
+              dashboardData.containsKey('task') ||
+              dashboardData.containsKey('customer');
+
+      if (!hasDashboardKeys) {
+        AppLogger.error('Invalid dashboard response: $responseData');
         return Left(
-          Failure(response.data['message'] ?? 'Invalid response format'),
+          Failure(responseData['message'] ?? 'Invalid dashboard response'),
         );
       }
+
+      return Right(DashboardModel.fromJson(dashboardData));
     } catch (e) {
       AppLogger.error("Error getting dashboard data: $e");
       if (e is DioException) {
-        return Left(
-          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
-        );
+        final dynamic errorData = e.response?.data;
+        final String message =
+        errorData is Map
+            ? (Map<String, dynamic>.from(errorData)['message'] ??
+            'Something went wrong')
+            : 'Something went wrong';
+        return Left(Failure(message));
       }
       return Left(Failure('Failed to get dashboard data: ${e.toString()}'));
     }

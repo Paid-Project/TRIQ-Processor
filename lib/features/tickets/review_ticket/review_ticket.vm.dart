@@ -17,6 +17,10 @@ import 'package:manager/api_endpoints.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:http_parser/http_parser.dart' as http_parser;
 
+import '../../../routes/routes.dart';
+import '../../stage/stage.view.dart';
+import '../../../services/stage.service.dart';
+
 class ReviewTicketViewModel extends ReactiveViewModel {
   final TextEditingController couponController = TextEditingController();
   String? appliedCoupon;
@@ -24,7 +28,7 @@ class ReviewTicketViewModel extends ReactiveViewModel {
 
   final TicketService _ticketService = locator<TicketService>();
   final ApiService _apiService = locator<ApiService>();
-
+  final _stageService = locator<StageService>();
   ReviewTicketModel? _ticketData;
   String? _ticketId;
   PendingTicketData? _pendingTicketData;
@@ -42,6 +46,31 @@ class ReviewTicketViewModel extends ReactiveViewModel {
   bool get isPendingTicket => _pendingTicketData != null;
 
   String? get errorMessage => _errorMessage;
+
+  String get displayProblemDescription {
+    final problem = _ticketData?.ticketDetails?.problem?.trim();
+    if (problem != null && problem.isNotEmpty) {
+      return problem;
+    }
+
+    if (_pendingTicketData?.isFromSiteVisit == true) {
+      final pendingMaintenanceType = _pendingTicketData?.maintenanceType?.trim();
+      if (pendingMaintenanceType != null && pendingMaintenanceType.isNotEmpty) {
+        return pendingMaintenanceType;
+      }
+    }
+
+    final isOfflineTicket =
+        _ticketData?.ticketDetails?.type?.toLowerCase() == 'offline';
+    if (isOfflineTicket) {
+      final ticketType = _ticketData?.ticketDetails?.ticketType?.trim();
+      if (ticketType != null && ticketType.isNotEmpty) {
+        return ticketType;
+      }
+    }
+
+    return LanguageService.get('no_problem_description_available');
+  }
 
   void init({String? ticketId, PendingTicketData? pendingTicketData}) {
     _ticketId = ticketId;
@@ -202,8 +231,8 @@ class ReviewTicketViewModel extends ReactiveViewModel {
         url: ApiEndpoints.sendCreateNotification,
         data: data,
       );
-
-      if (response.statusCode == 201) {
+print("Ticket response.statusCod:- ${response.statusCode}");
+      if (response.statusCode == 201 ||response.statusCode == 200 ) {
         AppLogger.info('Ticket notification sent successfully');
 
         // Refresh the tickets list before going back
@@ -211,14 +240,29 @@ class ReviewTicketViewModel extends ReactiveViewModel {
         await ticketsListViewModel.loadTickets(forceRefresh: true);
         // Get.off(()=> TicketsListView());
         // Navigate back
-        _navigationService.back();
+        // _navigationService.back();
+        // _navigationService.clearStackAndShow(
+        //   Routes.ticketsSummary,
+        //   // arguments: ticketId,
+        // );
+        // _stageService.updateSelectedBottomNavIndex(1);
+
 
         Fluttertoast.showToast(
           msg: response.data["message"] ?? "Notification sent",
           backgroundColor: Colors.green,
         );
+
+        await _navigationService.clearStackAndShow(
+          Routes.stage,
+          arguments: StageViewAttributes(selectedBottomNavIndex: 1),
+        );
       } else {
         AppLogger.error('Failed to send notification: ${response.statusCode}');
+        // _navigationService.clearStackAndShow(
+        //   Routes.ticketsSummary,
+        //   // arguments: ticketId,
+        // );
         // Navigate back
         _navigationService.back();
         // Get.off(()=> TicketsListView());
@@ -495,3 +539,6 @@ class ReviewTicketViewModel extends ReactiveViewModel {
     super.dispose();
   }
 }
+
+
+

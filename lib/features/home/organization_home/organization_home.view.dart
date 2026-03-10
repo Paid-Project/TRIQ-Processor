@@ -475,6 +475,13 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
   }
 
   Widget _buildDashboardCard(BuildContext context, DashboardCardData card, int index, OrganizationHomeViewModel model) {
+    final bool showRedDot =
+        (card.route == Routes.tasks &&
+            (model.dashboard?.task.isNewLatestRecord ?? false)) ||
+            (card.route == Routes.ticketsList &&
+                (model.dashboard?.ticket.isNewLatestRecord ?? false)) ||
+            (card.route == Routes.myCustomers &&
+                (model.dashboard?.customer.isNewLatestRecord ?? false));
     return GestureDetector(
       onTap: () {
         // Navigate based on the card route
@@ -540,7 +547,27 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                     ),
                   ],
                 ),
-
+                if (showRedDot)
+                  Positioned(
+                    top: -13,
+                    right:-13,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: AppColors.warningRed,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.white, width: 1.5),
+                      ),
+                    )
+                        .animate(onPlay: (controller) => controller.repeat())
+                        .scale(
+                      duration: 900.ms,
+                      begin: Offset(1, 1),
+                      end: Offset(1.25, 1.25),
+                    )
+                        .fade(begin: 1, end: 0.6),
+                  ),
                 // Coming Soon badge
                 if (card.isComingSoon)
                   Positioned(

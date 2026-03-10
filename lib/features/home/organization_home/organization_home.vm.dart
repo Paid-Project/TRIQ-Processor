@@ -42,11 +42,11 @@ class OrganizationHomeViewModel extends ReactiveViewModel {
   final _profile = ReactiveValue<ProfileModel?>(null);
   ProfileModel? get profile => _profile.value;
 
-  final ReactiveValue<Dashboard?> _dashboard = ReactiveValue(null);
-  Dashboard? get dashboard => _dashboard.value;
+  final ReactiveValue<DashboardModel?> _dashboard = ReactiveValue(null);
+  DashboardModel? get dashboard => _dashboard.value;
 
   // Added to access dashboard stats
-  DashboardStats? get stats => _dashboard.value?.stats;
+  // DashboardStats? get stats => _dashboard.value?.stats;
 
   final ReactiveValue<bool> _isLoading = ReactiveValue(false);
   bool get isLoading => _isLoading.value;
@@ -59,7 +59,7 @@ class OrganizationHomeViewModel extends ReactiveViewModel {
 
     requestPermissions();
     fetchProfileData();
-    // fetchDashboardData();
+    fetchDashboardData();
     initNotifications();
     // loadProfileData();
 
@@ -69,7 +69,7 @@ class OrganizationHomeViewModel extends ReactiveViewModel {
 
   Future<void> refreshProfile()async{
     fetchProfileData();
-    // fetchDashboardData();
+    fetchDashboardData();
     initNotifications();
     loadNotificationCount();
   }
@@ -210,68 +210,68 @@ print("profile:-$profile");
   }
 
   // Convert DashboardCard to HomeCardModel for UI compatibility
-  HomeCardModel dashboardCardToHomeCard(DashboardCard card) {
-    // Get color value - API now returns an integer directly
-    int colorValue = 0xFF72B6B6; // Default color
-
-    if (card.colorCode is int) {
-      // API is now returning an integer directly
-      colorValue = card.colorCode as int;
-    } else if (card.colorCode is String) {
-      // For backward compatibility, handle string format if needed
-      try {
-        final colorCode =
-            (card.colorCode as String).startsWith('#')
-                ? (card.colorCode as String).substring(1)
-                : card.colorCode as String;
-
-        colorValue = int.parse(
-          colorCode.length == 6 ? '0xFF$colorCode' : '0x$colorCode',
-          radix: 16,
-        );
-      } catch (e) {
-        print('Error parsing color code: ${card.colorCode}');
-      }
-    }
-
-    // Determine icon data based on card id or use a default
-    IconData iconData = Icons.dashboard;
-
-    switch (card.id.toLowerCase()) {
-      case 'teams':
-        iconData = Icons.people;
-        break;
-      case 'machines':
-        iconData = Icons.precision_manufacturing;
-        break;
-      case 'tickets':
-        iconData = Icons.confirmation_number;
-        break;
-      case 'attendance':
-        iconData = Icons.calendar_today;
-        break;
-      case 'tasks':
-        iconData = Icons.assignment;
-        break;
-      case 'reporting':
-        iconData = Icons.analytics;
-        break;
-      default:
-        iconData = Icons.dashboard;
-    }
-
-    // Create a HomeCardModel from the DashboardCard
-    return HomeCardModel(
-      id: card.id,
-      title: card.title,
-      description: card.description,
-      route: card.route,
-      colorCode: colorValue,
-      iconData: iconData,
-      iconUrl: card.iconUrl,
-      imageUrl: card.imageUrl.isNotEmpty ? card.imageUrl : card.iconUrl,
-    );
-  }
+  // HomeCardModel dashboardCardToHomeCard(DashboardCard card) {
+  //   // Get color value - API now returns an integer directly
+  //   int colorValue = 0xFF72B6B6; // Default color
+  //
+  //   if (card.colorCode is int) {
+  //     // API is now returning an integer directly
+  //     colorValue = card.colorCode as int;
+  //   } else if (card.colorCode is String) {
+  //     // For backward compatibility, handle string format if needed
+  //     try {
+  //       final colorCode =
+  //           (card.colorCode as String).startsWith('#')
+  //               ? (card.colorCode as String).substring(1)
+  //               : card.colorCode as String;
+  //
+  //       colorValue = int.parse(
+  //         colorCode.length == 6 ? '0xFF$colorCode' : '0x$colorCode',
+  //         radix: 16,
+  //       );
+  //     } catch (e) {
+  //       print('Error parsing color code: ${card.colorCode}');
+  //     }
+  //   }
+  //
+  //   // Determine icon data based on card id or use a default
+  //   IconData iconData = Icons.dashboard;
+  //
+  //   switch (card.id.toLowerCase()) {
+  //     case 'teams':
+  //       iconData = Icons.people;
+  //       break;
+  //     case 'machines':
+  //       iconData = Icons.precision_manufacturing;
+  //       break;
+  //     case 'tickets':
+  //       iconData = Icons.confirmation_number;
+  //       break;
+  //     case 'attendance':
+  //       iconData = Icons.calendar_today;
+  //       break;
+  //     case 'tasks':
+  //       iconData = Icons.assignment;
+  //       break;
+  //     case 'reporting':
+  //       iconData = Icons.analytics;
+  //       break;
+  //     default:
+  //       iconData = Icons.dashboard;
+  //   }
+  //
+  //   // Create a HomeCardModel from the DashboardCard
+  //   return HomeCardModel(
+  //     id: card.id,
+  //     title: card.title,
+  //     description: card.description,
+  //     route: card.route,
+  //     colorCode: colorValue,
+  //     iconData: iconData,
+  //     iconUrl: card.iconUrl,
+  //     imageUrl: card.imageUrl.isNotEmpty ? card.imageUrl : card.iconUrl,
+  //   );
+  // }
 
   showScanQrOptionsForEmployee() async {
     final response = await _bottomSheetService

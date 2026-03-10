@@ -314,9 +314,7 @@ class ReviewTicketView extends StatelessWidget {
                   ),
                 ),
                 TextSpan(
-                  text:
-                      ticketData.ticketDetails?.problem ??
-                      LanguageService.get('no_problem_description_available'),
+                  text: model.displayProblemDescription,
                   style: TextStyle(fontSize: 11, color: AppColors.textGrey),
                 ),
               ],
