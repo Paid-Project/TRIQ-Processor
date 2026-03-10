@@ -192,6 +192,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
               isFromSiteVisit: true,
               organizationId: organizationId,
               machineId: machineId,
+
             );
             model.continueToPay();
           },

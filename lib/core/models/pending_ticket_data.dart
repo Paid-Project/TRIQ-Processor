@@ -9,6 +9,7 @@ class PendingTicketData {
   final List<File>? attachments;
   final String? maintenanceType;
   final bool isFromSiteVisit;
+  final bool? selectedType;
   final String machineId;
   final String organizationId;
   final String? machineName;
@@ -21,6 +22,7 @@ class PendingTicketData {
     this.additionalNotes,
     this.attachments,
     this.maintenanceType,
+    this.selectedType,
     required this.isFromSiteVisit,
     required this.machineId,
     required this.organizationId,

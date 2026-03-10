@@ -692,6 +692,7 @@ class TicketDetailsView extends StatelessWidget {
     final customerName = orgDetails?.fullName ?? 'Unknown Customer';
 
     final flagUrl =orgDetails!.flag!.prefixWithBaseUrl;
+    print("flagUrl:-${flagUrl}");
     final supportType = ticketDetails?.type ?? 'Unknown';
     final createdAt = ticketDetails?.createdAt;
 print("status:- ${ model.ticketDetails?.ticketDetails?.status?.toLowerCase()}");
@@ -730,16 +731,21 @@ print("status:- ${ model.ticketDetails?.ticketDetails?.status?.toLowerCase()}");
             Positioned(
               bottom: -4,
               right: -4,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: SvgPicture.network(
-                  flagUrl,
-                  height: 16,
-                  width: 16,
-                  placeholderBuilder: (context) => Container(height: 16, width: 16, color: AppColors.textGrey),
-                ),
-              ),
+              child: ClipRRect(borderRadius: BorderRadius.circular(2), child: AppImages.getSvgFlag(flagUrl, width: 14, height: 14)),
             ),
+            // Positioned(
+            //   bottom: -4,
+            //   right: -4,
+            //   child: ClipRRect(
+            //     borderRadius: BorderRadius.circular(2),
+            //     child: SvgPicture.network(
+            //       flagUrl,
+            //       height: 16,
+            //       width: 16,
+            //       placeholderBuilder: (context) => Container(height: 16, width: 16, color: AppColors.textGrey),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         SizedBox(width: 16),
