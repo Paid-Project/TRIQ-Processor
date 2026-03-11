@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
-import 'package:dotted_border/dotted_border.dart';
 
 import '../../../core/models/machine_supplier_model.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../resources/app_resources/app_resources.dart';
 import '../../../resources/multimedia_resources/resources.dart';
 import '../../../services/language.service.dart';
@@ -173,7 +173,7 @@ class CreateTicketDialog extends StatelessWidget {
                                     machineSupplierData,
                                   ),
                                   onChanged: (value) {
-                                    print("selected organization ===> $value");
+                                    AppLogger.info('Selected organization changed');
                                     model.selectedOrganizationId = value;
                                     model.selectedMachineId =
                                         null; // Reset machine selection when organization changes
@@ -204,7 +204,7 @@ class CreateTicketDialog extends StatelessWidget {
                                     model.selectedOrganizationId!,
                                   ),
                                   onChanged: (value) {
-                                    print("selected machine ===> $value");
+                                    AppLogger.info('Selected machine changed');
                                     model.formKey.currentState?.validate();
                                     model.selectedMachineId = value;
                                   },
@@ -655,7 +655,7 @@ class CreateTicketDialog extends StatelessWidget {
         }
       }
     } catch (e) {
-      print("Error finding machines for organization $organizationId: $e");
+      AppLogger.error('Error finding machines for organization: ');
     }
 
     return uniqueItems.entries

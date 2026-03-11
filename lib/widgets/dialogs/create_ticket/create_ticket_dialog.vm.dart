@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -53,7 +52,6 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
         maxWidth: 1920,
         maxHeight: 1920,
         imageQuality: 90,
-        type: FileType.image,
       );
 
       result.fold(
@@ -182,3 +180,4 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
     super.dispose();
   }
 }
+

@@ -61,7 +61,7 @@ class FilePickerService {
       if (permissionStatus.isPermanentlyDenied) {
         return Left(
           Failure(
-            'Camera permission permanently denied. Please enable it from manager settings.',
+            'Camera permission permanently denied. Please enable it from app settings.',
           ),
         );
       }
@@ -133,7 +133,7 @@ class FilePickerService {
       if (permissionStatus.isPermanentlyDenied) {
         return Left(
           Failure(
-            'Storage permission permanently denied. Please enable it from manager settings.',
+            'Storage permission permanently denied. Please enable it from app settings.',
           ),
         );
       }
@@ -159,6 +159,29 @@ class FilePickerService {
     }
   }
 
+  /// Pick an audio file using the system file picker.
+  /// No storage permission request is needed for SAF-based pickers.
+  ResultFuture<File> pickAudioFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return Left(Failure('No audio selected'));
+      }
+
+      if (result.files.first.path == null) {
+        return Left(Failure('Invalid audio path'));
+      }
+
+      return Right(File(result.files.first.path!));
+    } catch (e) {
+      AppLogger.error('Error picking audio file: $e');
+      return Left(Failure('Failed to pick audio file: $e'));
+    }
+  }
   /// Pick any file type
   /// Returns the selected file on success
   ResultFuture<File> pickAnyFile() async {
@@ -171,7 +194,7 @@ class FilePickerService {
       if (permissionStatus.isPermanentlyDenied) {
         return Left(
           Failure(
-            'Storage permission permanently denied. Please enable it from manager settings.',
+            'Storage permission permanently denied. Please enable it from app settings.',
           ),
         );
       }
@@ -231,7 +254,7 @@ class FilePickerService {
       if (permissionStatus.isPermanentlyDenied) {
         return Left(
           Failure(
-            'Camera permission permanently denied. Please enable it from manager settings.',
+            'Camera permission permanently denied. Please enable it from app settings.',
           ),
         );
       }
@@ -265,7 +288,7 @@ class FilePickerService {
       if (permissionStatus.isPermanentlyDenied) {
         return Left(
           Failure(
-            'Storage permission permanently denied. Please enable it from manager settings.',
+            'Storage permission permanently denied. Please enable it from app settings.',
           ),
         );
       }
@@ -302,7 +325,6 @@ class FilePickerService {
     double? maxHeight,
     int? imageQuality,
     Duration? maxDuration,
-    FileType type = FileType.media,
   }) async {
     try {
       // Request permission
@@ -334,3 +356,6 @@ class FilePickerService {
     }
   }
 }
+
+
+

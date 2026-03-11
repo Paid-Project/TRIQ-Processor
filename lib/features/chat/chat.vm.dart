@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:manager/api_endpoints.dart';
 import 'package:manager/configs.dart';
@@ -11,6 +13,9 @@ import 'package:manager/core/storage/storage.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
 import 'package:manager/features/tickets/tickets_list/tickets_list.vm.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 import '../../core/locator.dart';
@@ -19,11 +24,13 @@ import '../../resources/app_resources/app_resources.dart';
 import '../../services/api.service.dart';
 import '../../services/chat.service.dart';
 import '../../services/dialogs.service.dart';
+import '../../services/file_picker.service.dart';
 import '../../services/language.service.dart';
 import '../../services/socket_service.dart';
 import '../../widgets/dialogs/loader/loader_dialog.view.dart';
 import '../../resources/enums/chat_enum.dart';
 import 'model/chat_message_model.dart';
+import 'video_chat/demo/location_service.dart';
 
 enum ChatRoomScreenType { mainChat, contactChat }
 
@@ -46,17 +53,24 @@ class ChatViewModel extends ReactiveViewModel {
   final _chatService = locator<ChatService>();
   final _apiService = locator<ApiService>();
   final _dialogService = locator<DialogService>();
+  final _filePickerService = locator<FilePickerService>();
   final TextEditingController messageController = TextEditingController();
   final ScrollController scrollController = ScrollController();
 
   final SocketService _socketService = SocketService();
   final ImagePicker _imagePicker = ImagePicker();
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  Timer? _recordingTimer;
+  String? _activeRecordingPath;
   ChatMessageModel? replyMessage;
   ChatMessageModel? replyTo;
   String? editingMessageId;
   // State variables
   bool _isSendingMessage = false;
   bool _isUploadingImage = false;
+  bool _isRecordingAudio = false;
+  Duration _recordingDuration = Duration.zero;
+  double _recordingSlideOffset = 0;
   bool _isSearchMode = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -73,8 +87,11 @@ class ChatViewModel extends ReactiveViewModel {
 
   int _currentPage = 1;
   int _totalMessages = 0;
-  int _limit = 20;
+  final int _limit = 20;
   bool _hasMoreMessages = true;
+  bool _showAttachment = false;
+
+  static const double recordingCancelThreshold = 120;
 
   bool get isLoading => _isLoading;
 
@@ -86,18 +103,32 @@ class ChatViewModel extends ReactiveViewModel {
   ChatRoomScreenType _chatRoomScreenType = ChatRoomScreenType.mainChat;
   ChatRoomScreenType get chatRoomScreenType => _chatRoomScreenType;
   final TicketsListViewModel ticketDetailsViewModel = locator<TicketsListViewModel>();
+
   // Messages list
   final List<ChatMessageModel> _messages = [];
-  bool _showAttachment  = false;
-  bool get showAttachment  => _showAttachment ;
+
   List<ChatMessageModel> get messages => _messages.toList();
 
   // Getters
   bool get isSendingMessage => _isSendingMessage;
+  bool get showAttachment => _showAttachment;
 
   bool get isUploadingImage => _isUploadingImage;
+  bool get isRecordingAudio => _isRecordingAudio;
+  Duration get recordingDuration => _recordingDuration;
+  double get recordingSlideOffset => _recordingSlideOffset;
+  double get recordingCancelProgress {
+    if (_recordingSlideOffset >= 0) {
+      return 0;
+    }
+    final progress = (-_recordingSlideOffset) / recordingCancelThreshold;
+    return progress.clamp(0.0, 1.0).toDouble();
+  }
 
-  bool _isReplyMode = false;
+  bool get shouldCancelRecording =>
+      _recordingSlideOffset <= -recordingCancelThreshold;
+
+  final bool _isReplyMode = false;
   bool get isReplyMode => _isReplyMode;
 
   bool _isTicketDetailsExpanded = false;
@@ -144,6 +175,7 @@ class ChatViewModel extends ReactiveViewModel {
     },
   };
   void toggleAttachment() {
+    if (_isRecordingAudio) return;
     _showAttachment = !_showAttachment;
     notifyListeners();
   }
@@ -152,42 +184,105 @@ class ChatViewModel extends ReactiveViewModel {
     _showAttachment = select;
     notifyListeners();
   }
+
+
+  Future<void> sendLocationMessage({
+    Position? position,
+    double? latitude,
+    double? longitude,
+    bool isLiveLocation = false,
+  }) async {
+    final selectedPosition =
+        position ?? await LocationService.getCurrentLocation();
+
+    final lat = latitude ?? selectedPosition?.latitude;
+    final lng = longitude ?? selectedPosition?.longitude;
+
+    if (lat == null || lng == null) return;
+
+    final locationUrl = 'https://maps.google.com/?q=$lat,$lng';
+    final content =
+        isLiveLocation ? 'Live location: $locationUrl' : locationUrl;
+    final clientMessageId = _createClientMessageId();
+
+    _socketService.sendMessage(
+      roomId: roomId,
+      content: content,
+      event: chatEvents[chatRoomScreenType.name]['send'],
+      messageType: MessageType.location.name,
+      clientMessageId: clientMessageId,
+    );
+
+    _addLocalMessage(
+      content,
+      messageType: MessageType.location.name,
+      clientMessageId: clientMessageId,
+    );
+  }
+
   /// Handle new incoming messages
   void _handleNewMessage(dynamic data) {
-    print("🎯 _handleNewMessage called with: $data");
-    if (data is Map<String, dynamic>) {
-      try {
-        final message = ChatMessageModel.fromJson(data);
-        print("✅ Message parsed successfully: ${message.content}");
+    if (data is! Map<String, dynamic>) {
+      AppLogger.warning('Received unsupported message payload: ${data.runtimeType}');
+      return;
+    }
 
-        if (message.sender.id == userData.id) {
-          // This is our own message echoed back by server.
-          // Remove the optimistic local copy (matched by content) and replace with server version.
-          message.isSentByMe = true;
-          final localIdx = _messages.indexWhere(
-                (m) =>
-            m.isSentByMe &&
-                m.content == message.content &&
-                m.id != message.id,
-          );
-          if (localIdx != -1) {
-            _messages[localIdx] = message;
-          } else {
-            _messages.insert(0, message);
-          }
+    try {
+      final message = ChatMessageModel.fromJson(data);
+      message.isSentByMe = message.sender.id == userData.id;
+
+      if (message.isSentByMe) {
+        final localIndex = _findOptimisticMessageIndex(message);
+        if (localIndex != -1) {
+          _messages[localIndex] = message;
         } else {
-          message.isSentByMe = false;
           _messages.insert(0, message);
         }
-
-        notifyListeners();
-        print("📝 Message added to list. Total messages: ${_messages.length}");
-      } catch (e) {
-        print("❌ Error parsing message: $e");
+      } else {
+        _messages.insert(0, message);
       }
-    } else {
-      print("⚠️ Received data is not a Map: ${data.runtimeType}");
+
+      _resolveReplyReferences();
+      notifyListeners();
+    } catch (e) {
+      AppLogger.error('Error parsing incoming message: $e');
     }
+  }
+
+  int _findOptimisticMessageIndex(ChatMessageModel serverMessage) {
+    return _messages.indexWhere((localMessage) {
+      if (!localMessage.isSentByMe || localMessage.id == serverMessage.id) {
+        return false;
+      }
+
+      if (serverMessage.clientMessageId != null &&
+          localMessage.clientMessageId == serverMessage.clientMessageId) {
+        return true;
+      }
+
+      if (localMessage.messageType != serverMessage.messageType) {
+        return false;
+      }
+
+      if (localMessage.content.trim() != serverMessage.content.trim()) {
+        return false;
+      }
+
+      if (localMessage.attachments.length != serverMessage.attachments.length) {
+        return false;
+      }
+
+      for (var index = 0; index < localMessage.attachments.length; index++) {
+        final localAttachment = localMessage.attachments[index];
+        final serverAttachment = serverMessage.attachments[index];
+        if (localAttachment.url != serverAttachment.url ||
+            localAttachment.type != serverAttachment.type) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   }
 
   void _handleReaction(dynamic data) {
@@ -227,7 +322,7 @@ class ChatViewModel extends ReactiveViewModel {
 
   /// Socket implementation
   Future<void> initializeSocket() async {
-    print("🚀 Initializing socket connection...");
+    AppLogger.info('Initializing socket connection...');
 
     // Initialize socket connection
     _socketService.initializeSocket(
@@ -240,7 +335,7 @@ class ChatViewModel extends ReactiveViewModel {
       },
       onConnected: () {
         // Register user
-        print("👤 Registering user: ${userData.id ?? 'default_user'}");
+        AppLogger.info('Registering user for chat room');
         _socketService.registerUser(
           userData.id ?? 'default_user',
           chatEvents[chatRoomScreenType.name]['register'],
@@ -252,7 +347,7 @@ class ChatViewModel extends ReactiveViewModel {
         );
 
         // Listen for incoming messages
-        print("👂 Setting up message listener...");
+        AppLogger.info('Setting up message listener...');
         _socketService.onNewMessage(
           _handleNewMessage,
           chatEvents[chatRoomScreenType.name]['newMessage'],
@@ -288,21 +383,21 @@ class ChatViewModel extends ReactiveViewModel {
       );
 
       result.fold(
-            (failure) {
+        (failure) {
           AppLogger.error('Failed to fetch messages: ${failure.message}');
           Fluttertoast.showToast(
             msg:
-            "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
+                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
             backgroundColor: AppColors.error,
             textColor: AppColors.white,
           );
         },
-            (response) {
+        (response) {
           final List<dynamic> messagesData = response['messages'] ?? [];
           final List<ChatMessageModel> newMessages =
-          messagesData.map((e) => ChatMessageModel.fromJson(e)).toList();
+              messagesData.map((e) => ChatMessageModel.fromJson(e)).toList();
 
           // Set isSentByMe for each message
           for (var message in newMessages) {
@@ -365,25 +460,25 @@ class ChatViewModel extends ReactiveViewModel {
       final result = await _chatService.getAllChatMessages(roomId: roomId);
 
       result.fold(
-            (failure) {
+        (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
           _messages.clear();
 
           Fluttertoast.showToast(
             msg:
-            "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
+                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
             backgroundColor: AppColors.error,
             textColor: AppColors.white,
           );
         },
-            (response) {
+        (response) {
           final result =
-          response.map((element) {
-            element.isSentByMe = element.sender.id == userData.id;
-            return element;
-          }).toList();
+              response.map((element) {
+                element.isSentByMe = element.sender.id == userData.id;
+                return element;
+              }).toList();
 
           _messages.clear();
           _messages.addAll(result);
@@ -397,10 +492,12 @@ class ChatViewModel extends ReactiveViewModel {
 
   /// Locally add a sent message for optimistic UI update
   void _addLocalMessage(
-      String content, {
-        List<Attachment> attachments = const [],
-        ChatMessageModel? replyTo,
-      }) {
+    String content, {
+    List<Attachment> attachments = const [],
+    ChatMessageModel? replyTo,
+    String messageType = 'text',
+    String? clientMessageId,
+  }) {
     final localMessage = ChatMessageModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       roomId: roomId,
@@ -410,6 +507,7 @@ class ChatViewModel extends ReactiveViewModel {
         email: userData.email ?? '',
       ),
       senderType: '',
+      messageType: messageType,
       content: content,
       translatedContent: content,
       attachments: attachments,
@@ -419,6 +517,7 @@ class ChatViewModel extends ReactiveViewModel {
       version: 0,
       isSentByMe: true,
       replyTo: replyTo,
+      clientMessageId: clientMessageId,
       status: MessageStatus.sent,
       isDeleted: false,
     );
@@ -428,7 +527,6 @@ class ChatViewModel extends ReactiveViewModel {
 
   /// Send a text message
   Future<void> sendMessage() async {
-    // final messageText = messageController.text.trim();
     if (messageController.text.trim().isEmpty && !hasImagePreview) {
       AppLogger.warning('Cannot send empty message');
       return;
@@ -438,19 +536,16 @@ class ChatViewModel extends ReactiveViewModel {
       _isSendingMessage = true;
       notifyListeners();
 
-      /// 🔥 EDIT MODE CHECK
       if (editingMessageId != null) {
         final messageText = messageController.text.trim();
         if (messageText.isEmpty) return;
 
-        final response = await _chatService.editChat(
+        await _chatService.editChat(
           content: messageText,
           messageId: editingMessageId!,
         );
 
-        // ✅ API success hone ke baad local list update karo
         final index = _messages.indexWhere((m) => m.id == editingMessageId);
-
         if (index != -1) {
           _messages[index].content = messageText;
         }
@@ -460,13 +555,13 @@ class ChatViewModel extends ReactiveViewModel {
         notifyListeners();
         return;
       }
+
       final messageText = messageController.text.trim();
       messageController.clear();
 
-      // If there are media files, send them with text
       if (hasImagePreview && _selectedMediaPaths.isNotEmpty) {
-        List<String> selectedMediaPaths = List.from(_selectedMediaPaths);
-        List<String> selectedMediaTypes = List.from(_selectedMediaTypes);
+        final selectedMediaPaths = List<String>.from(_selectedMediaPaths);
+        final selectedMediaTypes = List<String>.from(_selectedMediaTypes);
 
         _selectedMediaPaths.clear();
         _selectedMediaNames.clear();
@@ -478,22 +573,26 @@ class ChatViewModel extends ReactiveViewModel {
           messageText,
         );
       } else {
-        // Send text-only message via socket
+        final clientMessageId = _createClientMessageId();
         _socketService.sendMessage(
           roomId: roomId,
           content: messageText,
           replyTo: replyMessage?.id,
           event: chatEvents[chatRoomScreenType.name]['send'],
+          messageType: MessageType.text.name,
+          clientMessageId: clientMessageId,
         );
-        // Optimistically add the message to local list so it shows instantly
-        _addLocalMessage(messageText, replyTo: replyMessage);
-        // Clear reply after sending
+        _addLocalMessage(
+          messageText,
+          replyTo: replyMessage,
+          messageType: MessageType.text.name,
+          clientMessageId: clientMessageId,
+        );
         replyMessage = null;
         AppLogger.info('Text message sent');
       }
     } catch (e) {
       AppLogger.error('Error sending message: $e');
-      // Optionally, update the temporary message to show a 'failed' state.
     } finally {
       _isSendingMessage = false;
       notifyListeners();
@@ -517,13 +616,13 @@ class ChatViewModel extends ReactiveViewModel {
               // Determine if it's a video or image based on file extension
               final extension = file.name.toLowerCase().split('.').last;
               return [
-                'mp4',
-                'mov',
-                'avi',
-                'mkv',
-                'webm',
-                '3gp',
-              ].contains(extension)
+                    'mp4',
+                    'mov',
+                    'avi',
+                    'mkv',
+                    'webm',
+                    '3gp',
+                  ].contains(extension)
                   ? 'video'
                   : 'image';
             }).toList();
@@ -569,6 +668,443 @@ class ChatViewModel extends ReactiveViewModel {
     }
   }
 
+  Future<void> pickAudioFileAndSend() async {
+    if (_isRecordingAudio || _isSendingMessage || _isUploadingImage) {
+      return;
+    }
+
+    if (_showAttachment) {
+      _showAttachment = false;
+      notifyListeners();
+    }
+
+    final result = await _filePickerService.pickAudioFile();
+
+    await result.fold(
+      (failure) async {
+        final message = failure.message.trim();
+        if (message == 'No audio selected') {
+          return;
+        }
+
+        AppLogger.error('Error picking audio file: ${failure.message}');
+        Fluttertoast.showToast(
+          msg: message,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: AppColors.error,
+          textColor: AppColors.white,
+        );
+      },
+      (file) async {
+        if (!await file.exists()) {
+          Fluttertoast.showToast(
+            msg: 'Selected audio file is not available',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: AppColors.error,
+            textColor: AppColors.white,
+          );
+          return;
+        }
+
+        final duration = await _resolveAudioDuration(file.path);
+        await _uploadAndSendAudioMessage(
+          file.path,
+          duration,
+          deleteFileAfterUpload: false,
+        );
+      },
+    );
+  }
+
+  Future<Duration?> _resolveAudioDuration(String audioPath) async {
+    final audioPlayer = AudioPlayer();
+    StreamSubscription<Duration>? durationSubscription;
+
+    try {
+      final durationCompleter = Completer<Duration?>();
+
+      durationSubscription = audioPlayer.onDurationChanged.listen((duration) {
+        if (!durationCompleter.isCompleted && duration > Duration.zero) {
+          durationCompleter.complete(duration);
+        }
+      });
+
+      await audioPlayer.setSourceDeviceFile(audioPath);
+
+      final directDuration = await audioPlayer.getDuration();
+      if (directDuration != null && directDuration > Duration.zero) {
+        return directDuration;
+      }
+
+      return await durationCompleter.future.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => null,
+      );
+    } catch (e) {
+      AppLogger.warning('Unable to resolve audio duration for $audioPath: $e');
+      return null;
+    } finally {
+      await durationSubscription?.cancel();
+      unawaited(audioPlayer.dispose());
+    }
+  }
+
+  String _resolveAudioMimeType(String audioPath, [String? mimeType]) {
+    final normalizedMimeType = mimeType?.trim();
+    if (normalizedMimeType != null && normalizedMimeType.isNotEmpty) {
+      return normalizedMimeType;
+    }
+
+    switch (path.extension(audioPath).toLowerCase()) {
+      case '.mp3':
+        return 'audio/mpeg';
+      case '.wav':
+        return 'audio/wav';
+      case '.ogg':
+        return 'audio/ogg';
+      case '.aac':
+        return 'audio/aac';
+      case '.amr':
+        return 'audio/amr';
+      case '.opus':
+        return 'audio/opus';
+      case '.webm':
+        return 'audio/webm';
+      case '.flac':
+        return 'audio/flac';
+      case '.m4a':
+      default:
+        return 'audio/mp4';
+    }
+  }
+
+  List<Map<String, dynamic>> _extractUploadedFilesFromResponse(
+    Map<String, dynamic> response,
+  ) {
+    final rawFiles =
+        response['files'] ??
+        response['data'] ??
+        response['file'] ??
+        response['urls'] ??
+        response['fileUrls'] ??
+        response['uploadedFiles'];
+
+    if (rawFiles is List) {
+      return rawFiles
+          .map<Map<String, dynamic>?>((file) {
+            if (file is Map) {
+              return Map<String, dynamic>.from(file);
+            }
+            if (file is String && file.trim().isNotEmpty) {
+              return {'url': file.trim()};
+            }
+            return null;
+          })
+          .whereType<Map<String, dynamic>>()
+          .toList();
+    }
+
+    if (rawFiles is Map) {
+      return [Map<String, dynamic>.from(rawFiles)];
+    }
+
+    final url = response['url']?.toString();
+    if (url != null && url.isNotEmpty) {
+      return [
+        {
+          'url': url,
+          'name': response['name'],
+          'mimeType': response['mimeType'] ?? response['mime_type'],
+        },
+      ];
+    }
+
+    return const [];
+  }
+
+  String _resolveUploadedFileUrl(Map<String, dynamic> file) {
+    const candidates = ['url', 'fileUrl', 'path', 'location'];
+
+    for (final key in candidates) {
+      final value = file[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return '';
+  }
+
+  String _resolveUploadedFileName(
+    Map<String, dynamic> file,
+    String fallbackPath,
+  ) {
+    const candidates = ['name', 'fileName', 'filename', 'originalname'];
+
+    for (final key in candidates) {
+      final value = file[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return path.basename(fallbackPath);
+  }
+
+  String? _resolveUploadedFileMimeType(Map<String, dynamic> file) {
+    const candidates = ['mimeType', 'mime_type', 'contentType'];
+
+    for (final key in candidates) {
+      final value = file[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> startAudioRecording() async {
+    if (_isRecordingAudio || _isSendingMessage || _isUploadingImage) {
+      return;
+    }
+
+    try {
+      final hasPermission = await _audioRecorder.hasPermission();
+      if (!hasPermission) {
+        Fluttertoast.showToast(
+          msg: 'Microphone permission is required to record audio',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: AppColors.error,
+          textColor: AppColors.white,
+        );
+        return;
+      }
+
+      final tempDirectory = await getTemporaryDirectory();
+      final recordingPath = path.join(
+        tempDirectory.path,
+        'voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+      );
+
+      await _audioRecorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+          sampleRate: 44100,
+          numChannels: 1,
+        ),
+        path: recordingPath,
+      );
+
+      _activeRecordingPath = recordingPath;
+      _recordingDuration = Duration.zero;
+      _recordingSlideOffset = 0;
+      _isRecordingAudio = true;
+      _showAttachment = false;
+      _recordingTimer?.cancel();
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _recordingDuration += const Duration(seconds: 1);
+        notifyListeners();
+      });
+      notifyListeners();
+    } catch (e) {
+      _resetRecordingState();
+      AppLogger.error('Error starting audio recording: $e');
+      Fluttertoast.showToast(
+        msg: 'Unable to start audio recording',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: AppColors.error,
+        textColor: AppColors.white,
+      );
+    }
+  }
+
+  void updateRecordingDrag(double horizontalDelta) {
+    if (!_isRecordingAudio) return;
+    _recordingSlideOffset = horizontalDelta > 0 ? 0 : horizontalDelta;
+    notifyListeners();
+  }
+
+  Future<void> completeRecordingGesture() async {
+    if (!_isRecordingAudio) return;
+    if (shouldCancelRecording) {
+      await cancelAudioRecording();
+      return;
+    }
+    await stopAndSendAudioMessage();
+  }
+
+  Future<void> cancelAudioRecording() async {
+    if (!_isRecordingAudio) return;
+
+    final recordingPath = _activeRecordingPath;
+    try {
+      final cancelledPath = await _audioRecorder.stop();
+      if (cancelledPath != null) {
+        await _deleteTemporaryFile(cancelledPath);
+      }
+    } catch (e) {
+      AppLogger.error('Error cancelling audio recording: $e');
+    } finally {
+      if (recordingPath != null) {
+        await _deleteTemporaryFile(recordingPath);
+      }
+      _resetRecordingState();
+      notifyListeners();
+    }
+  }
+
+  Future<void> stopAndSendAudioMessage() async {
+    if (!_isRecordingAudio) return;
+
+    final duration = _recordingDuration;
+    String? recordingPath;
+
+    try {
+      recordingPath = await _audioRecorder.stop();
+    } catch (e) {
+      AppLogger.error('Error stopping audio recording: $e');
+    } finally {
+      _resetRecordingState();
+      notifyListeners();
+    }
+
+    if (recordingPath == null || recordingPath.isEmpty) {
+      Fluttertoast.showToast(
+        msg: 'Audio recording was not saved',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: AppColors.error,
+        textColor: AppColors.white,
+      );
+      return;
+    }
+
+    if (duration < const Duration(seconds: 1)) {
+      await _deleteTemporaryFile(recordingPath);
+      Fluttertoast.showToast(
+        msg: 'Recording is too short',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: AppColors.error,
+        textColor: AppColors.white,
+      );
+      return;
+    }
+
+    await _uploadAndSendAudioMessage(
+      recordingPath,
+      duration,
+      deleteFileAfterUpload: true,
+    );
+  }
+
+  Future<void> _uploadAndSendAudioMessage(
+    String audioPath,
+    Duration? duration, {
+    bool deleteFileAfterUpload = false,
+  }) async {
+    final clientMessageId = _createClientMessageId();
+    final durationInSeconds =
+        duration != null && duration > Duration.zero ? duration.inSeconds : null;
+
+    try {
+      _isUploadingImage = true;
+      notifyListeners();
+
+      final result = await _chatService.uploadChatFiles(
+        [audioPath],
+        chatRoomScreenType.name,
+      );
+
+      result.fold(
+        (failure) {
+          AppLogger.error('Failed to upload audio: ${failure.message}');
+          Fluttertoast.showToast(
+            msg: 'Failed to upload audio: ${failure.message}',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: AppColors.error,
+            textColor: AppColors.white,
+          );
+        },
+        (response) {
+          final files = _extractUploadedFilesFromResponse(response);
+          if (files.isEmpty) {
+            throw Exception('Invalid audio upload response');
+          }
+
+          final uploadedAudio = files.first;
+          final uploadedAudioUrl = _resolveUploadedFileUrl(uploadedAudio);
+          if (uploadedAudioUrl.isEmpty) {
+            throw Exception('Uploaded audio URL is missing');
+          }
+
+          final resolvedMimeType = _resolveAudioMimeType(
+            audioPath,
+            _resolveUploadedFileMimeType(uploadedAudio),
+          );
+          final attachmentPayload = {
+            'url': uploadedAudioUrl,
+            'name': _resolveUploadedFileName(uploadedAudio, audioPath),
+            'type': MessageType.audio.name,
+            'mimeType': resolvedMimeType,
+            if (durationInSeconds != null) 'durationInSeconds': durationInSeconds,
+          };
+
+          _socketService.sendMessage(
+            roomId: roomId,
+            content: '',
+            attachments: [attachmentPayload],
+            replyTo: replyMessage?.id,
+            event: chatEvents[chatRoomScreenType.name]['send'],
+            messageType: MessageType.audio.name,
+            clientMessageId: clientMessageId,
+          );
+
+          _addLocalMessage(
+            '',
+            attachments: [
+              Attachment(
+                type: MessageType.audio.name,
+                url: attachmentPayload['url'] as String,
+                name: attachmentPayload['name'] as String,
+                mimeType: resolvedMimeType,
+                durationInSeconds: durationInSeconds,
+              ),
+            ],
+            replyTo: replyMessage,
+            messageType: MessageType.audio.name,
+            clientMessageId: clientMessageId,
+          );
+
+          replyMessage = null;
+          AppLogger.info('Audio message sent successfully');
+        },
+      );
+    } catch (e) {
+      AppLogger.error('Error sending audio message: $e');
+      Fluttertoast.showToast(
+        msg: 'Failed to send audio message',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: AppColors.error,
+        textColor: AppColors.white,
+      );
+    } finally {
+      if (deleteFileAfterUpload) {
+        await _deleteTemporaryFile(audioPath);
+      }
+      _isUploadingImage = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> openVideoChat() async {
     final tokenResponse = await _chatService.sendVChatStatus(
       roomName: roomId,
@@ -580,7 +1116,7 @@ class ChatViewModel extends ReactiveViewModel {
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
       Get.to(
-            () => VideoCallScreen(roomName: roomId, token: tokenResponse['token']),
+        () => VideoCallScreen(roomName: roomId, token: tokenResponse['token']),
       );
     }
   }
@@ -596,7 +1132,7 @@ class ChatViewModel extends ReactiveViewModel {
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
       Get.to(
-            () => VideoCallScreen(
+        () => VideoCallScreen(
           roomName: roomId,
           token: tokenResponse['token'],
           isVoice: true,
@@ -625,22 +1161,23 @@ class ChatViewModel extends ReactiveViewModel {
 
   /// Send media (images and videos) with optional text
   Future<void> _sendMediaWithText(
-      List<String> mediaPaths,
-      List<String> mediaTypes,
-      String text,
-      ) async {
+    List<String> mediaPaths,
+    List<String> mediaTypes,
+    String text,
+  ) async {
+    final clientMessageId = _createClientMessageId();
+
     try {
       _isUploadingImage = true;
       notifyListeners();
 
-      // Upload media files to server
       final result = await _chatService.uploadChatFiles(
         mediaPaths,
         chatRoomScreenType.name,
       );
 
       result.fold(
-            (failure) {
+        (failure) {
           AppLogger.error('Failed to upload media: ${failure.message}');
           Fluttertoast.showToast(
             msg: 'Failed to upload media: ${failure.message}',
@@ -650,49 +1187,68 @@ class ChatViewModel extends ReactiveViewModel {
             textColor: AppColors.white,
           );
         },
-            (response) {
-          // Extract files info from response
-          final List<dynamic> files = response['files'] ?? [];
+        (response) {
+          final files = _extractUploadedFilesFromResponse(response);
 
-          if (files.isNotEmpty) {
-            // Convert to attachment format with proper types
-            final List<Map<String, dynamic>> attachments = [];
-            for (int i = 0; i < files.length; i++) {
-              final file = files[i];
-              final mediaType = i < mediaTypes.length ? mediaTypes[i] : 'image';
-              attachments.add({
-                'url': file['url'] ?? '',
-                'name':
-                file['name'] ??
-                    (mediaType == 'video' ? 'video.mp4' : 'image.jpg'),
-                'type': mediaType,
-              });
-            }
-
-            // Send message with media attachments and text via socket
-            _socketService.sendMessage(
-              roomId: roomId,
-              content: text, // Include text content
-              attachments: attachments,
-              event: chatEvents[chatRoomScreenType.name]['send'],
-            );
-
-            // Optimistically add media message locally
-            final localAttachments =
-            attachments
-                .map(
-                  (a) => Attachment(
-                type: a['type'] ?? 'image',
-                url: a['url'] ?? '',
-              ),
-            )
-                .toList();
-            _addLocalMessage(text, attachments: localAttachments);
-
-            AppLogger.info('Media with text message sent successfully');
-          } else {
+          if (files.isEmpty) {
             throw Exception('Invalid response from server');
           }
+
+          final attachments = <Map<String, dynamic>>[];
+          for (var index = 0; index < files.length; index++) {
+            final file = files[index];
+            final mediaType = index < mediaTypes.length ? mediaTypes[index] : 'image';
+            final uploadedFileUrl = _resolveUploadedFileUrl(file);
+            if (uploadedFileUrl.isEmpty) {
+              continue;
+            }
+
+            attachments.add({
+              'url': uploadedFileUrl,
+              'name': _resolveUploadedFileName(
+                file,
+                mediaType == 'video' ? 'video.mp4' : 'image.jpg',
+              ),
+              'type': mediaType,
+            });
+          }
+
+          if (attachments.isEmpty) {
+            throw Exception('Uploaded file URLs are missing');
+          }
+
+          final resolvedMessageType = _resolveOutgoingMessageType(attachments);
+
+          _socketService.sendMessage(
+            roomId: roomId,
+            content: text,
+            attachments: attachments,
+            event: chatEvents[chatRoomScreenType.name]['send'],
+            messageType: resolvedMessageType,
+            clientMessageId: clientMessageId,
+          );
+
+          final localAttachments =
+              attachments
+                  .map(
+                    (attachment) => Attachment(
+                      type: attachment['type']?.toString() ?? 'image',
+                      url: attachment['url']?.toString() ?? '',
+                      name: attachment['name']?.toString(),
+                    ),
+                  )
+                  .toList();
+
+          _addLocalMessage(
+            text,
+            attachments: localAttachments,
+            replyTo: replyMessage,
+            messageType: resolvedMessageType,
+            clientMessageId: clientMessageId,
+          );
+
+          replyMessage = null;
+          AppLogger.info('Media with text message sent successfully');
         },
       );
     } catch (e) {
@@ -708,6 +1264,37 @@ class ChatViewModel extends ReactiveViewModel {
       _isUploadingImage = false;
       notifyListeners();
     }
+  }
+
+  String _resolveOutgoingMessageType(List<Map<String, dynamic>> attachments) {
+    if (attachments.isEmpty) {
+      return MessageType.text.name;
+    }
+    return (attachments.first['type'] ?? MessageType.text.name).toString();
+  }
+
+  String _createClientMessageId() {
+    return 'local_${DateTime.now().microsecondsSinceEpoch}';
+  }
+
+  Future<void> _deleteTemporaryFile(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      AppLogger.warning('Unable to delete temporary audio file: $e');
+    }
+  }
+
+  void _resetRecordingState() {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+    _activeRecordingPath = null;
+    _isRecordingAudio = false;
+    _recordingDuration = Duration.zero;
+    _recordingSlideOffset = 0;
   }
 
   /// Toggle search mode
@@ -736,14 +1323,14 @@ class ChatViewModel extends ReactiveViewModel {
 
     return _messages.where((message) {
       // Search in message content
-      final contentMatch = message.content.toLowerCase().contains(
+      final contentMatch = message.previewText.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
 
       // Search in attachment names (if any)
       final attachmentMatch = message.attachments.any(
-            (attachment) =>
-        attachment.url.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        (attachment) =>
+            attachment.url.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             (attachment.url
                 .split('/')
                 .last
@@ -762,7 +1349,7 @@ class ChatViewModel extends ReactiveViewModel {
     List<Map<String, dynamic>> results = [];
     for (int i = 0; i < _messages.length; i++) {
       final message = _messages[i];
-      final contentMatch = message.content.toLowerCase().contains(
+      final contentMatch = message.previewText.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
 
@@ -775,11 +1362,11 @@ class ChatViewModel extends ReactiveViewModel {
         final attachment = message.attachments[j];
         final attachmentMatch =
             attachment.url.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                (attachment.url
-                    .split('/')
-                    .last
-                    .toLowerCase()
-                    .contains(_searchQuery.toLowerCase()));
+            (attachment.url
+                .split('/')
+                .last
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()));
 
         if (attachmentMatch) {
           results.add({
@@ -810,9 +1397,9 @@ class ChatViewModel extends ReactiveViewModel {
     final results = searchResults;
     if (results.isNotEmpty) {
       _currentSearchIndex =
-      _currentSearchIndex <= 0
-          ? results.length - 1
-          : _currentSearchIndex - 1;
+          _currentSearchIndex <= 0
+              ? results.length - 1
+              : _currentSearchIndex - 1;
       _scrollToSearchResult(results[_currentSearchIndex]['index']);
       notifyListeners();
     }
@@ -826,7 +1413,7 @@ class ChatViewModel extends ReactiveViewModel {
           final double targetPosition = (messageIndex + 1) * 100.0;
           final double maxScroll = scrollController.position.maxScrollExtent;
           final double scrollPosition =
-          targetPosition > maxScroll ? maxScroll : targetPosition;
+              targetPosition > maxScroll ? maxScroll : targetPosition;
           scrollController.animateTo(
             scrollPosition,
             duration: const Duration(milliseconds: 300),
@@ -876,7 +1463,7 @@ class ChatViewModel extends ReactiveViewModel {
             }
           } catch (e) {
             AppLogger.error('Error resolving chat: $e');
-            throw e;
+            rethrow;
           }
         },
       ),
@@ -948,11 +1535,12 @@ class ChatViewModel extends ReactiveViewModel {
 
   @override
   void dispose() {
-    // Clean up socket listeners
     _socketService.off(chatEvents[chatRoomScreenType.name]['newMessage']);
     _socketService.dispose();
 
-    // Dispose controllers
+    _recordingTimer?.cancel();
+    unawaited(_audioRecorder.dispose());
+
     messageController.dispose();
     scrollController.dispose();
     _searchController.dispose();
@@ -1035,7 +1623,7 @@ class ChatViewModel extends ReactiveViewModel {
 
   Future<void> deleteMessage(String messageId) async {
     try {
-      // 1️⃣ Optimistically mark as deleted locally (WhatsApp style)
+      // 1Ã¯Â¸ÂÃ¢Æ’Â£ Optimistically mark as deleted locally (WhatsApp style)
       final index = _messages.indexWhere((m) => m.id == messageId);
       if (index != -1) {
         _messages[index].isDeleted = true;
@@ -1043,7 +1631,7 @@ class ChatViewModel extends ReactiveViewModel {
         notifyListeners();
       }
 
-      // 2️⃣ Call API
+      // 2Ã¯Â¸ÂÃ¢Æ’Â£ Call API
       await _chatService.deleteChat(messageId: messageId);
     } catch (e) {
       AppLogger.error('Error deleting message: $e');
@@ -1056,3 +1644,19 @@ class ChatViewModel extends ReactiveViewModel {
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,10 +1,12 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
 import 'package:manager/features/stage/widgets/call_requiest_dialog.dart';
 import 'package:manager/features/tickets/ticket_details/ticket_details.view.dart';
@@ -15,6 +17,10 @@ import 'package:manager/widgets/common_app_bar.dart';
 import 'package:manager/widgets/common_text_field.dart';
 import 'package:manager/widgets/common/common_cached_image.dart';
 import 'package:manager/features/chat/chat.vm.dart';
+import 'package:manager/features/chat/video_chat/demo/location_service.dart';
+import 'package:manager/features/chat/widgets/chat_audio_message_bubble.dart';
+import 'package:manager/features/chat/widgets/voice_record_action_button.dart';
+import 'package:manager/features/chat/widgets/voice_recording_bar.dart';
 import 'package:manager/widgets/extantion/common_extantion.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -28,7 +34,6 @@ import '../../resources/enums/chat_enum.dart';
 import '../../routes/routes.dart';
 import '../../services/api.service.dart';
 import '../../services/language.service.dart';
-import '../tickets/ticket_details/ticket_details.vm.dart';
 import '../tickets/tickets_list/tickets_list.vm.dart' show TicketsListViewModel;
 import 'model/chat_message_model.dart';
 
@@ -121,55 +126,52 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     if(widget.incomingCallData!=null) {
       final data=widget.incomingCallData??{};
       final String? roomId = data['room_id'];
-      final String? ticketStatus = data['ticketStatus'];
-      final String? ticketId = data['ticketId'];
-      String sender_name=data['sender_name'];
-      String receiver_name=data['receiver_name'];
+      final String senderName = data['sender_name'] ?? '';
+      final String receiverName = data['receiver_name'] ?? '';
       final String? flag = data['flag'];
-      final String? profile_pic = data['profile_pic'];
-      final String? eventType = data['eventType'];
+      final String? profilePic = data['profile_pic'];
       final String? callType = data['callType'];
       final String? token = data['roomToken'];
-      final String? user_id = data['user_id'];
-      bool isVoice=callType=='audio';
+      final String userId = data['user_id'] ?? '';
+      final bool isVoice = callType == 'audio';
 
 
       WidgetsBinding.instance.addPostFrameCallback((c) {
-        showCallRequestDialog(profile: profile_pic ?? '',
-            name: sender_name,
+        showCallRequestDialog(profile: profilePic ?? '',
+            name: senderName,
             call_type: callType ?? '',
             flag: flag ?? '',
             onAccept: () {
               openVideoChat(roomId ?? '', status: 'call-accept',
                   isVoice: isVoice,
                   token: token ?? '',
-                  userId: user_id ?? '',
-                  receiver_name: receiver_name);
+                  userId: userId,
+                  receiverName: receiverName);
             },
             onDecline: () {
               openVideoChat(roomId ?? '', status: 'call-decline',
                   isVoice: isVoice,
                   token: token ?? '',
-                  userId: user_id ?? '',
-                  receiver_name: receiver_name);
+                  userId: userId,
+                  receiverName: receiverName);
             });
       });
     }
   }
 
-  static Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String userId,required String receiver_name}) async {
+  static Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String userId,required String receiverName}) async {
 
-    final _chatService=locator<ChatService>();
+    final chatService = locator<ChatService>();
     if(status== 'call-accept'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userId);
-      if(tokenResponce['success']){
+      final tokenResponse = await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId);
+      if(tokenResponse['success']){
         Get.back();
-        Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponce['token'], isVoice: isVoice));
+        Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponse['token'], isVoice: isVoice));
       }
 
     }
     else if(status== 'call-decline'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userId);
+      await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId);
       Get.back();
     }
 
@@ -187,7 +189,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     final body = {'reschedule_time': rescheduleTime};
 
     final response = await _apiService.put(
-      url: "${ApiEndpoints.updateTicket}/${ticketId ?? ""}",
+      url: "${ApiEndpoints.updateTicket}/$ticketId",
       data: body,
     );
 
@@ -209,31 +211,6 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     }
   }
 
-  void _handleAttachmentAction(String action, ChatViewModel model) {
-    // Handle different attachment actions
-    switch (action) {
-      case 'file':
-        model.pickMultipleMediaFromAlbum();
-        break;
-      case 'gallery':
-      // Handle multiple album selection (images and videos)
-        model.pickMultipleMediaFromAlbum();
-        break;
-      case 'camera':
-      // Handle camera - add single image to multiple selection
-        model.pickImageFromCamera();
-        break;
-      case 'location':
-      // Handle location sharing
-        break;
-      case 'video_call':
-      // model.openVideoChat();
-        break;
-      case 'voice_call':
-      // model.openAudioChat();
-        break;
-    }
-  }
 
   void _handleResolveAction(ChatViewModel model) {
     // Handle resolve action
@@ -300,7 +277,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                               CircleAvatar(
                                 backgroundColor: Color(
                                   0xFF7C4DFF,
-                                ).withOpacity(0.1),
+                                ).withValues(alpha: 0.1),
                                 radius: 30,
                                 child: Image.asset(AppImages.ticketSummary,height: 30,width: 30,),
                               ),
@@ -415,7 +392,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                     },
                   ).then((value) {
                     if (value != null) {
-                      print('Dialog closed with result: $value');
+                      AppLogger.info('Dialog closed with result');
                       remarkController.clear();
                       if (value == 'cancel') {
                         remarkController.clear();
@@ -423,7 +400,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                         remarkController.clear();
                       }
                     } else {
-                      print('Dialog closed by barrier dismiss or back button');
+                      AppLogger.info('Dialog closed by barrier dismiss or back button');
                       remarkController.clear();
                     }
                   });
@@ -712,6 +689,63 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     );
   }
 
+  Uri? _extractLocationUri(String text) {
+    final trimmed = text.trim();
+    final match = RegExp(r'https?://maps\.google\.com/\?q=([-0-9.]+),([-0-9.]+)').firstMatch(trimmed);
+    if (match != null) {
+      return Uri.tryParse(match.group(0)!);
+    }
+
+    final liveLocationMatch = RegExp(r'Live location:\s*(https?://maps\.google\.com/\?q=([-0-9.]+),([-0-9.]+))').firstMatch(trimmed);
+    if (liveLocationMatch != null) {
+      return Uri.tryParse(liveLocationMatch.group(1)!);
+    }
+
+    return null;
+  }
+
+  Future<void> _openLocationMessage(String text) async {
+    final webUri = _extractLocationUri(text);
+    if (webUri == null) return;
+
+    final coordinates = webUri.queryParameters['q']?.split(',');
+    final lat = coordinates != null && coordinates.isNotEmpty ? coordinates[0] : null;
+    final lng = coordinates != null && coordinates.length > 1 ? coordinates[1] : null;
+
+    if (lat != null && lng != null) {
+      final geoUri = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+      if (await canLaunchUrl(geoUri)) {
+        await launchUrl(geoUri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    }
+
+    await launchUrl(webUri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildMessageText(String text, bool isSentByMe) {
+    final locationUri = _extractLocationUri(text);
+    final displayText = isSentByMe ? text : text;
+    final textWidget = Text(
+      displayText,
+      style: TextStyle(
+        color: isSentByMe ? AppColors.white : AppColors.textPrimary,
+        fontSize: AppSizes.f14,
+        height: 1.4,
+        fontWeight: FontWeight.w400,
+        decoration: locationUri != null ? TextDecoration.underline : null,
+      ),
+    );
+
+    if (locationUri == null) {
+      return textWidget;
+    }
+
+    return InkWell(
+      onTap: () => _openLocationMessage(text),
+      child: textWidget,
+    );
+  }
   Widget _buildHighlightedText(
       String text,
       String searchQuery,
@@ -1021,7 +1055,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                           ),
                                           SizedBox(height: 2),
                                           Text(
-                                            message.replyTo!.content,
+                                            message.replyTo!.previewText,
                                             maxLines: 2,
                                             overflow:
                                             TextOverflow.ellipsis,
@@ -1114,6 +1148,17 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                             ),
                                           ),
                                         );
+                                      } else if (attachment.isAudio) {
+                                        return Container(
+                                          margin: EdgeInsets.only(
+                                            bottom: AppSizes.h8,
+                                          ),
+                                          child: ChatAudioMessageBubble(
+                                            messageId: message.id,
+                                            attachment: attachment,
+                                            isSentByMe: message.isSentByMe,
+                                          ),
+                                        );
                                       }
                                       return SizedBox.shrink();
                                     }),
@@ -1127,21 +1172,11 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                       model.searchQuery,
                                       message.isSentByMe,
                                     )
-                                        : Text(
+                                        : _buildMessageText(
                                       message.isSentByMe
                                           ? message.content
-                                          : message
-                                          .translatedContent,
-                                      style: TextStyle(
-                                        color:
-                                        message.isSentByMe
-                                            ? AppColors.white
-                                            : AppColors
-                                            .textPrimary,
-                                        fontSize: AppSizes.f14,
-                                        height: 1.4,
-                                        fontWeight: FontWeight.w400,
-                                      ),
+                                          : message.translatedContent,
+                                      message.isSentByMe,
                                     ),
                                   ],
 
@@ -1306,7 +1341,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   borderRadius: BorderRadiusGeometry.circular(8),
                 ),
                 child: Text(
-                  message.content,
+                  message.previewText,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: AppColors.gray,
@@ -1805,7 +1840,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
   Widget _buildVideoThumbnail(String videoUrl) {
     videoUrl = videoUrl.replaceFirst("http", "https");
-    print("efef ===> $videoUrl");
+    AppLogger.info('Generating video thumbnail');
     return FutureBuilder<String?>(
       future: _generateVideoThumbnail(videoUrl),
       builder: (context, snapshot) {
@@ -1875,6 +1910,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
 
   Widget _buildMessageInput(ChatViewModel model) {
+    final showSendButton =
+        (model.messageController.text.trim().isNotEmpty || model.hasImagePreview) &&
+        !model.isRecordingAudio;
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSizes.w16,
@@ -1892,251 +1931,100 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
         ],
       ),
       child: SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.lightGrey.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(AppSizes.v24),
-            border: Border.all(
-              color:
-              _messageFocusNode.hasFocus
-                  ? AppColors.primary.withValues(alpha: 0.3)
-                  : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          child: CommonTextField(
-            controller: model.messageController,
-            placeholder: 'Write Message',
-            onTapOutside: (event) {},
-            prefixIcon: GestureDetector(
-              onTap: model.toggleAttachment,
-              child: Container(
-                margin: EdgeInsets.all(8),
-                padding: EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: AppColors.lightGrey.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Image.asset(
-                  AppImages.attachment,
-                  width: 20,
-                  height: 20,
-                  color: AppColors.primaryDark,
-                ),
-              ) ,
-            ),
-            // // onFieldSubmitted: (value) => model.sendMessage(),
-            // prefixIcon: PopupMenuButton<String>(
-            //   onSelected: (value) => _handleAttachmentAction(value, model),
-            //   shape: RoundedRectangleBorder(
-            //     borderRadius: BorderRadius.circular(AppSizes.v23),
-            //     side: BorderSide(
-            //       color: AppColors.textGrey.withValues(alpha: 0.1),
-            //     ),
-            //   ),
-            //   elevation: 0,
-            //   position: PopupMenuPosition.over,
-            //   // offset: Offset(0, -370),
-            //   offset: Offset(0, -180),
-            //   menuPadding: EdgeInsets.zero,
-            //   color: AppColors.white,
-            //   itemBuilder:
-            //       (BuildContext context) => [
-            //     PopupMenuItem<String>(
-            //       value: 'file',
-            //       height: 34,
-            //       child: _buildAttachmentMenuItem(
-            //         icon: AppImages.file,
-            //         label: 'File',
-            //         color: AppColors.violetBlue,
-            //         onTap: () {},
-            //       ),
-            //     ),
-            //     PopupMenuDivider(height: 0.5),
-            //     PopupMenuItem<String>(
-            //       value: 'gallery',
-            //       height: 34,
-            //       child: _buildAttachmentMenuItem(
-            //         icon: AppImages.gallery,
-            //         label: 'Album',
-            //         color: AppColors.bluebackground,
-            //         onTap: () {},
-            //       ),
-            //     ),
-            //     PopupMenuDivider(height: 0.5),
-            //     PopupMenuItem<String>(
-            //       value: 'camera',
-            //       height: 34,
-            //       child: _buildAttachmentMenuItem(
-            //         icon: AppImages.camera,
-            //         label: 'Camera',
-            //         color: AppColors.greenbackground,
-            //         onTap: () {},
-            //       ),
-            //     ),
-            //     // PopupMenuDivider(height: 0.5),
-            //     // PopupMenuItem<String>(
-            //     //   value: 'location',
-            //     //   height: 34,
-            //     //   child: _buildAttachmentMenuItem(
-            //     //     icon: AppImages.location,
-            //     //     label: 'Location',
-            //     //     color: AppColors.redbackground,
-            //     //     onTap: () {},
-            //     //   ),
-            //     // ),
-            //     // PopupMenuDivider(height: 0.5),
-            //     // PopupMenuItem<String>(
-            //     //   value: 'video_call',
-            //     //   height: 34,
-            //     //   child: _buildAttachmentMenuItem(
-            //     //     icon: AppImages.video,
-            //     //     label: 'Video Call',
-            //     //     color: AppColors.backgroundlightgreen,
-            //     //     onTap: () {},
-            //     //   ),
-            //     // ),
-            //     // PopupMenuDivider(height: 0.5),
-            //     // PopupMenuItem<String>(
-            //     //   value: 'voice_call',
-            //     //   height: 34,
-            //     //   child: _buildAttachmentMenuItem(
-            //     //     icon: AppImages.phone,
-            //     //     label: 'Voice Call',
-            //     //     color: AppColors.colorFFB141,
-            //     //     onTap: () {},
-            //     //   ),
-            //     // ),
-            //   ],
-            //   child: Container(
-            //     margin: EdgeInsets.all(8),
-            //     padding: EdgeInsets.all(5),
-            //     decoration: BoxDecoration(
-            //       color: AppColors.lightGrey.withValues(alpha: 0.2),
-            //       borderRadius: BorderRadius.circular(10),
-            //     ),
-            //     child: Image.asset(
-            //       AppImages.attachment,
-            //       width: 20,
-            //       height: 20,
-            //       color: AppColors.primaryDark,
-            //     ),
-            //   ),
-            // ),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Camera button
-                GestureDetector(
-                  onTap:
-                      () => // Handle camera - add single image to multiple selection
-                  model.pickImageFromCamera(),
-                  child: Image.asset(
-                    AppImages.cameraOutlined,
-                    width: 20,
-                    height: 20,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-                SizedBox(width: AppSizes.w12),
-                // GestureDetector(
-                //   onTap: () {
-                //     // Handle voice message
-                //   },
-                //   child: Image.asset(
-                //     AppImages.microphone,
-                //     width: 20,
-                //     height: 20,
-                //     color: AppColors.textGrey,
-                //   ),
-                // ),
-                // SizedBox(width: AppSizes.w12),
-                GestureDetector(
-                  onTap:
-                  (model.isSendingMessage || model.isUploadingImage)
-                      ? null
-                      : () {
-                    // Send message when send button is tapped
-                    if (model.messageController.text
-                        .trim()
-                        .isNotEmpty ||
-                        model.hasImagePreview) {
-                      model.sendMessage();
-                    }
-                  },
-                  child:
-                  (model.isSendingMessage || model.isUploadingImage)
-                      ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.black,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: model.isRecordingAudio
+                    ? VoiceRecordingBar(
+                        key: const ValueKey('recording-bar'),
+                        duration: model.recordingDuration,
+                        cancelProgress: model.recordingCancelProgress,
+                        shouldCancel: model.shouldCancelRecording,
+                      )
+                    : Container(
+                        key: const ValueKey('message-input'),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGrey.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(AppSizes.v24),
+                          border: Border.all(
+                            color: _messageFocusNode.hasFocus
+                                ? AppColors.primary.withValues(alpha: 0.3)
+                                : Colors.transparent,
+                            width: 1,
+                          ),
+                        ),
+                        child: CommonTextField(
+                          controller: model.messageController,
+                          placeholder: 'Write Message',
+                          onTapOutside: (event) {},
+                          prefixIcon: GestureDetector(
+                            onTap: model.toggleAttachment,
+                            child: Container(
+                              margin: EdgeInsets.all(8),
+                              padding: EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: AppColors.lightGrey.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Image.asset(
+                                AppImages.attachment,
+                                width: 20,
+                                height: 20,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ),
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: model.pickImageFromCamera,
+                                child: Image.asset(
+                                  AppImages.cameraOutlined,
+                                  width: 20,
+                                  height: 20,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                              SizedBox(width: AppSizes.w12),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  )
-                      : Image.asset(
-                    AppImages.send,
-                    width: 20,
-                    height: 20,
-                    color:
-                    (model.messageController.text
-                        .trim()
-                        .isNotEmpty ||
-                        model.hasImagePreview) &&
-                        !model.isSendingMessage &&
-                        !model.isUploadingImage
-                        ? AppColors.primaryDark
-                        : AppColors.textGrey.withValues(alpha: 0.5),
-                  ),
-                ),
-                SizedBox(width: AppSizes.w12),
-              ],
+              ),
             ),
-          ),
+            SizedBox(width: AppSizes.w12),
+            VoiceRecordActionButton(
+              showSendButton: showSendButton,
+              isBusy: model.isSendingMessage || model.isUploadingImage,
+              isRecording: model.isRecordingAudio,
+              onSend: () {
+                if (showSendButton) {
+                  model.sendMessage();
+                }
+              },
+              onRecordStart: () {
+                FocusScope.of(context).unfocus();
+                if (model.showAttachment) {
+                  model.toggleAttachment();
+                }
+                model.startAudioRecording();
+              },
+              onRecordUpdate: (details) {
+                model.updateRecordingDrag(details.offsetFromOrigin.dx);
+              },
+              onRecordEnd: () {
+                model.completeRecordingGesture();
+              },
+            ),
+          ],
         ),
       ),
     );
   }
-
-  Widget _buildAttachmentMenuItem({
-    required String icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.w16,
-        vertical: AppSizes.h12,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSizes.v10),
-            ),
-            child: Center(
-              child: Image.asset(icon, width: 18, height: 18, color: color),
-            ),
-          ),
-          SizedBox(width: AppSizes.w12),
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: AppSizes.f14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<ChatViewModel>.reactive(
@@ -2318,7 +2206,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                 ),
                                 SizedBox(height: 2),
                                 Text(
-                                  model.replyMessage!.content,
+                                  model.replyMessage!.previewText,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -2396,20 +2284,20 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
                     builder: (context, status, _) {
 
-                      String status_new=(status==''?(widget.ticketStatus??''):model.ticketDetailsViewModel.currentOpenTicketStatus.value).toLowerCase();
+                      String statusNew = (status == '' ? (widget.ticketStatus ?? '') : model.ticketDetailsViewModel.currentOpenTicketStatus.value).toLowerCase();
 
                       AppLogger.info('''
                     currentOpenTicketStatus = ${model.ticketDetailsViewModel.currentOpenTicketStatus.value}\n
                     ticketStatus = ${widget.ticketStatus}\n
-                    status = $status_new\n
+                    status = $statusNew\n
                     ''');
-                      if (status_new == "resolved") {
+                      if (statusNew == "resolved") {
                         return SizedBox();
                       }
-                      else if (status_new == "on hold") {
+                      else if (statusNew == "on hold") {
                         return _buildTicketStatusMessage("Ticket is on Hold", AppColors.error);
                       }
-                      else if (status_new == "waiting for accept") {
+                      else if (statusNew == "waiting for accept") {
                         return _buildTicketStatusMessage("Ticket Waiting for Accept", AppColors.warning);
                       }
                       else {
@@ -2546,7 +2434,7 @@ class _PendingStatusCardState extends State<PendingStatusCard>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
             spreadRadius: 2,
           )
@@ -2641,7 +2529,7 @@ class AttachmentSheet extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
           )
         ],
@@ -2710,7 +2598,26 @@ class AttachmentSheet extends StatelessWidget {
                 icon: AppImages.location,
                 label: 'Location',
                 color: AppColors.redbackground,
-                onTap: () {},
+                onTap: () async {
+                  if (model.showAttachment) {
+                    model.toggleAttachment();
+                  }
+
+                  final result = await showModalBottomSheet<_LocationPickerResult>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const _LocationPickerSheet(),
+                  );
+
+                  if (result == null) return;
+
+                  await model.sendLocationMessage(
+                    latitude: result.latitude,
+                    longitude: result.longitude,
+                    isLiveLocation: result.isLiveLocation,
+                  );
+                },
               ),
 
               _buildAttachmentMenuItem(
@@ -2731,7 +2638,9 @@ class AttachmentSheet extends StatelessWidget {
                 icon: AppImages.microphone,
                 label: "Audio",
                 color: Colors.deepPurple,
-                onTap: () {},
+                onTap: () {
+                  model.pickAudioFileAndSend();
+                },
               ),
             ],
           ),
@@ -2755,7 +2664,7 @@ class AttachmentSheet extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Image.asset(
@@ -2780,32 +2689,401 @@ class AttachmentSheet extends StatelessWidget {
       ),
     );
   }
-  Widget _attachmentItem({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
 
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: color, size: 25),
+}
+
+class _LocationPickerResult {
+  const _LocationPickerResult({
+    required this.latitude,
+    required this.longitude,
+    this.isLiveLocation = false,
+  });
+
+  final double latitude;
+  final double longitude;
+  final bool isLiveLocation;
+}
+
+class _LocationPickerSheet extends StatefulWidget {
+  const _LocationPickerSheet();
+
+  @override
+  State<_LocationPickerSheet> createState() => _LocationPickerSheetState();
+}
+
+class _LocationPickerSheetState extends State<_LocationPickerSheet> {
+  Position? _currentPosition;
+  LatLng? _selectedLatLng;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocation();
+  }
+
+  Future<void> _loadLocation() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final position = await LocationService.getCurrentLocation();
+
+    if (!mounted) return;
+
+    if (position == null) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Location permission ya GPS unavailable hai.';
+      });
+      return;
+    }
+
+    setState(() {
+      _currentPosition = position;
+      _selectedLatLng = LatLng(position.latitude, position.longitude);
+      _isLoading = false;
+    });
+  }
+
+  void _submit({required bool isLiveLocation, LatLng? coordinates}) {
+    final point =
+        coordinates ??
+        _selectedLatLng ??
+        (_currentPosition == null
+            ? null
+            : LatLng(_currentPosition!.latitude, _currentPosition!.longitude));
+
+    if (point == null) return;
+
+    Navigator.of(context).pop(
+      _LocationPickerResult(
+        latitude: point.latitude,
+        longitude: point.longitude,
+        isLiveLocation: isLiveLocation,
+      ),
+    );
+  }
+
+  String _formatAccuracy() {
+    final accuracy = _currentPosition?.accuracy;
+    if (accuracy == null) return 'Fetching accuracy';
+    return 'Accurate to ${accuracy.toStringAsFixed(0)} meters';
+  }
+
+  String _formatCoordinates(LatLng point) {
+    return '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedPoint = _selectedLatLng;
+    final currentPoint =
+        _currentPosition == null
+            ? null
+            : LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+
+    return SafeArea(
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.88,
+        decoration: const BoxDecoration(
+          color: Color(0xFF08111C),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Send location',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: _loadLocation,
+                      icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : _error != null
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.location_off_rounded,
+                                    color: Colors.white70,
+                                    size: 42,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _error!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: _loadLocation,
+                                    child: const Text('Try again'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              SizedBox(
+                                height: 300,
+                                child: Stack(
+                                  children: [
+                                    GoogleMap(
+                                      initialCameraPosition: CameraPosition(
+                                        target: currentPoint!,
+                                        zoom: 16,
+                                      ),
+                                      myLocationEnabled: true,
+                                      myLocationButtonEnabled: false,
+                                      zoomControlsEnabled: false,
+                                      compassEnabled: false,
+                                      mapToolbarEnabled: false,
+                                      markers: {
+                                        Marker(
+                                          markerId: const MarkerId('current_location'),
+                                          position: currentPoint,
+                                          infoWindow: const InfoWindow(
+                                            title: 'Current location',
+                                          ),
+                                          icon: BitmapDescriptor.defaultMarkerWithHue(
+                                            BitmapDescriptor.hueAzure,
+                                          ),
+                                        ),
+                                        if (selectedPoint != null)
+                                          Marker(
+                                            markerId: const MarkerId('selected_location'),
+                                            position: selectedPoint,
+                                            infoWindow: const InfoWindow(
+                                              title: 'Selected location',
+                                            ),
+                                          ),
+                                      },
+                                      onTap: (point) {
+                                        setState(() {
+                                          _selectedLatLng = point;
+                                        });
+                                      },
+                                    ),
+                                    Positioned(
+                                      left: 16,
+                                      top: 16,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.55),
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: const Text(
+                                          'Tap map to pick location',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 16,
+                                      top: 16,
+                                      child: Material(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(18),
+                                        child: IconButton(
+                                          onPressed: () {                                            setState(() {
+                                              _selectedLatLng = currentPoint;
+                                            });
+                                          },
+                                          icon: const Icon(Icons.my_location_rounded),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: ListView(
+                                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+                                  children: [
+                                    _LocationActionTile(
+                                      icon: Icons.share_location_rounded,
+                                      title: 'Share live location',
+                                      subtitle: 'Send live location link in chat',
+                                      onTap: () => _submit(
+                                        isLiveLocation: true,
+                                        coordinates: currentPoint,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const Text(
+                                      'Location options',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _LocationActionTile(
+                                      icon: Icons.my_location_rounded,
+                                      title: 'Send your current location',
+                                      subtitle: _formatAccuracy(),
+                                      onTap: () => _submit(
+                                        isLiveLocation: false,
+                                        coordinates: currentPoint,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _LocationActionTile(
+                                      icon: Icons.location_on_rounded,
+                                      title: 'Send selected location',
+                                      subtitle: selectedPoint == null
+                                          ? 'Tap on map to choose location'
+                                          : _formatCoordinates(selectedPoint),
+                                      onTap: selectedPoint == null
+                                          ? null
+                                          : () => _submit(
+                                                isLiveLocation: false,
+                                                coordinates: selectedPoint,
+                                              ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 6),
-
-          Text(label, style: const TextStyle(fontSize: 10))
-        ],
+        ),
       ),
     );
   }
 }
+
+class _LocationActionTile extends StatelessWidget {
+  const _LocationActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF0E1B2A),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: Colors.white, size: 26),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: onTap == null ? Colors.white24 : Colors.white54,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
