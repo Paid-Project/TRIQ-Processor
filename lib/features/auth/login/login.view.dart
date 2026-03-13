@@ -47,6 +47,7 @@ class LoginView extends StatelessWidget {
                         SizedBox(height: AppSizes.h5),
                         _buildMainContent(context, model),
                         _buildSignUpPrompt(context, model),
+                        _buildTermsAndConditionsCheckbox(context),
                         // if (!model.showForgotPassword &&
                         //     !model.showOtpLogin &&
                         //     (model.loginMode == LoginMode.email || model.loginMode == LoginMode.phone) &&
@@ -58,7 +59,7 @@ class LoginView extends StatelessWidget {
                                 model.loginMode == LoginMode.phone) &&
                             !model.showOtpField) ...[
                           // _buildSignUpPrompt(context, model),
-                          _buildTermsAndConditionsCheckbox(context),
+
                           SizedBox(height: AppSizes.h20),
                         ],
                       ],
