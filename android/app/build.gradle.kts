@@ -3,10 +3,19 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android")
     // Flutter plugin MUST be after Android + Kotlin plugins
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
+}
+
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
 }
 
 //val keystoreProperties = Properties()
@@ -26,10 +35,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     defaultConfig {
         applicationId = "com.triqinnovationsProcessor.app"
         minSdk = flutter.minSdkVersion
@@ -37,6 +42,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
     }
 
 //    signingConfigs {
@@ -55,7 +63,6 @@ android {
 //            signingConfig = signingConfigs.getByName("release")
 //        }
         release {
-
             isMinifyEnabled = false
             isShrinkResources = false
             signingConfig = signingConfigs.getByName("debug")
@@ -83,3 +90,4 @@ dependencies {
 
     implementation("androidx.multidex:multidex:2.0.1")
 }
+

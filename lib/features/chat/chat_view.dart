@@ -5,7 +5,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
 import 'package:manager/features/stage/widgets/call_requiest_dialog.dart';
@@ -708,19 +707,26 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     final webUri = _extractLocationUri(text);
     if (webUri == null) return;
 
-    final coordinates = webUri.queryParameters['q']?.split(',');
-    final lat = coordinates != null && coordinates.isNotEmpty ? coordinates[0] : null;
-    final lng = coordinates != null && coordinates.length > 1 ? coordinates[1] : null;
+    try {
+      final coordinates = webUri.queryParameters['q']?.split(',');
+      final lat = coordinates != null && coordinates.isNotEmpty ? coordinates[0] : null;
+      final lng = coordinates != null && coordinates.length > 1 ? coordinates[1] : null;
 
-    if (lat != null && lng != null) {
-      final geoUri = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
-      if (await canLaunchUrl(geoUri)) {
-        await launchUrl(geoUri, mode: LaunchMode.externalApplication);
-        return;
+      if (lat != null && lng != null) {
+        final geoUri = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+        if (await canLaunchUrl(geoUri)) {
+          final launched = await launchUrl(geoUri, mode: LaunchMode.externalApplication);
+          if (launched) return;
+        }
       }
-    }
 
-    await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      final launchedWeb = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      if (!launchedWeb) {
+        Fluttertoast.showToast(msg: 'Map open nahi ho pa raha.');
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Map open nahi ho pa raha.');
+    }
   }
 
   Widget _buildMessageText(String text, bool isSentByMe) {
@@ -2713,7 +2719,7 @@ class _LocationPickerSheet extends StatefulWidget {
 
 class _LocationPickerSheetState extends State<_LocationPickerSheet> {
   Position? _currentPosition;
-  LatLng? _selectedLatLng;
+  bool _hasLocationPermission = false;
   bool _isLoading = true;
   String? _error;
 
@@ -2729,39 +2735,68 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
       _error = null;
     });
 
-    final position = await LocationService.getCurrentLocation();
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-    if (!mounted) return;
+      _hasLocationPermission =
+          permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
 
-    if (position == null) {
+      if (!_hasLocationPermission) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _error = 'Location permission denied.';
+        });
+        return;
+      }
+
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _error = 'Location service (GPS) off hai.';
+        });
+        return;
+      }
+
+      final position = await LocationService.getCurrentLocation();
+
+      if (!mounted) return;
+
+      if (position == null) {
+        setState(() {
+          _isLoading = false;
+          _error = 'Location fetch nahi ho pa raha. Phir se try karein.';
+        });
+        return;
+      }
+
+      setState(() {
+        _currentPosition = position;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Location permission ya GPS unavailable hai.';
+        _error = 'Location load fail ho gaya. Phir se try karein.';
       });
-      return;
     }
-
-    setState(() {
-      _currentPosition = position;
-      _selectedLatLng = LatLng(position.latitude, position.longitude);
-      _isLoading = false;
-    });
   }
 
-  void _submit({required bool isLiveLocation, LatLng? coordinates}) {
-    final point =
-        coordinates ??
-        _selectedLatLng ??
-        (_currentPosition == null
-            ? null
-            : LatLng(_currentPosition!.latitude, _currentPosition!.longitude));
-
-    if (point == null) return;
+  void _submit({required bool isLiveLocation}) {
+    final position = _currentPosition;
+    if (position == null) return;
 
     Navigator.of(context).pop(
       _LocationPickerResult(
-        latitude: point.latitude,
-        longitude: point.longitude,
+        latitude: position.latitude,
+        longitude: position.longitude,
         isLiveLocation: isLiveLocation,
       ),
     );
@@ -2773,21 +2808,17 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
     return 'Accurate to ${accuracy.toStringAsFixed(0)} meters';
   }
 
-  String _formatCoordinates(LatLng point) {
-    return '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
+  String _formatCoordinates() {
+    final position = _currentPosition;
+    if (position == null) return 'Coordinates unavailable';
+    return '${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedPoint = _selectedLatLng;
-    final currentPoint =
-        _currentPosition == null
-            ? null
-            : LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
-
     return SafeArea(
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.88,
+        height: MediaQuery.of(context).size.height * 0.6,
         decoration: const BoxDecoration(
           color: Color(0xFF08111C),
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -2860,136 +2891,58 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
                               ),
                             ),
                           )
-                        : Column(
+                        : ListView(
+                            padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
                             children: [
-                              SizedBox(
-                                height: 300,
-                                child: Stack(
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    GoogleMap(
-                                      initialCameraPosition: CameraPosition(
-                                        target: currentPoint!,
-                                        zoom: 16,
-                                      ),
-                                      myLocationEnabled: true,
-                                      myLocationButtonEnabled: false,
-                                      zoomControlsEnabled: false,
-                                      compassEnabled: false,
-                                      mapToolbarEnabled: false,
-                                      markers: {
-                                        Marker(
-                                          markerId: const MarkerId('current_location'),
-                                          position: currentPoint,
-                                          infoWindow: const InfoWindow(
-                                            title: 'Current location',
-                                          ),
-                                          icon: BitmapDescriptor.defaultMarkerWithHue(
-                                            BitmapDescriptor.hueAzure,
-                                          ),
-                                        ),
-                                        if (selectedPoint != null)
-                                          Marker(
-                                            markerId: const MarkerId('selected_location'),
-                                            position: selectedPoint,
-                                            infoWindow: const InfoWindow(
-                                              title: 'Selected location',
-                                            ),
-                                          ),
-                                      },
-                                      onTap: (point) {
-                                        setState(() {
-                                          _selectedLatLng = point;
-                                        });
-                                      },
-                                    ),
-                                    Positioned(
-                                      left: 16,
-                                      top: 16,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.55),
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: const Text(
-                                          'Tap map to pick location',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
+                                    const Text(
+                                      'Current location',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
                                       ),
                                     ),
-                                    Positioned(
-                                      right: 16,
-                                      top: 16,
-                                      child: Material(
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _formatCoordinates(),
+                                      style: const TextStyle(
                                         color: Colors.white,
-                                        borderRadius: BorderRadius.circular(18),
-                                        child: IconButton(
-                                          onPressed: () {                                            setState(() {
-                                              _selectedLatLng = currentPoint;
-                                            });
-                                          },
-                                          icon: const Icon(Icons.my_location_rounded),
-                                        ),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _formatAccuracy(),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Expanded(
-                                child: ListView(
-                                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
-                                  children: [
-                                    _LocationActionTile(
-                                      icon: Icons.share_location_rounded,
-                                      title: 'Share live location',
-                                      subtitle: 'Send live location link in chat',
-                                      onTap: () => _submit(
-                                        isLiveLocation: true,
-                                        coordinates: currentPoint,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    const Text(
-                                      'Location options',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _LocationActionTile(
-                                      icon: Icons.my_location_rounded,
-                                      title: 'Send your current location',
-                                      subtitle: _formatAccuracy(),
-                                      onTap: () => _submit(
-                                        isLiveLocation: false,
-                                        coordinates: currentPoint,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    _LocationActionTile(
-                                      icon: Icons.location_on_rounded,
-                                      title: 'Send selected location',
-                                      subtitle: selectedPoint == null
-                                          ? 'Tap on map to choose location'
-                                          : _formatCoordinates(selectedPoint),
-                                      onTap: selectedPoint == null
-                                          ? null
-                                          : () => _submit(
-                                                isLiveLocation: false,
-                                                coordinates: selectedPoint,
-                                              ),
-                                    ),
-                                  ],
-                                ),
+                              const SizedBox(height: 16),
+                              _LocationActionTile(
+                                icon: Icons.my_location_rounded,
+                                title: 'Send your current location',
+                                subtitle: 'Send exact coordinates in chat',
+                                onTap: () => _submit(isLiveLocation: false),
+                              ),
+                              const SizedBox(height: 10),
+                              _LocationActionTile(
+                                icon: Icons.share_location_rounded,
+                                title: 'Share live location',
+                                subtitle: 'Send live location link in chat',
+                                onTap: () => _submit(isLiveLocation: true),
                               ),
                             ],
                           ),
@@ -3072,6 +3025,11 @@ class _LocationActionTile extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
 
 
 

@@ -2,7 +2,6 @@
 #
 # Indicates whether the localizations should be
 # generated in a synthetic package or in the current one.
-synthetic-package: false
 
 # Directory containing the .arb files.
 arb-dir: lib/l10n

@@ -4,4 +4,5 @@
     <string name="facebook_app_id">1381992976341024</string>
     <string name="fb_login_protocol_scheme">fb1381992976341024</string>
     <string name="facebook_client_token">ceb3b7bbf08f76b30cb361838b593803</string>
+    <string name="google_maps_api_key">YOUR_GOOGLE_MAPS_API_KEY</string>
 </resources>

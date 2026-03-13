@@ -192,32 +192,42 @@ class ChatViewModel extends ReactiveViewModel {
     double? longitude,
     bool isLiveLocation = false,
   }) async {
-    final selectedPosition =
-        position ?? await LocationService.getCurrentLocation();
+    try {
+      final selectedPosition =
+          position ?? await LocationService.getCurrentLocation();
 
-    final lat = latitude ?? selectedPosition?.latitude;
-    final lng = longitude ?? selectedPosition?.longitude;
+      final lat = latitude ?? selectedPosition?.latitude;
+      final lng = longitude ?? selectedPosition?.longitude;
 
-    if (lat == null || lng == null) return;
+      if (lat == null || lng == null) {
+        Fluttertoast.showToast(
+          msg: 'Location available nahi hai. Permission/GPS check karein.',
+        );
+        return;
+      }
 
-    final locationUrl = 'https://maps.google.com/?q=$lat,$lng';
-    final content =
-        isLiveLocation ? 'Live location: $locationUrl' : locationUrl;
-    final clientMessageId = _createClientMessageId();
+      final locationUrl = 'https://maps.google.com/?q=$lat,$lng';
+      final content =
+          isLiveLocation ? 'Live location: $locationUrl' : locationUrl;
+      final clientMessageId = _createClientMessageId();
 
-    _socketService.sendMessage(
-      roomId: roomId,
-      content: content,
-      event: chatEvents[chatRoomScreenType.name]['send'],
-      messageType: MessageType.location.name,
-      clientMessageId: clientMessageId,
-    );
+      _socketService.sendMessage(
+        roomId: roomId,
+        content: content,
+        event: chatEvents[chatRoomScreenType.name]['send'],
+        messageType: MessageType.location.name,
+        clientMessageId: clientMessageId,
+      );
 
-    _addLocalMessage(
-      content,
-      messageType: MessageType.location.name,
-      clientMessageId: clientMessageId,
-    );
+      _addLocalMessage(
+        content,
+        messageType: MessageType.location.name,
+        clientMessageId: clientMessageId,
+      );
+    } catch (e) {
+      AppLogger.error('Failed to send location message: $e');
+      Fluttertoast.showToast(msg: 'Location send nahi ho paya.');
+    }
   }
 
   /// Handle new incoming messages
@@ -1644,6 +1654,7 @@ class ChatViewModel extends ReactiveViewModel {
     }
   }
 }
+
 
 
 
