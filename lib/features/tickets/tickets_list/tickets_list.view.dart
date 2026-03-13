@@ -725,7 +725,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
       final difference = now.difference(createdAt);
 
       if (difference.inDays > 0) {
-        return '${difference.inDays}d ${difference.inHours % 24}h}';
+        return '${difference.inDays}d ${difference.inHours % 24}h';
       } else if (difference.inHours > 0) {
         return '${difference.inHours}h ${difference.inMinutes % 60}m';
       } else {

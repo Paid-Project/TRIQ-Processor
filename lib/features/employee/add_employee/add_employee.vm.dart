@@ -156,7 +156,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
   bool get isPartialyAdd => _screenMode.value == ScreenMode.partialAdd;
   bool get isPartialEdit => _isPartialEdit;
   List<Employee> get reportToList => _reportToList.value;
-
+  List<String> selectedReportToIds = [];
   final List<String> bloodGroups = [
     'O+',
     'A+',
@@ -228,7 +228,14 @@ class AddEmployeeViewModel extends ReactiveViewModel {
       _screenMode.value = ScreenMode.create;
     }
   }
-
+  void toggleReportTo(String id) {
+    if (selectedReportToIds.contains(id)) {
+      selectedReportToIds.remove(id);
+    } else {
+      selectedReportToIds.add(id);
+    }
+    notifyListeners();
+  }
   Future<void> loadEmployeeForEdit(String employeeId) async {
     try {
       final result = await _employeeService.getEmployeeById(employeeId);
@@ -802,7 +809,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
       context: context,
       initialDate: startDateTime ?? DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      lastDate: DateTime.now(), // future date disable
     );
 
     if (date != null) {
@@ -891,6 +898,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
   }
 
   void updateSelectedDepartment(DepartmentModel? location) {
+    selectedReportToIds = [];
     if (location?.id == 'new') {
       // showCreateDepartmentDialog(context, viewModel)
     } else if (location != null) {
@@ -1101,7 +1109,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
           bloodGroup: _selectedBloodGroup,
           country: _selectedCountry?.code,
           area: customFactoryLocationController.text.trim(),
-          reportTo: _selectedReportToEmployee.value?.id,
+          reportTo:selectedReportToIds,
           employeeType: _selectedEmploymentType.value,
           shiftTiming: _shiftTiming.value,
           personalAddress: personalAddress,

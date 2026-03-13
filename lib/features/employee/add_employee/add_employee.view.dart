@@ -295,13 +295,22 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                 placeholder: LanguageService.get('enter_email'),
                                 keyboardType: TextInputType.emailAddress,
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
-                                validator:
-                                    (value) =>
-                                        value?.isEmpty == true
-                                            ? LanguageService.get(
-                                              'Please Enter Mail',
-                                            )
-                                            : null,
+                                validator: (value) {
+
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please Enter Mail';
+                                  }
+
+                                  final emailRegex = RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  );
+
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return 'Please Enter Valid Email';
+                                  }
+
+                                  return null;
+                                },
                               ),
                             ),
                             if (!viewModel.isViewMode) ...[
@@ -536,68 +545,135 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                             strokeWidth: 2,
                                           ),
                                         )
-                                        : CustomDropdownFormField<String>(
-                                          key: ValueKey('report_to_${viewModel.reportToList.length}'),
-                                          hintText: viewModel.reportToList.isEmpty
-                                                  ? 'No eligible employees found'
-                                                  : LanguageService.get('report_to'),
-                                          value:
-                                              viewModel
-                                                  .selectedReportToEmployee
-                                                  ?.id, // ✅ ID use karo
-                                          items: viewModel.reportToList.map((Employee emp,) {
-                                                return DropdownMenuItem<String>(
-                                                  value: emp.id,
-                                                  child: Text(
-                                                    "${emp.name ?? 'Unknown'} (${emp.designation?.name ?? 'N/A'})",
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                );
-                                              }).toList(),
-                                          onChanged:
-                                              viewModel.isViewMode ||
-                                                      viewModel
-                                                          .reportToList
-                                                          .isEmpty
-                                                  ? null
-                                                  : (String? selectedId) {
-                                                    // ✅ String receive karo
-                                                    if (selectedId != null) {
-                                                      final selectedEmployee =
-                                                          viewModel.reportToList
-                                                              .firstWhere(
-                                                                (emp) =>
-                                                                    emp.id ==
-                                                                    selectedId,
-                                                              );
-                                                      viewModel
-                                                          .updateSelectedReportTo(
-                                                            selectedEmployee,
-                                                            selectedEmployee
-                                                                .name,
-                                                          );
-                                                    }
+                                        :
+                                CustomDropdownFormField<String>(
+                                  key: ValueKey('report_to_${viewModel.reportToList.length}'),
+                                  isExpanded: true,
+                                  hintText: viewModel.selectedReportToIds.isEmpty
+                                      ? LanguageService.get('report_to')
+                                      : "${viewModel.selectedReportToIds.length} selected",
+
+                                  value: null,
+
+                                  items: viewModel.reportToList.map((Employee emp) {
+                                    return DropdownMenuItem<String>(
+                                      value: emp.id,
+                                      enabled: false,
+
+                                      child: StatefulBuilder(
+                                        builder: (context, menuSetState) {
+
+                                          final isSelected =
+                                          viewModel.selectedReportToIds.contains(emp.id);
+
+                                          return InkWell(
+                                            onTap: () {
+                                              viewModel.toggleReportTo(emp.id!);
+                                              menuSetState(() {});
+                                            },
+                                            child: Row(
+                                              children: [
+                                                Checkbox(
+                                                  value: isSelected,
+                                                  onChanged: (val) {
+                                                    viewModel.toggleReportTo(emp.id!);
+                                                    menuSetState(() {});
                                                   },
-                                          label: '',
-                                          validator: (value) {
-                                            if (viewModel
-                                                        .selectedDesignation
-                                                        ?.name !=
-                                                    'CEO' &&
-                                                !viewModel.isViewMode &&
-                                                viewModel
-                                                    .reportToList
-                                                    .isNotEmpty) {
-                                              if (value == null ||
-                                                  value.isEmpty) {
-                                                return 'Please select report to';
-                                              }
-                                            }
-                                            return null;
-                                          },
-                                        ),
+                                                ),
+
+                                                Expanded(
+                                                  child: Text(
+                                                    "${capitalize(emp.name ?? 'Unknown')} (${emp.designation?.name ?? 'N/A'})",
+                                                    style: TextStyle(fontSize: 14),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }).toList(),
+
+                                  onChanged: viewModel.isViewMode || viewModel.reportToList.isEmpty
+                                      ? null
+                                      : (_) {},
+
+                                  label: '',
+                                  validator: (value) {
+                                    if (viewModel.selectedDesignation?.name != 'CEO' &&
+                                        !viewModel.isViewMode &&
+                                        viewModel.reportToList.isNotEmpty) {
+
+                                      if (viewModel.selectedReportToIds.isEmpty) {
+                                        return 'Please select report to';
+                                      }
+                                    }
+                                    return null;
+                                  },
+                                )
+                                // CustomDropdownFormField<String>(
+                                //           key: ValueKey('report_to_${viewModel.reportToList.length}'),
+                                //           hintText: viewModel.reportToList.isEmpty
+                                //                   ? 'No eligible employees found'
+                                //                   : LanguageService.get('report_to'),
+                                //           value:
+                                //               viewModel
+                                //                   .selectedReportToEmployee
+                                //                   ?.id, // ✅ ID use karo
+                                //           items: viewModel.reportToList.map((Employee emp,) {
+                                //                 return DropdownMenuItem<String>(
+                                //                   value: emp.id,
+                                //                   child: Text(
+                                //                     "${emp.name ?? 'Unknown'} (${emp.designation?.name ?? 'N/A'})",
+                                //                     style: TextStyle(
+                                //                       fontSize: 14,
+                                //                     ),
+                                //                   ),
+                                //                 );
+                                //               }).toList(),
+                                //           onChanged:
+                                //               viewModel.isViewMode ||
+                                //                       viewModel
+                                //                           .reportToList
+                                //                           .isEmpty
+                                //                   ? null
+                                //                   : (String? selectedId) {
+                                //                     // ✅ String receive karo
+                                //                     if (selectedId != null) {
+                                //                       final selectedEmployee =
+                                //                           viewModel.reportToList
+                                //                               .firstWhere(
+                                //                                 (emp) =>
+                                //                                     emp.id ==
+                                //                                     selectedId,
+                                //                               );
+                                //                       viewModel
+                                //                           .updateSelectedReportTo(
+                                //                             selectedEmployee,
+                                //                             selectedEmployee
+                                //                                 .name,
+                                //                           );
+                                //                     }
+                                //                   },
+                                //           label: '',
+                                //           validator: (value) {
+                                //             if (viewModel
+                                //                         .selectedDesignation
+                                //                         ?.name !=
+                                //                     'CEO' &&
+                                //                 !viewModel.isViewMode &&
+                                //                 viewModel
+                                //                     .reportToList
+                                //                     .isNotEmpty) {
+                                //               if (value == null ||
+                                //                   value.isEmpty) {
+                                //                 return 'Please select report to';
+                                //               }
+                                //             }
+                                //             return null;
+                                //           },
+                                //         ),
                               ),
 
                               // Debug info
@@ -950,6 +1026,22 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                 placeholder: LanguageService.get('enter_email'),
                                 keyboardType: TextInputType.emailAddress,
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
+                                validator: (value) {
+
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please Enter Mail';
+                                  }
+
+                                  final emailRegex = RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  );
+
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return 'Please Enter Valid Email';
+                                  }
+
+                                  return null;
+                                },
                                 // validator:
                                 //     (value) =>
                                 //         value?.isEmpty == true
@@ -1194,4 +1286,8 @@ class _FormSection extends StatelessWidget {
       ],
     );
   }
+}
+String capitalize(String text) {
+  if (text.isEmpty) return text;
+  return text[0].toUpperCase() + text.substring(1);
 }

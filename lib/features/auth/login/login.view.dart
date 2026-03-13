@@ -322,11 +322,22 @@ class LoginView extends StatelessWidget {
                     controller: model.emailController,
                     label: LanguageService.get('email_address'),
                     keyboardType: TextInputType.emailAddress,
-                    validator:
-                        (value) =>
-                            value?.isEmpty == true
-                                ? LanguageService.get('please_enter_email')
-                                : null,
+                    validator: (value) {
+
+                      if (value == null || value.isEmpty) {
+                        return 'Please Enter Mail';
+                      }
+
+                      final emailRegex = RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      );
+
+                      if (!emailRegex.hasMatch(value)) {
+                        return 'Please Enter Valid Email';
+                      }
+
+                      return null;
+                    },
                   ),
                   SizedBox(height: AppSizes.h5),
                 ],
@@ -687,11 +698,22 @@ class LoginView extends StatelessWidget {
                   controller: model.forgotEmailController,
                   label: LanguageService.get('email_address'),
                   keyboardType: TextInputType.emailAddress,
-                  validator:
-                      (value) =>
-                          value?.isEmpty == true
-                              ? LanguageService.get('please_enter_email')
-                              : null,
+                  validator: (value) {
+
+                    if (value == null || value.isEmpty) {
+                      return 'Please Enter Mail';
+                    }
+
+                    final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    );
+
+                    if (!emailRegex.hasMatch(value)) {
+                      return 'Please Enter Valid Email';
+                    }
+
+                    return null;
+                  },
                   prefixIcon: Icons.email_outlined,
                 ),
               ],
@@ -979,11 +1001,22 @@ class LoginView extends StatelessWidget {
                   controller: model.forgotEmailController,
                   label: LanguageService.get('email_address'),
                   keyboardType: TextInputType.emailAddress,
-                  validator:
-                      (value) =>
-                          value?.isEmpty == true
-                              ? LanguageService.get('please_enter_email')
-                              : null,
+                  validator: (value) {
+
+                    if (value == null || value.isEmpty) {
+                      return 'Please Enter Mail';
+                    }
+
+                    final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    );
+
+                    if (!emailRegex.hasMatch(value)) {
+                      return 'Please Enter Valid Email';
+                    }
+
+                    return null;
+                  },
                 ),
                 SizedBox(height: 8),
                 Align(

@@ -132,7 +132,22 @@ class RegisterView extends StatelessWidget {
             controller: model.emailController,
             label: LanguageService.get('email'),
             keyboardType: TextInputType.emailAddress,
-            validator: (value) => value?.isEmpty == true ? LanguageService.get('please_enter_email') : null,
+            validator: (value) {
+
+              if (value == null || value.isEmpty) {
+                return 'Please Enter Mail';
+              }
+
+              final emailRegex = RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              );
+
+              if (!emailRegex.hasMatch(value)) {
+                return 'Please Enter Valid Email';
+              }
+
+              return null;
+            },
           ),
 
           SizedBox(height: AppSizes.h13),

@@ -214,7 +214,7 @@ class EmployeeService {
     String? bloodGroup,
     String? country,
     String? area,
-    String? reportTo,
+    List<String> ? reportTo,
     String? machineId,
     String? employeeType,
     String? shiftTiming,
@@ -241,7 +241,7 @@ class EmployeeService {
       if (bloodGroup != null) fields['bloodGroup'] = bloodGroup;
       if (country != null) fields['country'] = country;
       if (area != null) fields['area'] = area;
-      if (reportTo != null) fields['reportTo'] = reportTo;
+      if (reportTo != null) fields['reportTo'] =  json.encode(reportTo);
       if (employeeType != null) fields['employeeType'] = employeeType;
       if (shiftTiming != null) fields['shiftTiming'] = shiftTiming;
 
