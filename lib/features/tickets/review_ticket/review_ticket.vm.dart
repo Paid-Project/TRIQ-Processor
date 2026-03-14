@@ -2,7 +2,7 @@ import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart' show GetNavigation;
-import 'package:manager/features/tickets/tickets_list/tickets_list.view.dart';
+
 import 'package:stacked_services/stacked_services.dart';
 import 'package:stacked/stacked.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -16,10 +16,13 @@ import 'package:manager/services/api.service.dart';
 import 'package:manager/api_endpoints.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:http_parser/http_parser.dart' as http_parser;
-
 import '../../../routes/routes.dart';
-import '../../stage/stage.view.dart';
 import '../../../services/stage.service.dart';
+import '../../stage/stage.view.dart';
+
+
+
+
 
 class ReviewTicketViewModel extends ReactiveViewModel {
   final TextEditingController couponController = TextEditingController();
@@ -29,6 +32,7 @@ class ReviewTicketViewModel extends ReactiveViewModel {
   final TicketService _ticketService = locator<TicketService>();
   final ApiService _apiService = locator<ApiService>();
   final _stageService = locator<StageService>();
+
   ReviewTicketModel? _ticketData;
   String? _ticketId;
   PendingTicketData? _pendingTicketData;
@@ -239,7 +243,6 @@ print("Ticket response.statusCod:- ${response.statusCode}");
         final ticketsListViewModel = locator<TicketsListViewModel>();
         await ticketsListViewModel.loadTickets(forceRefresh: true);
         // Get.off(()=> TicketsListView());
-        // Navigate back
         // _navigationService.back();
         // _navigationService.clearStackAndShow(
         //   Routes.ticketsSummary,
@@ -253,10 +256,32 @@ print("Ticket response.statusCod:- ${response.statusCode}");
           backgroundColor: Colors.green,
         );
 
-        await _navigationService.clearStackAndShow(
-          Routes.stage,
-          arguments: StageViewAttributes(selectedBottomNavIndex: 1),
-        );
+        // Update the tab selection first so StageView shows Tickets when we return.
+        _stageService.updateSelectedBottomNavIndex(1);
+
+        // Safely pop back to StageView if it's already in the stack.
+        final navigator = StackedService.navigatorKey?.currentState;
+        bool foundStage = false;
+        if (navigator != null) {
+          navigator.popUntil((route) {
+            if (route.settings.name == Routes.stage) {
+              foundStage = true;
+              return true;
+            }
+            return route.isFirst;
+          });
+        }
+
+        // If StageView wasn't in the stack, replace the current route with it.
+        if (!foundStage) {
+          await _navigationService.replaceWith(
+            Routes.stage,
+            arguments: StageViewAttributes(selectedBottomNavIndex: 1),
+          );
+        }
+
+
+
       } else {
         AppLogger.error('Failed to send notification: ${response.statusCode}');
         // _navigationService.clearStackAndShow(
@@ -539,6 +564,4 @@ print("Ticket response.statusCod:- ${response.statusCode}");
     super.dispose();
   }
 }
-
-
 

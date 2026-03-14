@@ -613,13 +613,13 @@ class ReviewTicketView extends StatelessWidget {
     BuildContext context,
     ReviewTicketViewModel model,
   ) {
-    final ticketData = model.ticketData;
-    if (ticketData == null) return SizedBox.shrink();
+        final ticketData = model.ticketData;
+        if (ticketData == null) return SizedBox.shrink();
 
-    // final cost = ticketData.pricingDetails?.cost ?? 0;
-    final cost = 0;
-    final currency = ticketData.pricingDetails?.currency ?? "USD";
-    final formattedCost = _formatCurrency(cost, currency);
+        // final cost = ticketData.pricingDetails?.cost ?? 0;
+         final cost = 0;
+         final currency = ticketData.pricingDetails?.currency ?? "USD";
+         final formattedCost = _formatCurrency(cost, currency);
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),

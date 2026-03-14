@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:manager/core/utils/app_logger.dart';
 import 'package:manager/core/utils/navigation/app_navigation_observer.dart';
+
 import 'package:manager/routes/router.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
-import '../features/auth/login/login.view.dart';
 import '../l10n/app_localizations.dart';
 import '../resources/app_resources/app_resources.dart';
 import 'app.vm.dart';
+
 
 /// A global key for managing snack bars and other scaffold-related actions
 /// throughout the manager.
@@ -32,6 +32,7 @@ class AppView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<AppViewModel>.reactive(
+
       /// Provides an instance of [AppViewModel].
       viewModelBuilder: () => AppViewModel(),
 
@@ -71,8 +72,9 @@ class AppView extends StatelessWidget {
           locale: const Locale('en'),
 
           /// Determines the initial screen based on the manager's state.
-          home:model.homeNavigation(),
+          initialRoute: model.getInitialRoute(),
         );
+
       },
     );
   }

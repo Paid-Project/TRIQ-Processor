@@ -13,8 +13,12 @@
 /// - **`login`** → `/login` (Login screen)
 /// - **`register`** → `/register` (Registration screen)
 abstract class Routes {
+  /// Route for the root/initial screen.
+  static const String root = '/';
+
   /// Route for the login screen.
   static const String login = '/login';
+
 
   /// Route for the registration screen.
   static const String register = '/register';
@@ -184,6 +188,7 @@ abstract class Routes {
   static const String introduction = '/introduction';
   static const String authSelectionView = '/authSelectionView';
   static const String generalSetting = '/generalSetting';
+  static const String languageSelection = '/languageSelection';
 
   static const String myWallet = '/myWallet';
 
@@ -197,6 +202,7 @@ abstract class Routes {
   static const String reviewTicket = '/reviewTicket';
   static const String videoPlayer = '/videoPlayer';
   static const String ticketDetails = '/ticketDetails';
+  static const String groupInfoScreen = '/groupInfoScreen';
   static const String teams = '/teams';
   static const String glassFlowSystem = '/glass-flow-system';
   static const String feedbackSurvey = '/survey';

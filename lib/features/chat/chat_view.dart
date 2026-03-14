@@ -1287,7 +1287,11 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                   children: [
                                     _buildMessageStatus(message),
                                     SizedBox(width: AppSizes.w6),
-                                    _buildMessageSeenStatus(message),
+                                    GestureDetector(
+                                        onTap: () {
+                                          _showRecipientList(message);
+                                        },
+                                        child: _buildMessageSeenStatus(message)),
                                   ],
                                 ),
                               ],
@@ -1498,6 +1502,17 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     } else {
       return 'Just now';
     }
+  }
+  void _showRecipientList(ChatMessageModel message) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return RecipientListWidget(message: message);
+      },
+    );
   }
 
   Widget _buildImagePreview(ChatViewModel model) {
@@ -3026,6 +3041,183 @@ class _LocationActionTile extends StatelessWidget {
   }
 }
 
+class RecipientListWidget extends StatefulWidget {
+  final ChatMessageModel message;
+
+  const RecipientListWidget({super.key, required this.message});
+
+  @override
+  State<RecipientListWidget> createState() => _RecipientListWidgetState();
+}
+
+class _RecipientListWidgetState extends State<RecipientListWidget> {
+
+  int selectedTab = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    //
+    // final readUsers = widget.message.readBy;
+    // final unreadUsers = widget.message.sentTo
+    //     .where((u) => !readUsers.any((r) => r.id == u.id))
+    //     .toList();
+
+    // final users = selectedTab == 0 ? unreadUsers : readUsers;
+
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        height: MediaQuery.of(context).size.height * 0.5,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+
+            /// drag handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            /// header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        "Recipient List",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                SizedBox(width: 40,)
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            /// tabs
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Row(
+                  children: [
+
+                    _tabButton(
+                      // title: "Unread (${unreadUsers.length})",
+                      title: "Unread ()",
+                      index: 0,
+                    ),
+
+                    _tabButton(
+                      title: "Read ()",
+                      // title: "Read (${readUsers.length})",
+                      index: 1,
+                    ),
+
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            /// user list
+            Expanded(
+              child: ListView.builder(
+                itemCount: 10,
+                itemBuilder: (context, index) {
+
+                  // final user = users[index];
+
+                  return Container(
+
+                    padding: EdgeInsets.symmetric(horizontal: AppSizes.f8),
+                    decoration: BoxDecoration(
+
+                      border: Border(
+
+                        bottom: BorderSide(
+                          color: Colors.grey.shade300,
+                          width: 1,
+
+                        ),
+                      ),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.grey.shade200,
+                        child: Text(
+                           "?",
+                        ),
+                      ),
+                      title: Text("Leslie Alexander",style: TextStyle(fontSize: 14,color: AppColors.black),),
+
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tabButton({required String title, required int index}) {
+
+    final isSelected = selectedTab == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedTab = index;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: selectedTab == 0 ?BorderRadius.horizontal(right: Radius.circular(0),left: Radius.circular(25)):BorderRadius.horizontal(right: Radius.circular(25),left: Radius.circular(0)),
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 
 

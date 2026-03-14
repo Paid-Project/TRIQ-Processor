@@ -7,6 +7,7 @@ import 'package:stacked/stacked.dart';
 import '../core/locator.dart';
 import '../features/language/language_selection_view.dart';
 import '../features/tickets/tickets_list/tickets_list.vm.dart';
+import '../routes/routes.dart';
 
 class AppViewModel extends ReactiveViewModel {
   final _ticketsListViewModel = locator<TicketsListViewModel>();
@@ -25,6 +26,19 @@ class AppViewModel extends ReactiveViewModel {
     }
     return LoginView();
   }
+
+  String getInitialRoute() {
+    if (isFirstTimeUser()) {
+      return Routes.languageSelection;
+    }
+
+    if (getUser().token?.isNotEmpty == true) {
+      return Routes.stage;
+    }
+    return Routes.login;
+  }
+
+
 
   bool isFirstTimeUser() {
     return !hasLanguageBeenSelected();

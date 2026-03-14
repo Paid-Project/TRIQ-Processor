@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:manager/core/storage/storage.dart';
+
 import 'package:manager/features/chat/chat_list.view.dart';
 import 'package:manager/features/chat/chat_view.dart';
 import 'package:manager/features/auth/login/login.view.dart';
@@ -23,14 +25,17 @@ import 'package:manager/features/qr/scan_qr/scan_qr.view.dart';
 import 'package:manager/features/requests/approvals/approval.view.dart';
 import 'package:manager/features/search/search_view.dart';
 import 'package:manager/features/stage/stage.view.dart';
+import 'package:manager/features/language/language_selection_view.dart';
 import 'package:manager/routes/routes.dart';
 import 'package:stacked/stacked.dart';
 import 'package:manager/features/teams/department/team_list.view.dart';
 import 'package:manager/core/models/pending_ticket_data.dart';
+import '../app/app.vm.dart';
 
 import '../features/chat/archive_chat/archived_chat_list.view.dart';
 import '../features/Messages/create_group/create_group.view.dart';
 import '../features/auth/auth_selection/auth_selection.view.dart';
+import '../features/chat/group_info/group_info.view.dart';
 import '../features/employee/add_employee/add_employee.view.dart';
 import '../features/home/machine_supplier/machine_supplier.view.dart';
 import '../features/home/organization_home/organization_home.view.dart';
@@ -94,7 +99,14 @@ class AppRouter extends RouterBase {
 
   /// Internal mapping of views to their respective page routes.
   final Map<Type, StackedRouteFactory> _pagesMap = <Type, StackedRouteFactory>{
+    RootWrapper: (data) {
+      return MaterialPageRoute(
+        builder: (BuildContext _) => RootWrapper(arguments: data.arguments),
+        settings: data,
+      );
+    },
     LoginView: (data) {
+
       return MaterialPageRoute(
         builder: (BuildContext _) => LoginView(),
         settings: data,
@@ -194,6 +206,12 @@ class AppRouter extends RouterBase {
         settings: data,
       );
     },
+    GroupInfoScreen: (data) {
+      return MaterialPageRoute(
+        builder: (BuildContext _) => GroupInfoScreen(),
+        settings: data,
+      );
+    },
     ProfileView: (data) {
       return MaterialPageRoute(
         builder: (BuildContext _) => ProfileView(),
@@ -226,13 +244,15 @@ class AppRouter extends RouterBase {
       );
     },
     StageView: (data) {
+      final attributes = data.arguments is StageViewAttributes
+          ? data.arguments as StageViewAttributes
+          : StageViewAttributes(selectedBottomNavIndex: 0);
       return MaterialPageRoute(
-        builder:
-            (BuildContext _) =>
-                StageView(attributes: data.arguments as StageViewAttributes),
+        builder: (BuildContext _) => StageView(attributes: attributes),
         settings: data,
       );
     },
+
     ApprovalView: (data) {
       return MaterialPageRoute(
         builder: (BuildContext _) => ApprovalView(),
@@ -397,6 +417,12 @@ class AppRouter extends RouterBase {
     GeneralSettingView: (data) {
       return MaterialPageRoute(
         builder: (BuildContext _) => GeneralSettingView(),
+        settings: data,
+      );
+    },
+    LanguageSelectionView: (data) {
+      return MaterialPageRoute(
+        builder: (BuildContext _) => LanguageSelectionView(),
         settings: data,
       );
     },
@@ -608,7 +634,9 @@ class AppRouter extends RouterBase {
 
   /// Internal list of route definitions.
   final _routes = <RouteDef>[
+    RouteDef(Routes.root, page: RootWrapper),
     RouteDef(Routes.login, page: LoginView),
+
     RouteDef(Routes.register, page: RegisterView),
     RouteDef(Routes.otpVerification, page: OtpVerificationView),
     RouteDef(Routes.organizationHome, page: OrganizationHomeView),
@@ -640,7 +668,7 @@ class AppRouter extends RouterBase {
     RouteDef(Routes.videoPlayer, page: VideoPlayerView),
     RouteDef(Routes.ticketDetails, page: TicketDetailsView),
     RouteDef(Routes.employee, page: EmployeeDetailsView),
-
+    RouteDef(Routes.groupInfoScreen, page: GroupInfoScreen),
     // Analytics and existing dashboard routes
     RouteDef(Routes.analytics, page: AnalyticsView),
     RouteDef(Routes.feedback, page: FeedbackView),
@@ -653,6 +681,7 @@ class AppRouter extends RouterBase {
     RouteDef(Routes.introduction, page: IntroductionView),
     RouteDef(Routes.authSelectionView, page: AuthSelectionView),
     RouteDef(Routes.generalSetting, page: GeneralSettingView),
+    RouteDef(Routes.languageSelection, page: LanguageSelectionView),
     RouteDef(Routes.machineOverview, page: MachineOverviewView),
     RouteDef(Routes.machineOverviewDetails, page: MachineOverviewDetailsView),
     RouteDef(Routes.reviewTicket, page: ReviewTicketView),
@@ -684,3 +713,28 @@ class AppRouter extends RouterBase {
     // RouteDef(Routes.sitePhotosUpload, page: SitePhotosUploadView),
   ];
 }
+
+class RootWrapper extends StatelessWidget {
+  final dynamic arguments;
+  const RootWrapper({super.key, this.arguments});
+
+  @override
+  Widget build(BuildContext context) {
+    return ViewModelBuilder<AppViewModel>.nonReactive(
+      viewModelBuilder: () => AppViewModel(),
+      builder: (context, model, child) {
+        if (model.isFirstTimeUser()) return model.homeNavigation();
+        if (getUser().token?.isNotEmpty != true) return model.homeNavigation();
+
+        // If logged in, we can use the arguments to set the tab
+        final attributes = arguments is StageViewAttributes
+            ? arguments as StageViewAttributes
+            : StageViewAttributes(selectedBottomNavIndex: 0);
+
+        return StageView(attributes: attributes);
+      },
+    );
+  }
+}
+
+
