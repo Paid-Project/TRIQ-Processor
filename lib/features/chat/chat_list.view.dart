@@ -643,7 +643,18 @@ class _ChatListViewState extends State<ChatListView>
     );
   }
 
-  Widget _buildCountryFlag(BuildContext context, ChatListModel model) {
+  Widget _buildCountryFlag(BuildContext context, Chats model) {
+    final fullName = model.chatWith.fullName.trim();
+    final safeName = fullName.isEmpty ? 'VG' : fullName;
+    final initials =
+    safeName.substring(0, safeName.length >= 2 ? 2 : 1).toUpperCase();
+
+    final flagPath = model.chatWith.flag?.trim();
+    final flagUrl =
+    (flagPath == null || flagPath.isEmpty || flagPath.toLowerCase() == 'null')
+        ? null
+        : flagPath.prefixWithBaseUrl;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -655,7 +666,7 @@ class _ChatListViewState extends State<ChatListView>
           ),
           alignment: Alignment.center,
           child: Text(
-            "${model.chatWith?.fullName ?? 'VG'}".substring(0, 2).toUpperCase(),
+            initials,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12,
@@ -663,19 +674,20 @@ class _ChatListViewState extends State<ChatListView>
             ),
           ),
         ),
-        Positioned(
-          bottom: -4,
-          right: -4,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: SvgPicture.network(
-              "${model.chatWith?.flag?.prefixWithBaseUrl ?? ''}",
-              width: 17,
-              height: 17,
-              fit: BoxFit.cover,
+        if (flagUrl != null)
+          Positioned(
+            bottom: -4,
+            right: -4,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: SvgPicture.network(
+                flagUrl,
+                width: 17,
+                height: 17,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -683,27 +695,29 @@ class _ChatListViewState extends State<ChatListView>
   Widget _buildChatItem(
       BuildContext context,
       ChatListViewModel model,
-      ChatListModel chatRoom,
-      ) {
+      Chats chatRoom,
+      )
+  {
     final chatTitle = _getChatTitle(chatRoom);
     // final lastMessage = _getLastMessagePreview(chatRoom);
     final subText = _getSubText(chatRoom);
-    final ticketNumber =
-    chatRoom.ticket?.ticketNumber != null
-        ? "#${chatRoom.ticket?.ticketNumber ?? ''}"
-        : '';
-    final status = chatRoom.ticket?.status ?? 'Unknown';
+    final rawTicketNumber = chatRoom.ticket.ticketNumber.trim();
+    final ticketNumber = rawTicketNumber.isNotEmpty ? "#$rawTicketNumber" : '';
+    final status =
+    chatRoom.ticket.status.trim().isEmpty ? 'Unknown' : chatRoom.ticket.status;
     final chatWithName =
-        chatRoom.chatWith?.fullName?.toString().capitalizeWords ?? 'Unknown';
+    chatRoom.chatWith.fullName.toString().capitalizeWords.trim().isEmpty
+        ? 'Unknown'
+        : chatRoom.chatWith.fullName.toString().capitalizeWords;
 
     return InkWell(
       onTap: () {
         ChatRoomScreenType screen = ChatRoomScreenType.mainChat;
         bool isContactChat =
             model.currentTab == 'department' || model.currentTab == 'external';
-        String roomId = chatRoom.id ?? "";
+        String roomId = chatRoom.id;
         if (isContactChat) {
-          roomId = chatRoom.chatWith?.id ?? '';
+          roomId = chatRoom.chatWith.id;
           screen = ChatRoomScreenType.contactChat;
         }
 
@@ -711,17 +725,20 @@ class _ChatListViewState extends State<ChatListView>
           MaterialPageRoute(
             builder:
                 (context) => ChatView(
+              isVisible: !isContactChat,
               contactName: chatWithName,
-              contactNumber: ticketNumber,
+              contactNumber:
+              isContactChat ? chatRoom.chatWith.email : ticketNumber,
               contactInitials:
               chatWithName.isNotEmpty
                   ? chatWithName.substring(0, 1).toUpperCase()
                   : 'U',
               roomId: roomId,
-              ticketId: chatRoom.ticket?.id,
-              ticketStatus: chatRoom.ticket?.status,
-              updatedAt: chatRoom.ticket?.updatedAt?.formatReadableDate(),
-              flag: chatRoom.chatWith?.flag?.prefixWithBaseUrl,
+              ticketId:
+              chatRoom.ticket.id.trim().isEmpty ? null : chatRoom.ticket.id,
+              ticketStatus: chatRoom.ticket.status,
+              updatedAt: chatRoom.ticket.updatedAt.formatReadableDate(),
+              flag: chatRoom.chatWith.flag?.prefixWithBaseUrl,
               screen: screen,
             ),
           ),
@@ -897,59 +914,47 @@ class _ChatListViewState extends State<ChatListView>
     }
   }
 
-  String _getLastMessagePreview(ChatListModel chat) {
-    if (chat.unreadCount != null && chat.unreadCount! > 0) {
-      return chat.lastMessage?.content ??
-          "Chat with ${chat.chatWith!.fullName!}";
-    }
-    if (chat.unreadCount != null && chat.unreadCount! == 0) {
-      return chat.lastMessage?.content ??
-          "Chat with ${chat.chatWith!.fullName!}";
-    } else if (chat.chatWith?.fullName != null) {
-      return "Chat with ${chat.chatWith!.fullName?.toString().capitalizeWords}";
-    }
+  String _getLastMessagePreview(Chats chat) {
+    final content = chat.lastMessage?.content.trim();
+    if (content != null && content.isNotEmpty) return content;
+
+    final name = chat.chatWith.fullName.trim();
+    if (name.isNotEmpty) return "Chat with ${name.capitalizeWords}";
+
     return LanguageService.get("no_messages_yet");
   }
 
-  String _getSubText(ChatListModel chat) {
+
+  String _getSubText(Chats chat) {
     final ticket = chat.ticket;
-    final status = ticket?.status?.trim().toLowerCase();
-    final updatedAt = ticket?.updatedAt?.formatReadableDate();
+    final status = ticket.status.trim().toLowerCase();
+    final updatedAt = ticket.updatedAt.formatReadableDate();
+    final hasTicket = ticket.id.trim().isNotEmpty;
 
     // 🎯 If ticket exists and is resolved
-    if (ticket != null && ticket.id != null && status == "resolved") {
-      return updatedAt != null && updatedAt.isNotEmpty
-          ? "Resolved In $updatedAt"
-          : "Resolved";
+    if (hasTicket && status == "resolved") {
+      return updatedAt.isNotEmpty ? "Resolved In $updatedAt" : "Resolved";
     }
 
     // 🎯 If ticket exists but not resolved
-    if (ticket != null && ticket.id != null) {
-      return updatedAt != null && updatedAt.isNotEmpty
-          ? "Pending Since $updatedAt"
-          : "Pending";
+    if (hasTicket) {
+      return updatedAt.isNotEmpty ? "Pending Since $updatedAt" : "Pending";
     }
 
     // 🎯 If no ticket, show email
-    if (chat.chatWith?.email != null && chat.chatWith!.email!.isNotEmpty) {
-      return chat.chatWith!.email!;
+    final email = chat.chatWith.email.trim();
+    if (email.isNotEmpty) {
+      return email;
     }
 
     return LanguageService.get("no_messages_yet");
   }
 
-  Widget _buildCountdownTimer(ChatListModel chatRoom, ChatListViewModel model) {
-    Ticket? ticket = chatRoom.ticket;
-    if (ticket == null) {
-      return Text(
-        '-',
-        style: TextStyle(
-          color: _getStatusColor(ticket?.status),
-          fontSize: AppSizes.v12,
-        ),
-      );
-    }
-    if (ticket.rescheduleUpdateTime == null) {
+  Widget _buildCountdownTimer(Chats chatRoom, ChatListViewModel model) {
+    final ticket = chatRoom.ticket;
+    final DateTime? scheduledAt = ticket.rescheduleUpdateTime;
+
+    if (ticket.id.trim().isEmpty || scheduledAt == null) {
       return Text(
         '-',
         style: TextStyle(
@@ -959,15 +964,16 @@ class _ChatListViewState extends State<ChatListView>
       );
     }
 
+    final DateTime rescheduleTime = scheduledAt;
+
     return StreamBuilder<DateTime>(
-      stream: Stream.periodic(Duration(seconds: 1), (_) => DateTime.now()),
+      stream: Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
       builder: (context, snapshot) {
         final now = snapshot.data ?? DateTime.now();
-        final rescheduleTime = ticket.rescheduleUpdateTime!;
 
         if (now.isAfter(rescheduleTime)) {
           // Trigger background refresh when timer expires (only once per ticket)
-          final ticketId = ticket.id ?? '';
+          final ticketId = ticket.id;
           if (ticketId.isNotEmpty && !_expiredTicketIds.contains(ticketId)) {
             _expiredTicketIds.add(ticketId);
             WidgetsBinding.instance.addPostFrameCallback((_) {

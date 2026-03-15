@@ -13,6 +13,7 @@ import 'package:manager/core/storage/storage.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
 import 'package:manager/features/tickets/tickets_list/tickets_list.vm.dart';
+import 'package:manager/routes/routes.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -50,6 +51,7 @@ enum MessageType {
 }
 
 class ChatViewModel extends ReactiveViewModel {
+  final _navigationService = locator<NavigationService>();
   final _chatService = locator<ChatService>();
   final _apiService = locator<ApiService>();
   final _dialogService = locator<DialogService>();
@@ -174,6 +176,9 @@ class ChatViewModel extends ReactiveViewModel {
       "newMessage": "newMessage",
     },
   };
+  void navigateToGroupInfoChats() {
+    _navigationService.navigateTo(Routes.groupInfoScreen);
+  }
   void toggleAttachment() {
     if (_isRecordingAudio) return;
     _showAttachment = !_showAttachment;

@@ -37,6 +37,7 @@ import '../tickets/tickets_list/tickets_list.vm.dart' show TicketsListViewModel;
 import 'model/chat_message_model.dart';
 
 class ChatView extends StatefulWidget {
+  final bool? isVisible;
   final String contactName;
   final String contactNumber;
   final String contactInitials;
@@ -53,6 +54,7 @@ class ChatView extends StatefulWidget {
     required this.contactName,
     required this.contactNumber,
     required this.contactInitials,
+    this.isVisible = true,
     this.roomId,
     this.ticketId,
     this.flag,
@@ -632,7 +634,177 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
           color: AppColors.white,
           shadowColor: AppColors.black.withValues(alpha: 0.1),
           elevation: 8,
-        ) : SizedBox.shrink(),
+        ) :
+        PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
+          menuPadding: EdgeInsets.zero,
+          offset: Offset(-10, 40),
+          onSelected: (String value) {
+            if (value == 'resolve') {
+              _handleResolveAction(model);
+            }
+            if (value == 'Exit Group') {
+              showExitGroupDialog(context);
+            }
+
+            if (value == 'Group info') {
+              model.navigateToGroupInfoChats();
+              // group info open
+            }
+          },
+          itemBuilder:
+              (BuildContext context) => [
+            // // Reschedule Item
+            // PopupMenuItem<String>(
+            //   value: 'reschedule',
+            //   height: 100,
+            //   child: Container(
+            //     width: 300, // Set consistent width
+            //     padding: EdgeInsets.only(top: 10, bottom: 10),
+            //     child: Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         // Header
+            //         Text(
+            //           LanguageService.get('reschedule'),
+            //           style: TextStyle(
+            //             fontSize: 14,
+            //             fontWeight: FontWeight.w600,
+            //             color: AppColors.textPrimary,
+            //           ),
+            //         ),
+            //         SizedBox(height: 5),
+            //         // Dropdown Field
+            //         CustomDropdownFormField<String>( // <-- 1. Specify the type
+            //           value: null,
+            //           label: LanguageService.get('select_time'),
+            //
+            //           // 2. Convert the 'items' list to DropdownMenuItems
+            //           items: const [
+            //             DropdownMenuItem<String>(
+            //               value: "10",
+            //               child: Text("10 Min"),
+            //             ),
+            //             DropdownMenuItem<String>(
+            //               value: "15",
+            //               child: Text("15 Min"),
+            //             ),
+            //             DropdownMenuItem<String>(
+            //               value: "20",
+            //               child: Text("20 Min"),
+            //             ),
+            //             DropdownMenuItem<String>(
+            //               value: "30",
+            //               child: Text("30 Min"),
+            //             ),
+            //             DropdownMenuItem<String>(
+            //               value: "45",
+            //               child: Text("45 Min"),
+            //             ),
+            //             DropdownMenuItem<String>(
+            //               value: "60",
+            //               child: Text("60 Min"),
+            //             ),
+            //           ],
+            //           onChanged: (value) {
+            //             rescheduleTicket(
+            //               context,
+            //               widget.ticketId ?? "",
+            //               value ?? "",
+            //             );
+            //           },
+            //           validator: (value) {
+            //             return value == null
+            //                 ? LanguageService.get('please_select_time')
+            //                 : null;
+            //           },
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
+
+            // Divider
+            PopupMenuItem<String>(
+              enabled: false,
+              height: 1,
+              child: Divider(
+                height: 1,
+                thickness: 1,
+                color: Colors.grey[200],
+              ),
+            ),
+
+            // Mark As Resolved Item
+            PopupMenuItem<String>(
+              value: 'resolve',
+              child: Container(
+                width: 250, // Match width with reschedule item
+                padding: EdgeInsets.only(top: 10, bottom: 10),
+
+                child: Text(
+                  'Mark As Resolved',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+                // Mark As Resolved Item
+                PopupMenuItem<String>(
+                  value: 'Group info',
+                  child: Container(
+                    width: 250, // Match width with reschedule item
+                    padding: EdgeInsets.only(top: 10, bottom: 10),
+
+                    child: Text(
+                      'Group Info',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                // Divider
+                PopupMenuItem<String>(
+                  enabled: false,
+                  height: 1,
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Colors.grey[200],
+                  ),
+                ),
+                // Mark As Resolved Item
+                PopupMenuItem<String>(
+                  value: 'Exit Group',
+
+                  child: Container(
+                    width: 250, // Match width with reschedule item
+                    padding: EdgeInsets.only(top: 10, bottom: 10),
+
+                    child: Text(
+                      'Exit Group',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.red,
+                      ),
+                    ),
+                  ),
+                ),
+          ],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: AppColors.white,
+          shadowColor: AppColors.black.withValues(alpha: 0.1),
+          elevation: 8,
+        ),
       ],
     );
   }
@@ -2079,15 +2251,16 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  PendingStatusCard(
-                    title: widget.updatedAt ?? "N/A",
-                    ticketNumber: widget.contactNumber,
-                    status: widget.ticketStatus,
-                    child: TicketDetailsView(
-                      ticketId: widget.ticketId,
-                      isEmbedded: true,
+                  if(widget.isVisible == true )
+                    PendingStatusCard(
+                      title: widget.updatedAt ?? "N/A",
+                      ticketNumber: widget.contactNumber,
+                      status: widget.ticketStatus,
+                      child: TicketDetailsView(
+                        ticketId: widget.ticketId,
+                        isEmbedded: true,
+                      ),
                     ),
-                  ),
                   // PendingStatusCard(
                   //   title: widget.updatedAt ?? "N/A",
                   //   ticketNumber: widget.contactNumber,
@@ -3040,7 +3213,128 @@ class _LocationActionTile extends StatelessWidget {
     );
   }
 }
+  void showExitGroupDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
 
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20), // screen margin
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                /// icon
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.shade200,
+                  ),
+                  child: Icon(
+                    Icons.forum_outlined,
+                    size: 32,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                /// title
+                const Text(
+                  "Exit Group",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// description
+                Text(
+                  "Are you sure you want to exit this group?\n"
+                      "You will no longer receive updates or be part of this conversation.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                /// buttons
+                Row(
+                  children: [
+
+                    /// cancel button
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          side: const BorderSide(color: Colors.black26),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 14),
+
+                    /// exit button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // exit group logic
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          elevation: 0, //
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Yes, Exit Group",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 class RecipientListWidget extends StatefulWidget {
   final ChatMessageModel message;
 
