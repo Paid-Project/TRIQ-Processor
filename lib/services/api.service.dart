@@ -245,27 +245,16 @@ class ApiService {
 
   Future<ApiResponse?> postMultipart(
     String endpoint, {
-    required Map<String, String> data,
+    required Map<String, dynamic> data,
     required List<File> files,
     String fileField = 'media',
   }) async {
     try {
-      final List<MultipartFile> multipartFiles = [];
-
-      for (var file in files) {
-        String fileName = file.path.split('/').last;
-
-        String? mimeType = lookupMimeType(file.path);
-        multipartFiles.add(
-          await MultipartFile.fromFile(
-            file.path,
-            filename: fileName,
-            contentType: mimeType != null ? MediaType.parse(mimeType) : null,
-          ),
-        );
-      }
-
-      final formData = FormData.fromMap({...data, fileField: multipartFiles});
+      final formData = await _buildMultipartFormData(
+        data: data,
+        files: files,
+        fileField: fileField,
+      );
 
       final response = await _dio.post(endpoint, data: formData);
 
@@ -293,27 +282,16 @@ class ApiService {
 
   Future<ApiResponse?> putMultipart(
     String endpoint, {
-    required Map<String, String> data,
+    required Map<String, dynamic> data,
     required List<File> files,
     String fileField = 'media',
   }) async {
     try {
-      final List<MultipartFile> multipartFiles = [];
-
-      for (var file in files) {
-        String fileName = file.path.split('/').last;
-
-        String? mimeType = lookupMimeType(file.path);
-        multipartFiles.add(
-          await MultipartFile.fromFile(
-            file.path,
-            filename: fileName,
-            contentType: mimeType != null ? MediaType.parse(mimeType) : null,
-          ),
-        );
-      }
-
-      final formData = FormData.fromMap({...data, fileField: multipartFiles});
+      final formData = await _buildMultipartFormData(
+        data: data,
+        files: files,
+        fileField: fileField,
+      );
 
       final response = await _dio.put(endpoint, data: formData);
 
@@ -337,6 +315,48 @@ class ApiService {
       );
     }
     return null;
+  }
+
+  Future<FormData> _buildMultipartFormData({
+    required Map<String, dynamic> data,
+    required List<File> files,
+    required String fileField,
+  }) async {
+    final formData = FormData();
+
+    for (final entry in data.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (value == null) continue;
+
+      if (value is Iterable) {
+        for (final item in value) {
+          if (item == null) continue;
+          formData.fields.add(MapEntry(key, item.toString()));
+        }
+        continue;
+      }
+
+      formData.fields.add(MapEntry(key, value.toString()));
+    }
+
+    if (files.isNotEmpty) {
+      final List<MultipartFile> multipartFiles = [];
+      for (final file in files) {
+        final fileName = file.path.split('/').last;
+        final mimeType = lookupMimeType(file.path);
+        multipartFiles.add(
+          await MultipartFile.fromFile(
+            file.path,
+            filename: fileName,
+            contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+          ),
+        );
+      }
+      formData.files.addAll(multipartFiles.map((f) => MapEntry(fileField, f)));
+    }
+
+    return formData;
   }
 
   /// Enhanced error handling with status code mapping and toast support
@@ -614,14 +634,29 @@ class ApiService {
     Map<String, dynamic> dataMap = {'fields': {}, 'files': {}};
 
     for (var field in formData.fields) {
-      dataMap['fields'][field.key] = field.value;
+      final existing = dataMap['fields'][field.key];
+      if (existing == null) {
+        dataMap['fields'][field.key] = field.value;
+      } else if (existing is List) {
+        existing.add(field.value);
+      } else {
+        dataMap['fields'][field.key] = [existing, field.value];
+      }
     }
 
     for (var file in formData.files) {
-      dataMap['files'][file.key] = {
+      final currentFile = {
         'filename': file.value.filename,
         'contentType': file.value.contentType.toString(),
       };
+      final existing = dataMap['files'][file.key];
+      if (existing == null) {
+        dataMap['files'][file.key] = currentFile;
+      } else if (existing is List) {
+        existing.add(currentFile);
+      } else {
+        dataMap['files'][file.key] = [existing, currentFile];
+      }
     }
 
     return dataMap;

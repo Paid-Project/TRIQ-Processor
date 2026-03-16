@@ -225,10 +225,9 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                             _FormSection(
                               label: LanguageService.get('phone_number'),
                               child: IntlPhoneField(
-                                disableLengthCheck: true,
                                 controller: viewModel.phoneController,
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
-                                enabled: !viewModel.isViewMode, // ✅ ADDED
+                                enabled: !viewModel.isViewMode,
                                 pickerDialogStyle: PickerDialogStyle(
                                   backgroundColor: AppColors.white,
                                   countryCodeStyle: TextStyle(
@@ -239,12 +238,16 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   ),
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: LanguageService.get(
-                                    'enter_phone_number',
+                                  labelText: LanguageService.get(
+                                    'phone_number',
+                                  ),
+                                  labelStyle: TextStyle(
+                                    color: AppColors.textGrey,
+                                    fontSize: 13,
                                   ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(
-                                      AppSizes.h12,
+                                      AppSizes.v12,
                                     ),
                                     borderSide: BorderSide(
                                       color: AppColors.lightGrey,
@@ -252,7 +255,7 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(
-                                      AppSizes.h12,
+                                      AppSizes.v12,
                                     ),
                                     borderSide: BorderSide(
                                       color: AppColors.lightGrey,
@@ -260,23 +263,21 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(
-                                      AppSizes.h12,
+                                      AppSizes.v12,
                                     ),
                                     borderSide: BorderSide(
                                       color: AppColors.primary,
                                       width: 2,
                                     ),
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: AppSizes.h14,
-                                  ),
                                 ),
+                                initialCountryCode: 'IN',
                                 onChanged: (phone) {
                                   if (!viewModel.isViewMode) {
                                     viewModel.updatePhoneNumber(phone);
                                   }
+                                  // model.updateForgotPhoneNumber(phone);
                                 },
-                                initialCountryCode: 'IN',
                                 validator: (phone) {
                                   if (phone == null || phone.number.isEmpty) {
                                     return LanguageService.get(
@@ -286,7 +287,73 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   return null;
                                 },
                               ),
+
                             ),
+                            // _FormSection(
+                            //   label: LanguageService.get('phone_number'),
+                            //   child: IntlPhoneField(
+                            //     disableLengthCheck: true,
+                            //     controller: viewModel.phoneController,
+                            //     readOnly: viewModel.isViewMode, // ✅ FIXED
+                            //     enabled: !viewModel.isViewMode, // ✅ ADDED
+                            //     pickerDialogStyle: PickerDialogStyle(
+                            //       backgroundColor: AppColors.white,
+                            //       countryCodeStyle: TextStyle(
+                            //         color: AppColors.black,
+                            //       ),
+                            //       countryNameStyle: TextStyle(
+                            //         color: AppColors.black,
+                            //       ),
+                            //     ),
+                            //     decoration: InputDecoration(
+                            //       hintText: LanguageService.get(
+                            //         'enter_phone_number',
+                            //       ),
+                            //       border: OutlineInputBorder(
+                            //         borderRadius: BorderRadius.circular(
+                            //           AppSizes.h12,
+                            //         ),
+                            //         borderSide: BorderSide(
+                            //           color: AppColors.lightGrey,
+                            //         ),
+                            //       ),
+                            //       enabledBorder: OutlineInputBorder(
+                            //         borderRadius: BorderRadius.circular(
+                            //           AppSizes.h12,
+                            //         ),
+                            //         borderSide: BorderSide(
+                            //           color: AppColors.lightGrey,
+                            //         ),
+                            //       ),
+                            //       focusedBorder: OutlineInputBorder(
+                            //         borderRadius: BorderRadius.circular(
+                            //           AppSizes.h12,
+                            //         ),
+                            //         borderSide: BorderSide(
+                            //           color: AppColors.primary,
+                            //           width: 2,
+                            //         ),
+                            //       ),
+                            //       contentPadding: EdgeInsets.symmetric(
+                            //         vertical: AppSizes.h14,
+                            //       ),
+                            //     ),
+                            //     onChanged: (phone) {
+                            //       if (!viewModel.isViewMode) {
+                            //         viewModel.updatePhoneNumber(phone);
+                            //       }
+                            //     },
+                            //     initialCountryCode: 'IN',
+                            //     validator: (phone) {
+                            //       if (phone == null || phone.number.isEmpty) {
+                            //         return LanguageService.get(
+                            //           'please_enter_phone_number',
+                            //         );
+                            //       }
+                            //       return null;
+                            //     },
+                            //   ),
+                            // ),
                             AppGaps.h5,
                             _FormSection(
                               label: LanguageService.get('email'),
@@ -955,11 +1022,9 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                             _FormSection(
                               label: LanguageService.get('phone_number'),
                               child: IntlPhoneField(
-                                disableLengthCheck: true,
-                                controller:
-                                    viewModel.emergency_mobileController,
+                                controller:   viewModel.emergency_mobileController,
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
-                                enabled: !viewModel.isViewMode, // ✅ ADDED
+                                enabled: !viewModel.isViewMode,
                                 pickerDialogStyle: PickerDialogStyle(
                                   backgroundColor: AppColors.white,
                                   countryCodeStyle: TextStyle(
@@ -970,12 +1035,16 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   ),
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: LanguageService.get(
-                                    'enter_phone_number',
+                                  labelText: LanguageService.get(
+                                    'phone_number',
+                                  ),
+                                  labelStyle: TextStyle(
+                                    color: AppColors.textGrey,
+                                    fontSize: 13,
                                   ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(
-                                      AppSizes.h12,
+                                      AppSizes.v12,
                                     ),
                                     borderSide: BorderSide(
                                       color: AppColors.lightGrey,
@@ -983,7 +1052,7 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(
-                                      AppSizes.h12,
+                                      AppSizes.v12,
                                     ),
                                     borderSide: BorderSide(
                                       color: AppColors.lightGrey,
@@ -991,33 +1060,98 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(
-                                      AppSizes.h12,
+                                      AppSizes.v12,
                                     ),
                                     borderSide: BorderSide(
                                       color: AppColors.primary,
                                       width: 2,
                                     ),
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    vertical: AppSizes.h14,
-                                  ),
                                 ),
+                                initialCountryCode: 'IN',
                                 onChanged: (phone) {
                                   if (!viewModel.isViewMode) {
                                     viewModel.updatePhoneNumber(phone);
                                   }
+                                  // model.updateForgotPhoneNumber(phone);
                                 },
-                                initialCountryCode: 'IN',
-                                // validator: (phone) {
-                                //   if (phone == null || phone.number.isEmpty) {
-                                //     return LanguageService.get(
-                                //       'please_enter_phone_number',
-                                //     );
-                                //   }
-                                //   return null;
-                                // },
+                                validator: (phone) {
+                                  if (phone == null || phone.number.isEmpty) {
+                                    return LanguageService.get(
+                                      'please_enter_phone_number',
+                                    );
+                                  }
+                                  return null;
+                                },
                               ),
+
                             ),
+                            // _FormSection(
+                            //   label: LanguageService.get('phone_number'),
+                            //   child: IntlPhoneField(
+                            //     disableLengthCheck: true,
+                            //     controller:
+                            //         viewModel.emergency_mobileController,
+                            //     readOnly: viewModel.isViewMode, // ✅ FIXED
+                            //     enabled: !viewModel.isViewMode, // ✅ ADDED
+                            //     pickerDialogStyle: PickerDialogStyle(
+                            //       backgroundColor: AppColors.white,
+                            //       countryCodeStyle: TextStyle(
+                            //         color: AppColors.black,
+                            //       ),
+                            //       countryNameStyle: TextStyle(
+                            //         color: AppColors.black,
+                            //       ),
+                            //     ),
+                            //     decoration: InputDecoration(
+                            //       hintText: LanguageService.get(
+                            //         'enter_phone_number',
+                            //       ),
+                            //       border: OutlineInputBorder(
+                            //         borderRadius: BorderRadius.circular(
+                            //           AppSizes.h12,
+                            //         ),
+                            //         borderSide: BorderSide(
+                            //           color: AppColors.lightGrey,
+                            //         ),
+                            //       ),
+                            //       enabledBorder: OutlineInputBorder(
+                            //         borderRadius: BorderRadius.circular(
+                            //           AppSizes.h12,
+                            //         ),
+                            //         borderSide: BorderSide(
+                            //           color: AppColors.lightGrey,
+                            //         ),
+                            //       ),
+                            //       focusedBorder: OutlineInputBorder(
+                            //         borderRadius: BorderRadius.circular(
+                            //           AppSizes.h12,
+                            //         ),
+                            //         borderSide: BorderSide(
+                            //           color: AppColors.primary,
+                            //           width: 2,
+                            //         ),
+                            //       ),
+                            //       contentPadding: EdgeInsets.symmetric(
+                            //         vertical: AppSizes.h14,
+                            //       ),
+                            //     ),
+                            //     onChanged: (phone) {
+                            //       if (!viewModel.isViewMode) {
+                            //         viewModel.updatePhoneNumber(phone);
+                            //       }
+                            //     },
+                            //     initialCountryCode: 'IN',
+                            //     // validator: (phone) {
+                            //     //   if (phone == null || phone.number.isEmpty) {
+                            //     //     return LanguageService.get(
+                            //     //       'please_enter_phone_number',
+                            //     //     );
+                            //     //   }
+                            //     //   return null;
+                            //     // },
+                            //   ),
+                            // ),
                             AppGaps.h5,
                             _FormSection(
                               label: LanguageService.get('email'),

@@ -214,7 +214,7 @@ class EmployeeService {
     String? bloodGroup,
     String? country,
     String? area,
-    List<String> ? reportTo,
+    List<String>? reportTo,
     String? machineId,
     String? employeeType,
     String? shiftTiming,
@@ -224,26 +224,38 @@ class EmployeeService {
     File? profilePhoto,
   }) async {
     try {
-      final Map<String, String> fields = {
-        'name': name,
-        'phone': phone,
-        'email': email,
-        'employeeId': employeeId,
-        'department': departmentId,
-        'designation': designationId,
-        'joiningDate': joiningDate,
+      final Map<String, dynamic> fields = {
+        'name': name.trim(),
+        'phone': phone.trim(),
+        'email': email.trim(),
+        'employeeId': employeeId.trim(),
+        'department': departmentId.trim(),
+        'designation': designationId.trim(),
+        'joiningDate': joiningDate.trim(),
         'personalAddress': json.encode(personalAddress.toJson()),
         'emergencyContact': json.encode(emergencyContact.toJson()),
         'permissions': json.encode(permissions.toJson()),
-        'machine': machineId ?? '',
       };
 
-      if (bloodGroup != null) fields['bloodGroup'] = bloodGroup;
-      if (country != null) fields['country'] = country;
-      if (area != null) fields['area'] = area;
-      if (reportTo != null) fields['reportTo'] =  json.encode(reportTo);
-      if (employeeType != null) fields['employeeType'] = employeeType;
-      if (shiftTiming != null) fields['shiftTiming'] = shiftTiming;
+      if (bloodGroup != null && bloodGroup.trim().isNotEmpty) {
+        fields['bloodGroup'] = bloodGroup.trim();
+      }
+      if (country != null && country.trim().isNotEmpty) {
+        fields['country'] = country.trim();
+      }
+      if (area != null && area.trim().isNotEmpty) fields['area'] = area.trim();
+      if (reportTo != null && reportTo.isNotEmpty) {
+        fields['reportTo'] = reportTo;
+      }
+      if (machineId != null && machineId.trim().isNotEmpty) {
+        fields['machine'] = machineId.trim();
+      }
+      if (employeeType != null && employeeType.trim().isNotEmpty) {
+        fields['employeeType'] = employeeType.trim();
+      }
+      if (shiftTiming != null && shiftTiming.trim().isNotEmpty) {
+        fields['shiftTiming'] = shiftTiming.trim();
+      }
 
       final List<File> files = [];
       if (profilePhoto != null) {
