@@ -79,6 +79,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   TicketsListViewModel ticketDetailsViewModel = TicketsListViewModel();
   TextEditingController remarkController = TextEditingController();
   int initCount=0;
+  bool _didAutoScrollToLatestOnOpen = false;
 
   @override
   void initState() {
@@ -2167,6 +2168,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                     controller: model.messageController,
                     placeholder: 'Write Message',
                     onTapOutside: (event) {},
+                    onChanged: model.onComposerTextChanged,
                     prefixIcon: GestureDetector(
                       onTap: model.toggleAttachment,
                       child: Container(
@@ -2258,6 +2260,20 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               widget.ticketStatus ?? '';
           initCount++;
         }
+
+        if (!_didAutoScrollToLatestOnOpen &&
+            !model.isLoading &&
+            !model.isTicketDetailsExpanded) {
+          _didAutoScrollToLatestOnOpen = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            if (model.scrollController.hasClients) {
+              model.scrollController.jumpTo(
+                model.scrollController.position.maxScrollExtent,
+              );
+            }
+          });
+        }
         return Scaffold(
           appBar: _buildAppBar(context, model),
           backgroundColor: AppColors.white,
@@ -2320,10 +2336,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                           : NotificationListener<ScrollNotification>(
                         onNotification: (ScrollNotification scrollInfo) {
                           if (scrollInfo is ScrollUpdateNotification) {
-                            // Check if user scrolled to the bottom (for loading more messages)
-                            // Since list is reversed, bottom is where older messages are
-                            if (scrollInfo.metrics.pixels >=
-                                scrollInfo.metrics.maxScrollExtent -
+                            // Load older messages when user scrolls near the top.
+                            if (scrollInfo.metrics.pixels <=
+                                scrollInfo.metrics.minScrollExtent +
                                     100 &&
                                 model.hasMoreMessages &&
                                 !model.isLoadingMore) {
@@ -2334,7 +2349,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                         },
                         child: ListView.builder(
                           controller: model.scrollController,
-                          reverse: true,
+                          reverse: false,
                           padding: EdgeInsets.only(
                             top: AppSizes.h10,
                             bottom: 20,
@@ -2343,31 +2358,24 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                           model.isSearchMode
                               ? model.filteredMessages.length
                               : model.messages.length +
-                              1 +
                               (model.isLoadingMore ? 1 : 0),
-                          // +1 for loading indicator
                           itemBuilder: (context, index) {
-                            // Show loading indicator at the bottom (visually top) when loading more
                             if (!model.isSearchMode &&
                                 model.isLoadingMore &&
                                 index == 0) {
                               return _buildLoadingIndicator();
                             }
 
-                            // Adjust index for loading indicator
                             final adjustedIndex =
-                            model.isLoadingMore ? index - 1 : index;
-
-                            if (!model.isSearchMode &&
-                                adjustedIndex == 0) {
-                              return SizedBox();
-                            }
+                            (!model.isSearchMode && model.isLoadingMore)
+                                ? index - 1
+                                : index;
 
                             final message =
                             model.isSearchMode
-                                ? model
-                                .filteredMessages[adjustedIndex]
-                                :model.messages.reversed.toList()[adjustedIndex - 1];
+                                ? model.filteredMessages[adjustedIndex]
+                                : model.messages[adjustedIndex];
+
                             return _buildMessageBubble(message, model);
                           },
                         ),

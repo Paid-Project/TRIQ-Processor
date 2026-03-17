@@ -68,6 +68,7 @@ class ChatViewModel extends ReactiveViewModel {
   ChatMessageModel? replyTo;
   String? editingMessageId;
   // State variables
+  String? _remoteTypingUserId;
   bool _isSendingMessage = false;
   bool _isUploadingImage = false;
   bool _isRecordingAudio = false;
@@ -77,7 +78,7 @@ class ChatViewModel extends ReactiveViewModel {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   int _currentSearchIndex = -1;
-
+  bool get isRemoteUserTyping => _remoteTypingUserId != null;
   // Media preview variables (images and videos)
   List<String> _selectedMediaPaths = [];
   List<String> _selectedMediaNames = [];
@@ -86,7 +87,9 @@ class ChatViewModel extends ReactiveViewModel {
   // Pagination variables
   bool _isLoading = false;
   bool _isLoadingMore = false;
-
+  Timer? _typingDebounceTimer;
+  Timer? _remoteTypingResetTimer;
+  Timer? _seenRefreshDebounceTimer;
   int _currentPage = 1;
   int _totalMessages = 0;
   final int _limit = 20;
@@ -241,6 +244,16 @@ class ChatViewModel extends ReactiveViewModel {
     }
   }
 
+
+
+  void onComposerTextChanged(String value) {
+    if (value.trim().isEmpty) return;
+
+    _typingDebounceTimer?.cancel();
+    _typingDebounceTimer = Timer(const Duration(milliseconds: 450), () {
+      _socketService.typing(roomId);
+    });
+  }
   /// Handle new incoming messages
   void _handleNewMessage(dynamic data) {
     if (data is! Map<String, dynamic>) {
@@ -343,20 +356,24 @@ class ChatViewModel extends ReactiveViewModel {
 
   /// Socket implementation
   Future<void> initializeSocket() async {
-    AppLogger.info('Initializing socket connection...');
+    print("Ã°Å¸Å¡â‚¬ Initializing socket connection...");
 
     // Initialize socket connection
     _socketService.initializeSocket(
       serverUrl: '${Configurations().url}/',
-      queryParams: {'userId': userData.id ?? 'default_user', 'roomId': roomId},
+      queryParams: {},
       extraHeaders: {'Authorization': "${userData.token}"},
       onDisconnected: () {
         _socketService.off(chatEvents[chatRoomScreenType.name]['newMessage']);
-        _socketService.off(chatEvents[chatRoomScreenType.name]['join']);
+        _socketService.off('userTyping');
+        _socketService.off('messageReactionUpdated');
+        _socketService.off('messageReacted');
+        _socketService.off('seenMessage');
+        _socketService.off('error');
       },
       onConnected: () {
         // Register user
-        AppLogger.info('Registering user for chat room');
+        print("Ã°Å¸â€˜Â¤ Registering user: ${userData.id ?? 'default_user'}");
         _socketService.registerUser(
           userData.id ?? 'default_user',
           chatEvents[chatRoomScreenType.name]['register'],
@@ -368,17 +385,56 @@ class ChatViewModel extends ReactiveViewModel {
         );
 
         // Listen for incoming messages
-        AppLogger.info('Setting up message listener...');
+        print("Ã°Å¸â€˜â€š Setting up message listener...");
         _socketService.onNewMessage(
           _handleNewMessage,
           chatEvents[chatRoomScreenType.name]['newMessage'],
         );
 
-        _socketService.on("messageReacted", _handleReaction);
+        _socketService.onUserTyping(_handleUserTyping);
+        _socketService.onMessageReactionUpdated(_handleMessageReactionUpdated);
+        // Backward-compatible event name (if backend still uses it).
+        _socketService.on('messageReacted', (data) {
+          if (data is! Map) return;
+          final map = Map<String, dynamic>.from(data);
+          final messageId = map['messageId']?.toString().trim() ?? '';
+          if (messageId.isEmpty) return;
+
+          final emoji = map['emoji']?.toString();
+          final user = map['user']?.toString();
+          if (emoji == null || emoji.isEmpty || user == null || user.isEmpty) {
+            return;
+          }
+
+          _handleMessageReactionUpdated(messageId, [
+            {'user': user, 'emoji': emoji},
+          ]);
+        });
+        _socketService.onErrorMessage(_handleSocketError);
+        _socketService.onSeenMessageUpdated(_handleSeenMessageUpdated);
       },
     );
   }
+  void _handleSeenMessageUpdated(String messageId, List<String> readBy) {
+    if (messageId.trim().isEmpty) return;
 
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+
+    final current = _messages[index].readBy;
+    if (readBy.isEmpty) return;
+
+    // Merge, keeping unique ids.
+    for (final id in readBy) {
+      final userId = id.trim();
+      if (userId.isEmpty) continue;
+      if (!current.contains(userId)) {
+        current.add(userId);
+      }
+    }
+
+    notifyListeners();
+  }
   void reactToMessage(String messageId, String emoji) {
     // Emit to server
     _socketService.reactToMessage(messageId: messageId, emoji: emoji);
@@ -392,7 +448,71 @@ class ChatViewModel extends ReactiveViewModel {
       notifyListeners();
     }
   }
+  void _markLatestIncomingMessageAsSeen() {
+    // Backward compatible name (used in older code paths).
+    _markAllIncomingMessagesAsSeen();
+  }
+  void _markAllIncomingMessagesAsSeen() {
+    if (_messages.isEmpty) return;
+    final myUserId = userData.id ?? '';
+    if (myUserId.isEmpty) return;
 
+    var markedAny = false;
+    for (final message in _messages) {
+      if (message.sender.id == myUserId) continue;
+      if (message.readBy.contains(myUserId)) continue;
+      _markMessageAsSeen(message);
+      markedAny = true;
+    }
+
+    if (markedAny) {
+      _scheduleChatListRefreshForSeenUpdates();
+    }
+  }
+  void _markMessageAsSeen(ChatMessageModel message) {
+    final myUserId = userData.id ?? '';
+    if (myUserId.isEmpty) return;
+    if (message.sender.id == myUserId) return;
+    if (message.readBy.contains(myUserId)) return;
+
+    // Optimistically update local state for immediate UI effect.
+    message.readBy.add(myUserId);
+    notifyListeners();
+
+    _socketService.seenMessage(message.id);
+    _scheduleChatListRefreshForSeenUpdates();
+  }
+
+  void _handleUserTyping(String userId) {
+    if (userId.isEmpty) return;
+    if (userId == (userData.id ?? '')) return;
+
+    _remoteTypingUserId = userId;
+    notifyListeners();
+
+    _remoteTypingResetTimer?.cancel();
+    _remoteTypingResetTimer = Timer(const Duration(seconds: 2), () {
+      _remoteTypingUserId = null;
+      notifyListeners();
+    });
+  }
+
+  void _handleMessageReactionUpdated(
+      String messageId,
+      List<Map<String, dynamic>> reactions,
+      )
+  {
+    if (messageId.isEmpty) return;
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+
+    _messages[index].reactions =
+        reactions
+            .map((e) => Reaction.fromJson(e))
+            .where((r) => r.user.isNotEmpty && r.emoji.isNotEmpty)
+            .toList();
+    notifyListeners();
+  }
   /// Fetch all messages
   Future<void> loadMessages() async {
     try {
@@ -435,7 +555,7 @@ class ChatViewModel extends ReactiveViewModel {
 
           // Resolve reply references (replyToId -> replyTo object)
           _resolveReplyReferences();
-
+          _markLatestIncomingMessageAsSeen();
           // Update pagination state
           _totalMessages = response['total'] ?? 0;
           _hasMoreMessages = _messages.length < _totalMessages;
@@ -475,7 +595,9 @@ class ChatViewModel extends ReactiveViewModel {
     _isLoadingMore = false;
     notifyListeners();
   }
-
+  void _handleSocketError(String message) {
+    AppLogger.error('Socket error event: $message');
+  }
   Future<void> getAllChatMessages() async {
     try {
       final result = await _chatService.getAllChatMessages(roomId: roomId);
@@ -542,10 +664,15 @@ class ChatViewModel extends ReactiveViewModel {
       status: MessageStatus.sent,
       isDeleted: false,
     );
-    _messages.insert(0, localMessage);
+    _messages.add(localMessage);
     notifyListeners();
   }
-
+  void _scheduleChatListRefreshForSeenUpdates() {
+    _seenRefreshDebounceTimer?.cancel();
+    _seenRefreshDebounceTimer = Timer(const Duration(milliseconds: 350), () {
+      _chatService.triggerRefresh();
+    });
+  }
   /// Send a text message
   Future<void> sendMessage() async {
     if (messageController.text.trim().isEmpty && !hasImagePreview) {

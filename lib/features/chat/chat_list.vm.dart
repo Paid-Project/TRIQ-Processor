@@ -261,7 +261,9 @@ class ChatListViewModel extends BaseViewModel {
 
         _socketService.on('updateChatList', (data) {
           _handleChatListUpdate(data);
+          _socketService.onUpdateChatList(data);
         });
+
       },
     );
     AppLogger.info("Socket listener 'updateChatList' setup.");
