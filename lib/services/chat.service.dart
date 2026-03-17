@@ -124,6 +124,10 @@ class ChatService {
     try {
 
       String apiUrl='';
+      print("screen:-${screen}");
+      if(screen=='groupChat'){
+        apiUrl='${ApiEndpoints.getGroupChatMessage}/$roomId';
+      }else
       if(screen=='contactChat'){
         apiUrl='${ApiEndpoints.getAllContactChatMessages}/$roomId';
       }else{

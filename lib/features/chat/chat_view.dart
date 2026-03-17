@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
-import 'package:manager/features/stage/widgets/call_requiest_dialog.dart';
+
 import 'package:manager/features/tickets/ticket_details/ticket_details.view.dart';
 import 'package:manager/resources/multimedia_resources/resources.dart';
 import 'package:manager/services/chat.service.dart';
@@ -33,6 +33,7 @@ import '../../resources/enums/chat_enum.dart';
 import '../../routes/routes.dart';
 import '../../services/api.service.dart';
 import '../../services/language.service.dart';
+import '../stage/widgets/call_requiest_dialog.dart';
 import '../tickets/tickets_list/tickets_list.vm.dart' show TicketsListViewModel;
 import 'model/chat_message_model.dart';
 
@@ -441,43 +442,56 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   color: AppColors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+
                 ),
+
               ),
             ),
           ),
           SizedBox(width: AppSizes.w12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    widget.contactName,
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded( // ✅ IMPORTANT
+                      child: Text(
+                        widget.contactName,
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1, // ✅ must
+                      ),
                     ),
-                  ),
-                  SizedBox(width: AppSizes.w8),
-                  Container(
-                    width: 20,
-                    height: 15,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
+                    SizedBox(width: AppSizes.w8),
+                    Container(
+                      width: 20,
+                      height: 15,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: widget.flag != null
+                            ? SvgPicture.network(
+                          (widget.flag ?? '').prefixWithBaseUrl,
+                          fit: BoxFit.cover,
+                        )
+                            : SizedBox(),
+                      ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: widget.flag!=null?SvgPicture.network((widget.flag??'').prefixWithBaseUrl, fit: BoxFit.cover):SizedBox(),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                widget.contactNumber,
-                style: TextStyle(color: AppColors.white, fontSize: 12),
-              ),
-            ],
+                  ],
+                ),
+                Text(
+                  widget.contactNumber,
+                  style: TextStyle(color: AppColors.white, fontSize: 12),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -752,51 +766,51 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                 ),
               ),
             ),
-                // Mark As Resolved Item
-                PopupMenuItem<String>(
-                  value: 'Group info',
-                  child: Container(
-                    width: 250, // Match width with reschedule item
-                    padding: EdgeInsets.only(top: 10, bottom: 10),
+            // Mark As Resolved Item
+            PopupMenuItem<String>(
+              value: 'Group info',
+              child: Container(
+                width: 250, // Match width with reschedule item
+                padding: EdgeInsets.only(top: 10, bottom: 10),
 
-                    child: Text(
-                      'Group Info',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
+                child: Text(
+                  'Group Info',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                // Divider
-                PopupMenuItem<String>(
-                  enabled: false,
-                  height: 1,
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Colors.grey[200],
+              ),
+            ),
+            // Divider
+            PopupMenuItem<String>(
+              enabled: false,
+              height: 1,
+              child: Divider(
+                height: 1,
+                thickness: 1,
+                color: Colors.grey[200],
+              ),
+            ),
+            // Mark As Resolved Item
+            PopupMenuItem<String>(
+              value: 'Exit Group',
+
+              child: Container(
+                width: 250, // Match width with reschedule item
+                padding: EdgeInsets.only(top: 10, bottom: 10),
+
+                child: Text(
+                  'Exit Group',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.red,
                   ),
                 ),
-                // Mark As Resolved Item
-                PopupMenuItem<String>(
-                  value: 'Exit Group',
-
-                  child: Container(
-                    width: 250, // Match width with reschedule item
-                    padding: EdgeInsets.only(top: 10, bottom: 10),
-
-                    child: Text(
-                      'Exit Group',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.red,
-                      ),
-                    ),
-                  ),
-                ),
+              ),
+            ),
           ],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -2105,7 +2119,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   Widget _buildMessageInput(ChatViewModel model) {
     final showSendButton =
         (model.messageController.text.trim().isNotEmpty || model.hasImagePreview) &&
-        !model.isRecordingAudio;
+            !model.isRecordingAudio;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -2132,61 +2146,61 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                 duration: const Duration(milliseconds: 180),
                 child: model.isRecordingAudio
                     ? VoiceRecordingBar(
-                        key: const ValueKey('recording-bar'),
-                        duration: model.recordingDuration,
-                        cancelProgress: model.recordingCancelProgress,
-                        shouldCancel: model.shouldCancelRecording,
-                      )
+                  key: const ValueKey('recording-bar'),
+                  duration: model.recordingDuration,
+                  cancelProgress: model.recordingCancelProgress,
+                  shouldCancel: model.shouldCancelRecording,
+                )
                     : Container(
-                        key: const ValueKey('message-input'),
+                  key: const ValueKey('message-input'),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightGrey.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(AppSizes.v24),
+                    border: Border.all(
+                      color: _messageFocusNode.hasFocus
+                          ? AppColors.primary.withValues(alpha: 0.3)
+                          : Colors.transparent,
+                      width: 1,
+                    ),
+                  ),
+                  child: CommonTextField(
+                    controller: model.messageController,
+                    placeholder: 'Write Message',
+                    onTapOutside: (event) {},
+                    prefixIcon: GestureDetector(
+                      onTap: model.toggleAttachment,
+                      child: Container(
+                        margin: EdgeInsets.all(8),
+                        padding: EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           color: AppColors.lightGrey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(AppSizes.v24),
-                          border: Border.all(
-                            color: _messageFocusNode.hasFocus
-                                ? AppColors.primary.withValues(alpha: 0.3)
-                                : Colors.transparent,
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: CommonTextField(
-                          controller: model.messageController,
-                          placeholder: 'Write Message',
-                          onTapOutside: (event) {},
-                          prefixIcon: GestureDetector(
-                            onTap: model.toggleAttachment,
-                            child: Container(
-                              margin: EdgeInsets.all(8),
-                              padding: EdgeInsets.all(5),
-                              decoration: BoxDecoration(
-                                color: AppColors.lightGrey.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Image.asset(
-                                AppImages.attachment,
-                                width: 20,
-                                height: 20,
-                                color: AppColors.primaryDark,
-                              ),
-                            ),
-                          ),
-                          suffixIcon: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              GestureDetector(
-                                onTap: model.pickImageFromCamera,
-                                child: Image.asset(
-                                  AppImages.cameraOutlined,
-                                  width: 20,
-                                  height: 20,
-                                  color: AppColors.textGrey,
-                                ),
-                              ),
-                              SizedBox(width: AppSizes.w12),
-                            ],
-                          ),
+                        child: Image.asset(
+                          AppImages.attachment,
+                          width: 20,
+                          height: 20,
+                          color: AppColors.primaryDark,
                         ),
                       ),
+                    ),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: model.pickImageFromCamera,
+                          child: Image.asset(
+                            AppImages.cameraOutlined,
+                            width: 20,
+                            height: 20,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                        SizedBox(width: AppSizes.w12),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
             SizedBox(width: AppSizes.w12),
@@ -2223,6 +2237,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     return ViewModelBuilder<ChatViewModel>.reactive(
       viewModelBuilder: () => ChatViewModel(),
       onViewModelReady: (model) {
+        print("1:- ${widget.screen}");
         model.fetchInitialData(roomId1: widget.roomId,screen: widget.screen);
 
         // Add some sample messages for demonstration
@@ -2352,7 +2367,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                             model.isSearchMode
                                 ? model
                                 .filteredMessages[adjustedIndex]
-                                : model.messages[adjustedIndex - 1];
+                                :model.messages.reversed.toList()[adjustedIndex - 1];
                             return _buildMessageBubble(message, model);
                           },
                         ),
@@ -2473,32 +2488,35 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                     ),
                   // Message input or status message
                   if (!model.isTicketDetailsExpanded)
-                  ValueListenableBuilder<String>(
-                    valueListenable: model.ticketDetailsViewModel.currentOpenTicketStatus,
+                    ValueListenableBuilder<String>(
+                      valueListenable: model.ticketDetailsViewModel.currentOpenTicketStatus,
 
-                    builder: (context, status, _) {
+                      builder: (context, status, _) {
+                        if (model.chatRoomScreenType == ChatRoomScreenType.groupChat) {
+                          return _buildMessageInput(model);
+                        }
 
-                      String statusNew = (status == '' ? (widget.ticketStatus ?? '') : model.ticketDetailsViewModel.currentOpenTicketStatus.value).toLowerCase();
+                        String statusNew = (status == '' ? (widget.ticketStatus ?? '') : model.ticketDetailsViewModel.currentOpenTicketStatus.value).toLowerCase();
 
-                      AppLogger.info('''
+                        AppLogger.info('''
                     currentOpenTicketStatus = ${model.ticketDetailsViewModel.currentOpenTicketStatus.value}\n
                     ticketStatus = ${widget.ticketStatus}\n
                     status = $statusNew\n
                     ''');
-                      if (statusNew == "resolved") {
-                        return SizedBox();
-                      }
-                      else if (statusNew == "on hold") {
-                        return _buildTicketStatusMessage("Ticket is on Hold", AppColors.error);
-                      }
-                      else if (statusNew == "waiting for accept") {
-                        return _buildTicketStatusMessage("Ticket Waiting for Accept", AppColors.warning);
-                      }
-                      else {
-                        return _buildMessageInput(model);
-                      }
-                    },
-                  )
+                        if (statusNew == "resolved") {
+                          return SizedBox();
+                        }
+                        else if (statusNew == "on hold") {
+                          return _buildTicketStatusMessage("Ticket is on Hold", AppColors.error);
+                        }
+                        else if (statusNew == "waiting for accept") {
+                          return _buildTicketStatusMessage("Ticket Waiting for Accept", AppColors.warning);
+                        }
+                        else {
+                          return _buildMessageInput(model);
+                        }
+                      },
+                    )
                 ],
               ),
               if (model.showAttachment)
@@ -2931,7 +2949,7 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
 
       _hasLocationPermission =
           permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse;
+              permission == LocationPermission.whileInUse;
 
       if (!_hasLocationPermission) {
         if (!mounted) return;
@@ -3047,93 +3065,93 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
               Expanded(
                 child: _isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      )
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
                     : _error != null
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.location_off_rounded,
-                                    color: Colors.white70,
-                                    size: 42,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    _error!,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: _loadLocation,
-                                    child: const Text('Try again'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : ListView(
-                            padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Current location',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      _formatCoordinates(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _formatAccuracy(),
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _LocationActionTile(
-                                icon: Icons.my_location_rounded,
-                                title: 'Send your current location',
-                                subtitle: 'Send exact coordinates in chat',
-                                onTap: () => _submit(isLiveLocation: false),
-                              ),
-                              const SizedBox(height: 10),
-                              _LocationActionTile(
-                                icon: Icons.share_location_rounded,
-                                title: 'Share live location',
-                                subtitle: 'Send live location link in chat',
-                                onTap: () => _submit(isLiveLocation: true),
-                              ),
-                            ],
+                    ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.location_off_rounded,
+                          color: Colors.white70,
+                          size: 42,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadLocation,
+                          child: const Text('Try again'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                    : ListView(
+                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Current location',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _formatCoordinates(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatAccuracy(),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _LocationActionTile(
+                      icon: Icons.my_location_rounded,
+                      title: 'Send your current location',
+                      subtitle: 'Send exact coordinates in chat',
+                      onTap: () => _submit(isLiveLocation: false),
+                    ),
+                    const SizedBox(height: 10),
+                    _LocationActionTile(
+                      icon: Icons.share_location_rounded,
+                      title: 'Share live location',
+                      subtitle: 'Send live location link in chat',
+                      onTap: () => _submit(isLiveLocation: true),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -3213,128 +3231,128 @@ class _LocationActionTile extends StatelessWidget {
     );
   }
 }
-  void showExitGroupDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
+void showExitGroupDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
 
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20), // screen margin
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-
-                /// icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey.shade200,
-                  ),
-                  child: Icon(
-                    Icons.forum_outlined,
-                    size: 32,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                /// title
-                const Text(
-                  "Exit Group",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                /// description
-                Text(
-                  "Are you sure you want to exit this group?\n"
-                      "You will no longer receive updates or be part of this conversation.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
-                ),
-
-                const SizedBox(height: 22),
-
-                /// buttons
-                Row(
-                  children: [
-
-                    /// cancel button
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          side: const BorderSide(color: Colors.black26),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 14),
-
-                    /// exit button
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          // exit group logic
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          elevation: 0, //
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text(
-                          "Yes, Exit Group",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
+    builder: (context) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20), // screen margin
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
           ),
-        );
-      },
-    );
-  }
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+
+              /// icon
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey.shade200,
+                ),
+                child: Icon(
+                  Icons.forum_outlined,
+                  size: 32,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              /// title
+              const Text(
+                "Exit Group",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              /// description
+              Text(
+                "Are you sure you want to exit this group?\n"
+                    "You will no longer receive updates or be part of this conversation.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 12,
+                ),
+              ),
+
+              const SizedBox(height: 22),
+
+              /// buttons
+              Row(
+                children: [
+
+                  /// cancel button
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        side: const BorderSide(color: Colors.black26),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 14),
+
+                  /// exit button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // exit group logic
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        elevation: 0, //
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text(
+                        "Yes, Exit Group",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 class RecipientListWidget extends StatefulWidget {
   final ChatMessageModel message;
 
@@ -3402,7 +3420,7 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
                       ),
                     ),
                   ),
-                SizedBox(width: 40,)
+                  SizedBox(width: 40,)
                 ],
               ),
             ),
@@ -3465,7 +3483,7 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
                       leading: CircleAvatar(
                         backgroundColor: Colors.grey.shade200,
                         child: Text(
-                           "?",
+                          "?",
                         ),
                       ),
                       title: Text("Leslie Alexander",style: TextStyle(fontSize: 14,color: AppColors.black),),

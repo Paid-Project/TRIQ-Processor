@@ -46,6 +46,7 @@ abstract class ApiEndpoints {
   static const String assignMachine = 'machine/assign-machine';
 
   static const String getChatId = 'chat/room-create';
+  static const String getGroupChatMessage = 'groupChatMessage/messages';
   static const String sendMessage = 'chat/room';
   static const String sendVChatStatus = 'livekit/create-session';
   static const String archiveChatRoom = 'chat/rooms-archive';

@@ -33,7 +33,7 @@ import '../../resources/enums/chat_enum.dart';
 import 'model/chat_message_model.dart';
 import 'video_chat/demo/location_service.dart';
 
-enum ChatRoomScreenType { mainChat, contactChat }
+enum ChatRoomScreenType { mainChat, contactChat,   groupChat, }
 
 enum MessageType {
   text,
@@ -175,6 +175,12 @@ class ChatViewModel extends ReactiveViewModel {
       'send': "sendMessage",
       "newMessage": "newMessage",
     },
+    "groupChat": { // ✅ new add
+      'register': "registerUser",
+      'join': "joinRoom",
+      'send': "sendMessage",
+      "newMessage": "newMessage",
+    },
   };
   void navigateToGroupInfoChats() {
     _navigationService.navigateTo(Routes.groupInfoScreen);
@@ -213,7 +219,7 @@ class ChatViewModel extends ReactiveViewModel {
 
       final locationUrl = 'https://maps.google.com/?q=$lat,$lng';
       final content =
-          isLiveLocation ? 'Live location: $locationUrl' : locationUrl;
+      isLiveLocation ? 'Live location: $locationUrl' : locationUrl;
       final clientMessageId = _createClientMessageId();
 
       _socketService.sendMessage(
@@ -398,21 +404,21 @@ class ChatViewModel extends ReactiveViewModel {
       );
 
       result.fold(
-        (failure) {
+            (failure) {
           AppLogger.error('Failed to fetch messages: ${failure.message}');
           Fluttertoast.showToast(
             msg:
-                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
+            "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
             backgroundColor: AppColors.error,
             textColor: AppColors.white,
           );
         },
-        (response) {
+            (response) {
           final List<dynamic> messagesData = response['messages'] ?? [];
           final List<ChatMessageModel> newMessages =
-              messagesData.map((e) => ChatMessageModel.fromJson(e)).toList();
+          messagesData.map((e) => ChatMessageModel.fromJson(e)).toList();
 
           // Set isSentByMe for each message
           for (var message in newMessages) {
@@ -475,25 +481,25 @@ class ChatViewModel extends ReactiveViewModel {
       final result = await _chatService.getAllChatMessages(roomId: roomId);
 
       result.fold(
-        (failure) {
+            (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
           _messages.clear();
 
           Fluttertoast.showToast(
             msg:
-                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
+            "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
             backgroundColor: AppColors.error,
             textColor: AppColors.white,
           );
         },
-        (response) {
+            (response) {
           final result =
-              response.map((element) {
-                element.isSentByMe = element.sender.id == userData.id;
-                return element;
-              }).toList();
+          response.map((element) {
+            element.isSentByMe = element.sender.id == userData.id;
+            return element;
+          }).toList();
 
           _messages.clear();
           _messages.addAll(result);
@@ -507,12 +513,12 @@ class ChatViewModel extends ReactiveViewModel {
 
   /// Locally add a sent message for optimistic UI update
   void _addLocalMessage(
-    String content, {
-    List<Attachment> attachments = const [],
-    ChatMessageModel? replyTo,
-    String messageType = 'text',
-    String? clientMessageId,
-  }) {
+      String content, {
+        List<Attachment> attachments = const [],
+        ChatMessageModel? replyTo,
+        String messageType = 'text',
+        String? clientMessageId,
+      }) {
     final localMessage = ChatMessageModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       roomId: roomId,
@@ -631,13 +637,13 @@ class ChatViewModel extends ReactiveViewModel {
               // Determine if it's a video or image based on file extension
               final extension = file.name.toLowerCase().split('.').last;
               return [
-                    'mp4',
-                    'mov',
-                    'avi',
-                    'mkv',
-                    'webm',
-                    '3gp',
-                  ].contains(extension)
+                'mp4',
+                'mov',
+                'avi',
+                'mkv',
+                'webm',
+                '3gp',
+              ].contains(extension)
                   ? 'video'
                   : 'image';
             }).toList();
@@ -696,7 +702,7 @@ class ChatViewModel extends ReactiveViewModel {
     final result = await _filePickerService.pickAudioFile();
 
     await result.fold(
-      (failure) async {
+          (failure) async {
         final message = failure.message.trim();
         if (message == 'No audio selected') {
           return;
@@ -711,7 +717,7 @@ class ChatViewModel extends ReactiveViewModel {
           textColor: AppColors.white,
         );
       },
-      (file) async {
+          (file) async {
         if (!await file.exists()) {
           Fluttertoast.showToast(
             msg: 'Selected audio file is not available',
@@ -796,27 +802,27 @@ class ChatViewModel extends ReactiveViewModel {
   }
 
   List<Map<String, dynamic>> _extractUploadedFilesFromResponse(
-    Map<String, dynamic> response,
-  ) {
+      Map<String, dynamic> response,
+      ) {
     final rawFiles =
         response['files'] ??
-        response['data'] ??
-        response['file'] ??
-        response['urls'] ??
-        response['fileUrls'] ??
-        response['uploadedFiles'];
+            response['data'] ??
+            response['file'] ??
+            response['urls'] ??
+            response['fileUrls'] ??
+            response['uploadedFiles'];
 
     if (rawFiles is List) {
       return rawFiles
           .map<Map<String, dynamic>?>((file) {
-            if (file is Map) {
-              return Map<String, dynamic>.from(file);
-            }
-            if (file is String && file.trim().isNotEmpty) {
-              return {'url': file.trim()};
-            }
-            return null;
-          })
+        if (file is Map) {
+          return Map<String, dynamic>.from(file);
+        }
+        if (file is String && file.trim().isNotEmpty) {
+          return {'url': file.trim()};
+        }
+        return null;
+      })
           .whereType<Map<String, dynamic>>()
           .toList();
     }
@@ -853,9 +859,9 @@ class ChatViewModel extends ReactiveViewModel {
   }
 
   String _resolveUploadedFileName(
-    Map<String, dynamic> file,
-    String fallbackPath,
-  ) {
+      Map<String, dynamic> file,
+      String fallbackPath,
+      ) {
     const candidates = ['name', 'fileName', 'filename', 'originalname'];
 
     for (final key in candidates) {
@@ -1020,13 +1026,13 @@ class ChatViewModel extends ReactiveViewModel {
   }
 
   Future<void> _uploadAndSendAudioMessage(
-    String audioPath,
-    Duration? duration, {
-    bool deleteFileAfterUpload = false,
-  }) async {
+      String audioPath,
+      Duration? duration, {
+        bool deleteFileAfterUpload = false,
+      }) async {
     final clientMessageId = _createClientMessageId();
     final durationInSeconds =
-        duration != null && duration > Duration.zero ? duration.inSeconds : null;
+    duration != null && duration > Duration.zero ? duration.inSeconds : null;
 
     try {
       _isUploadingImage = true;
@@ -1038,7 +1044,7 @@ class ChatViewModel extends ReactiveViewModel {
       );
 
       result.fold(
-        (failure) {
+            (failure) {
           AppLogger.error('Failed to upload audio: ${failure.message}');
           Fluttertoast.showToast(
             msg: 'Failed to upload audio: ${failure.message}',
@@ -1048,7 +1054,7 @@ class ChatViewModel extends ReactiveViewModel {
             textColor: AppColors.white,
           );
         },
-        (response) {
+            (response) {
           final files = _extractUploadedFilesFromResponse(response);
           if (files.isEmpty) {
             throw Exception('Invalid audio upload response');
@@ -1131,7 +1137,7 @@ class ChatViewModel extends ReactiveViewModel {
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
       Get.to(
-        () => VideoCallScreen(roomName: roomId, token: tokenResponse['token']),
+            () => VideoCallScreen(roomName: roomId, token: tokenResponse['token']),
       );
     }
   }
@@ -1147,7 +1153,7 @@ class ChatViewModel extends ReactiveViewModel {
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
       Get.to(
-        () => VideoCallScreen(
+            () => VideoCallScreen(
           roomName: roomId,
           token: tokenResponse['token'],
           isVoice: true,
@@ -1176,10 +1182,10 @@ class ChatViewModel extends ReactiveViewModel {
 
   /// Send media (images and videos) with optional text
   Future<void> _sendMediaWithText(
-    List<String> mediaPaths,
-    List<String> mediaTypes,
-    String text,
-  ) async {
+      List<String> mediaPaths,
+      List<String> mediaTypes,
+      String text,
+      ) async {
     final clientMessageId = _createClientMessageId();
 
     try {
@@ -1192,7 +1198,7 @@ class ChatViewModel extends ReactiveViewModel {
       );
 
       result.fold(
-        (failure) {
+            (failure) {
           AppLogger.error('Failed to upload media: ${failure.message}');
           Fluttertoast.showToast(
             msg: 'Failed to upload media: ${failure.message}',
@@ -1202,7 +1208,7 @@ class ChatViewModel extends ReactiveViewModel {
             textColor: AppColors.white,
           );
         },
-        (response) {
+            (response) {
           final files = _extractUploadedFilesFromResponse(response);
 
           if (files.isEmpty) {
@@ -1244,15 +1250,15 @@ class ChatViewModel extends ReactiveViewModel {
           );
 
           final localAttachments =
-              attachments
-                  .map(
-                    (attachment) => Attachment(
-                      type: attachment['type']?.toString() ?? 'image',
-                      url: attachment['url']?.toString() ?? '',
-                      name: attachment['name']?.toString(),
-                    ),
-                  )
-                  .toList();
+          attachments
+              .map(
+                (attachment) => Attachment(
+              type: attachment['type']?.toString() ?? 'image',
+              url: attachment['url']?.toString() ?? '',
+              name: attachment['name']?.toString(),
+            ),
+          )
+              .toList();
 
           _addLocalMessage(
             text,
@@ -1344,8 +1350,8 @@ class ChatViewModel extends ReactiveViewModel {
 
       // Search in attachment names (if any)
       final attachmentMatch = message.attachments.any(
-        (attachment) =>
-            attachment.url.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            (attachment) =>
+        attachment.url.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             (attachment.url
                 .split('/')
                 .last
@@ -1377,11 +1383,11 @@ class ChatViewModel extends ReactiveViewModel {
         final attachment = message.attachments[j];
         final attachmentMatch =
             attachment.url.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            (attachment.url
-                .split('/')
-                .last
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()));
+                (attachment.url
+                    .split('/')
+                    .last
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase()));
 
         if (attachmentMatch) {
           results.add({
@@ -1412,9 +1418,9 @@ class ChatViewModel extends ReactiveViewModel {
     final results = searchResults;
     if (results.isNotEmpty) {
       _currentSearchIndex =
-          _currentSearchIndex <= 0
-              ? results.length - 1
-              : _currentSearchIndex - 1;
+      _currentSearchIndex <= 0
+          ? results.length - 1
+          : _currentSearchIndex - 1;
       _scrollToSearchResult(results[_currentSearchIndex]['index']);
       notifyListeners();
     }
@@ -1428,7 +1434,7 @@ class ChatViewModel extends ReactiveViewModel {
           final double targetPosition = (messageIndex + 1) * 100.0;
           final double maxScroll = scrollController.position.maxScrollExtent;
           final double scrollPosition =
-              targetPosition > maxScroll ? maxScroll : targetPosition;
+          targetPosition > maxScroll ? maxScroll : targetPosition;
           scrollController.animateTo(
             scrollPosition,
             duration: const Duration(milliseconds: 300),

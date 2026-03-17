@@ -71,6 +71,7 @@ class ChatListModel {
 class Chats {
   String id;
   String type;
+  String? groupTitle;
   Ticket ticket;
   ChatWith chatWith;
   List<ChatWith> members;
@@ -81,6 +82,7 @@ class Chats {
   Chats({
     required this.id,
     required this.type,
+    this.groupTitle,
     required this.ticket,
     required this.chatWith,
     required this.members,
@@ -89,9 +91,33 @@ class Chats {
     required this.updatedAt,
   });
 
+  static String? _extractGroupTitle(Map<String, dynamic> json) {
+    dynamic candidate =
+        json['groupTitle'] ??
+            json['groupName'] ??
+            json['roomTitle'] ??
+            json['roomName'] ??
+            json['title'] ??
+            json['name'];
+
+    if (candidate == null && json['group'] is Map) {
+      final groupMap = Map<String, dynamic>.from(json['group'] as Map);
+      candidate =
+          groupMap['title'] ??
+              groupMap['name'] ??
+              groupMap['groupTitle'] ??
+              groupMap['groupName'];
+    }
+
+    final s = candidate?.toString().trim();
+    if (s == null || s.isEmpty || s.toLowerCase() == 'null') return null;
+    return s;
+  }
+
   factory Chats.fromJson(Map<String, dynamic> json) => Chats(
     id: (json["_id"] ?? "").toString(),
     type: (json["type"] ?? "").toString(),
+    groupTitle: _extractGroupTitle(json),
     ticket:
     Ticket.fromJson(
       json["ticket"] is Map ? Map<String, dynamic>.from(json["ticket"]) : const {},
@@ -118,6 +144,7 @@ class Chats {
   Map<String, dynamic> toJson() => {
     "_id": id,
     "type": type,
+    "groupTitle": groupTitle,
     "ticket": ticket.toJson(),
     "chatWith": chatWith.toJson(),
     "members": List<dynamic>.from(members.map((x) => x.toJson())),

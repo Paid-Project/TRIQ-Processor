@@ -435,24 +435,37 @@ class _ChatListViewState extends State<ChatListView>
             ),
           ),
         ),
-        // floatingActionButton: model.currentTab=='external'?FloatingActionButton(
-        //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.v50)),
+        // floatingActionButton:
+        //     model.currentTab == 'external'
+        //         ? FloatingActionButton(
+        //           shape: RoundedRectangleBorder(
+        //             borderRadius: BorderRadius.circular(AppSizes.v50),
+        //           ),
         //
-        //     backgroundColor: AppColors.primary,
-        //     child: Icon(Icons.add),
-        //     onPressed: (){
-        //       showCustomAddMenuDialog(
-        //
-        //           alignment:Alignment.bottomRight,
-        //           context: context, dialogTitle: 'Add New Contact'.lang, itemLenth:2, menuItems: [
-        //         CustomMenuItem(onTap: (){
-        //           model.onScanFromCamera(context);
-        //         }),
-        //         CustomMenuItem(onTap: (){
-        //           model.onSearchByPhone(context);
-        //         })
-        //       ]);
-        //     }):null,
+        //           backgroundColor: AppColors.primary,
+        //           child: Icon(Icons.add),
+        //           onPressed: () {
+        //             showCustomAddMenuDialog(
+        //               alignment: Alignment.bottomRight,
+        //               context: context,
+        //               dialogTitle: 'Add New Contact'.lang,
+        //               itemLenth: 2,
+        //               menuItems: [
+        //                 CustomMenuItem(
+        //                   onTap: () {
+        //                     model.onScanFromCamera(context);
+        //                   },
+        //                 ),
+        //                 CustomMenuItem(
+        //                   onTap: () {
+        //                     model.onSearchByPhone(context);
+        //                   },
+        //                 ),
+        //               ],
+        //             );
+        //           },
+        //         )
+        //         : null,
       ),
     );
   }
@@ -477,7 +490,7 @@ class _ChatListViewState extends State<ChatListView>
         emptySubtitle = LanguageService.get("departmental_chats_appear_here");
         emptyIcon = Icons.business;
         break;
-      case 2:
+      case 2: // External
         filteredChats = model.getFilteredExternalChats();
         emptyTitle = LanguageService.get("no_external_conversations");
         emptySubtitle = LanguageService.get("external_chats_appear_here");
@@ -519,7 +532,11 @@ class _ChatListViewState extends State<ChatListView>
       color: AppColors.primary,
       backgroundColor: AppColors.white,
       onRefresh: () async {
-        await model.getChatRooms();
+        if (selectedTabIndex == 0) {
+          await model.getChatRooms();
+        } else {
+          await model.getOtherChatRooms();
+        }
       },
       child: ListView.separated(
         controller: _scrollController,
@@ -644,12 +661,14 @@ class _ChatListViewState extends State<ChatListView>
   }
 
   Widget _buildCountryFlag(BuildContext context, Chats model) {
-    final fullName = model.chatWith.fullName.trim();
+    final isGroupChat = model.type.trim().toLowerCase() == 'group';
+    final fullName =
+    (isGroupChat ? (model.groupTitle ?? '') : model.chatWith.fullName).trim();
     final safeName = fullName.isEmpty ? 'VG' : fullName;
     final initials =
     safeName.substring(0, safeName.length >= 2 ? 2 : 1).toUpperCase();
 
-    final flagPath = model.chatWith.flag?.trim();
+    final flagPath = isGroupChat ? null : model.chatWith.flag?.trim();
     final flagUrl =
     (flagPath == null || flagPath.isEmpty || flagPath.toLowerCase() == 'null')
         ? null
@@ -703,6 +722,7 @@ class _ChatListViewState extends State<ChatListView>
     final subText = _getSubText(chatRoom);
     final rawTicketNumber = chatRoom.ticket.ticketNumber.trim();
     final ticketNumber = rawTicketNumber.isNotEmpty ? "#$rawTicketNumber" : '';
+
     final status =
     chatRoom.ticket.status.trim().isEmpty ? 'Unknown' : chatRoom.ticket.status;
     final chatWithName =
@@ -715,30 +735,43 @@ class _ChatListViewState extends State<ChatListView>
         ChatRoomScreenType screen = ChatRoomScreenType.mainChat;
         bool isContactChat =
             model.currentTab == 'department' || model.currentTab == 'external';
+        final isGroupChat = chatRoom.type.trim().toLowerCase() == 'group';
         String roomId = chatRoom.id;
-        if (isContactChat) {
+        if (isGroupChat) {
+          screen = ChatRoomScreenType.groupChat;
+        } else if (isContactChat) {
           roomId = chatRoom.chatWith.id;
           screen = ChatRoomScreenType.contactChat;
         }
+
+        final resolvedChatTitle = _getChatTitle(chatRoom);
+        final resolvedInitials =
+        resolvedChatTitle.trim().isNotEmpty
+            ? resolvedChatTitle.trim().substring(0, 1).toUpperCase()
+            : 'U';
 
         Navigator.of(context).push(
           MaterialPageRoute(
             builder:
                 (context) => ChatView(
-              isVisible: !isContactChat,
-              contactName: chatWithName,
+              isVisible: isGroupChat ? false : !isContactChat,
+              contactName: isGroupChat ? resolvedChatTitle : chatWithName,
               contactNumber:
-              isContactChat ? chatRoom.chatWith.email : ticketNumber,
+              isGroupChat
+                  ? (chatRoom.members.isNotEmpty
+                  ? '${chatRoom.members.length} members'
+                  : 'Group')
+                  : (isContactChat ? chatRoom.chatWith.email : ticketNumber),
               contactInitials:
-              chatWithName.isNotEmpty
-                  ? chatWithName.substring(0, 1).toUpperCase()
-                  : 'U',
+              isGroupChat ? resolvedInitials : (chatWithName.isNotEmpty ? chatWithName.substring(0, 1).toUpperCase() : 'U'),
               roomId: roomId,
               ticketId:
-              chatRoom.ticket.id.trim().isEmpty ? null : chatRoom.ticket.id,
-              ticketStatus: chatRoom.ticket.status,
+              isGroupChat
+                  ? null
+                  : (chatRoom.ticket.id.trim().isEmpty ? null : chatRoom.ticket.id),
+              ticketStatus: isGroupChat ? null : chatRoom.ticket.status,
               updatedAt: chatRoom.ticket.updatedAt.formatReadableDate(),
-              flag: chatRoom.chatWith.flag?.prefixWithBaseUrl,
+              flag: isGroupChat ? null : chatRoom.chatWith.flag?.prefixWithBaseUrl,
               screen: screen,
             ),
           ),
@@ -890,9 +923,9 @@ class _ChatListViewState extends State<ChatListView>
   }
 
   String _formatTimestamp(DateTime timestamp) {
+
     return DateFormat('h:mm a').format(timestamp);
   }
-
   Color _getStatusColor(String? status) {
     if (status == null) return Colors.grey;
 
@@ -913,7 +946,6 @@ class _ChatListViewState extends State<ChatListView>
         return Colors.grey;
     }
   }
-
   String _getLastMessagePreview(Chats chat) {
     final content = chat.lastMessage?.content.trim();
     if (content != null && content.isNotEmpty) return content;
@@ -923,7 +955,6 @@ class _ChatListViewState extends State<ChatListView>
 
     return LanguageService.get("no_messages_yet");
   }
-
 
   String _getSubText(Chats chat) {
     final ticket = chat.ticket;
@@ -1013,11 +1044,24 @@ class _ChatListViewState extends State<ChatListView>
   }
 
   String _getChatTitle(dynamic chat) {
-    if (chat.chatWith?.fullName != null) {
-      return chat.chatWith!.fullName?.toString().capitalizeWords ?? '';
-    } else if (chat.ticket?.ticketNumber != null) {
-      return "Ticket #${chat.ticket!.ticketNumber!}";
+    final type = (chat.type ?? '').toString().trim().toLowerCase();
+    final groupTitle = (chat.groupTitle ?? '').toString().trim();
+    if (type == 'group' && groupTitle.isNotEmpty) {
+      return groupTitle.capitalizeWords;
     }
-    return "${LanguageService.get("chat")} #${chat.id?.substring(0, 6) ?? 'unknown'}";
+
+    if (chat.chatWith?.fullName != null) {
+      final name = chat.chatWith!.fullName?.toString().trim() ?? '';
+      if (name.isNotEmpty) return name.capitalizeWords;
+    }
+
+    if (chat.ticket?.ticketNumber != null) {
+      final ticketNo = chat.ticket!.ticketNumber?.toString().trim() ?? '';
+      if (ticketNo.isNotEmpty) return "Ticket #$ticketNo";
+    }
+
+    final id = chat.id?.toString().trim() ?? '';
+    final safePrefix = id.isEmpty ? 'unknown' : id.substring(0, id.length < 6 ? id.length : 6);
+    return "${LanguageService.get("chat")} #$safePrefix";
   }
 }

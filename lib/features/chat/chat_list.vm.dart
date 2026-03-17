@@ -70,6 +70,63 @@ class ChatListViewModel extends BaseViewModel {
     return _allChats;
   }
 
+  int _intFrom(dynamic value, [int fallback = 1]) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  /// Handles multiple backend response shapes and extracts the chat rooms list.
+  List<dynamic> _extractChatsListFromResponse(Map<String, dynamic> response) {
+    final rootData = response['data'];
+
+    // Common shapes:
+    // 1) { data: [ ... ] }
+    // 2) { chats: [ ... ] }
+    // 3) { data: { chats: [ ... ] } }
+    // 4) { data: { data: [ ... ] } }
+    // 5) { data: { rooms: [ ... ] } }
+    if (rootData is List) return rootData;
+
+    if (response['chats'] is List) return response['chats'] as List;
+    if (response['rooms'] is List) return response['rooms'] as List;
+
+    if (rootData is Map) {
+      final dataMap = Map<String, dynamic>.from(rootData);
+      if (dataMap['data'] is List) return dataMap['data'] as List;
+      if (dataMap['chats'] is List) return dataMap['chats'] as List;
+      if (dataMap['rooms'] is List) return dataMap['rooms'] as List;
+      if (dataMap['chatRooms'] is List) return dataMap['chatRooms'] as List;
+    }
+
+    return const [];
+  }
+
+  /// Extracts contact list for departmental/external tabs from various shapes.
+  List<dynamic> _extractContactsListFromResponse(Map<String, dynamic> response) {
+    final rootData = response['data'];
+    if (rootData is List) return rootData;
+
+    if (response['contacts'] is List) return response['contacts'] as List;
+
+    if (rootData is Map) {
+      final dataMap = Map<String, dynamic>.from(rootData);
+
+      // Most likely shapes based on other calls: data.externals / data.departmentals
+      final preferredKeys =
+      currentTab == 'department'
+          ? const ['departmentals', 'departmental', 'departments', 'data', 'contacts']
+          : const ['externals', 'external', 'data', 'contacts'];
+
+      for (final key in preferredKeys) {
+        final val = dataMap[key];
+        if (val is List) return val;
+      }
+    }
+
+    return const [];
+  }
+
   void navigateToHome() {
     _stageService.updateSelectedBottomNavIndex(0);
   }
@@ -99,8 +156,7 @@ class ChatListViewModel extends BaseViewModel {
   // Archived count methods
   int get archivedTicketChatsCount => getArchivedTicketChats().length;
 
-  int get archivedDepartmentalChatsCount =>
-      getArchivedDepartmentalChats().length;
+  int get archivedDepartmentalChatsCount => getArchivedDepartmentalChats().length;
 
   int get archivedExternalChatsCount => getArchivedExternalChats().length;
 
@@ -111,21 +167,24 @@ class ChatListViewModel extends BaseViewModel {
 
   String get searchQuery => _searchQuery;
   String currentTab = 'ticket';
-  Map<String, int> _currentPage = {'department': 1, 'external': 1, 'ticket': 1};
+  Map<String,int> _currentPage = {
+    'department':1,
+    'external':1,
+    'ticket':1
+  };
 
-  void setTab(int index) {
-    if (index == 0) {
+  void setTab(int index){
+    if(index == 0){
       currentTab = 'ticket';
       getChatRooms();
-    } else if (index == 1) {
+    }else if(index == 1){
       currentTab = 'department';
       getOtherChatRooms();
-    } else {
+    }else{
       currentTab = 'external';
       getOtherChatRooms();
     }
   }
-
   void updateSearchQuery(String query) {
     _searchQuery = query.toLowerCase();
     notifyListeners();
@@ -143,10 +202,8 @@ class ChatListViewModel extends BaseViewModel {
 
     return tickets
         .where(
-          (chat) =>
-              _getChatTitle(chat).toLowerCase().contains(_searchQuery) ||
-              _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
-        )
+          (chat) => _getChatTitle(chat).toLowerCase().contains(_searchQuery) || _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
+    )
         .toList();
   }
 
@@ -156,10 +213,8 @@ class ChatListViewModel extends BaseViewModel {
 
     return departmental
         .where(
-          (chat) =>
-              _getChatTitle(chat).toLowerCase().contains(_searchQuery) ||
-              _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
-        )
+          (chat) => _getChatTitle(chat).toLowerCase().contains(_searchQuery) || _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
+    )
         .toList();
   }
 
@@ -169,10 +224,8 @@ class ChatListViewModel extends BaseViewModel {
 
     return external
         .where(
-          (chat) =>
-              _getChatTitle(chat).toLowerCase().contains(_searchQuery) ||
-              _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
-        )
+          (chat) => _getChatTitle(chat).toLowerCase().contains(_searchQuery) || _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
+    )
         .toList();
   }
 
@@ -240,7 +293,6 @@ class ChatListViewModel extends BaseViewModel {
       AppLogger.error("Failed to parse socket chat update: $e");
     }
   }
-
   Future<void> getChatRooms() async {
     // + Reset pagination
     _currentPage = {
@@ -257,6 +309,7 @@ class ChatListViewModel extends BaseViewModel {
     try {
       // + Service call ko page aur limit ke saath update karein
       final result = await _chatService.getAllChats(page: 1, limit: _limit);
+
       result.fold(
             (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
@@ -267,21 +320,21 @@ class ChatListViewModel extends BaseViewModel {
           );
         },
             (response) { // 'response' ab Map<String, dynamic> hai
-          // + Paginated data parse karein
-          final dynamic rawChats = response['data'] ?? response['chats'];
-          final List<dynamic> responseData = rawChats is List ? rawChats : const [];
-
+          final responseData = _extractChatsListFromResponse(response);
           _allChats =
               responseData
                   .whereType<Map>()
                   .map((e) => Chats.fromJson(Map<String, dynamic>.from(e)))
                   .toList();
 
-          _currentPage[currentTab]  = response['page'] ?? 1;
-          _totalPages = response['totalPages'] ?? 1;
+          _currentPage[currentTab] = _intFrom(response['page'] ?? response['currentPage'], 1);
+          _totalPages = _intFrom(
+            response['totalPages'] ?? response['pages'] ?? response['total_pages'],
+            1,
+          );
           _isLastPage = (_currentPage[currentTab] ?? 1)>= _totalPages;
 
-          AppLogger.info('Successfully loaded ${response.length} chats for page $_currentPage');
+          AppLogger.info('Successfully loaded ${_allChats.length} chats for tab $currentTab (Page: ${_currentPage[currentTab]}/$_totalPages)');
         },
       );
     } catch (e) {
@@ -325,9 +378,7 @@ class ChatListViewModel extends BaseViewModel {
           );
         },
             (response) { // 'response' ab Map<String, dynamic> hai
-          // + Paginated data parse karein
-          final dynamic rawContacts = response['data'] ?? response['contacts'];
-          final List<dynamic> responseData = rawContacts is List ? rawContacts : const [];
+          final responseData = _extractContactsListFromResponse(response);
 
           final contactChats =
           responseData
@@ -404,11 +455,14 @@ class ChatListViewModel extends BaseViewModel {
               })
                   .toList();
 
-          _currentPage[currentTab] = response['page'] ?? 1;
-          _totalPages = response['totalPages'] ?? 1;
+          _currentPage[currentTab] = _intFrom(response['page'] ?? response['currentPage'], 1);
+          _totalPages = _intFrom(
+            response['totalPages'] ?? response['pages'] ?? response['total_pages'],
+            1,
+          );
           _isLastPage = (_currentPage[currentTab] ?? 1)>= _totalPages;
 
-          AppLogger.info('Successfully loaded ${response.length} chats for page $_currentPage');
+          AppLogger.info('Successfully loaded ${_allChats.length} chats for tab $currentTab (Page: ${_currentPage[currentTab]}/$_totalPages)');
         },
       );
     } catch (e) {
@@ -428,7 +482,6 @@ class ChatListViewModel extends BaseViewModel {
 
     notifyListeners();
   }
-
   Future<void> loadArchivedChats() async {
     _isLoading = true;
     notifyListeners();
@@ -473,7 +526,7 @@ class ChatListViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  void navigateToChat(ChatListModel chatRoom) async {
+  void navigateToChat(Chats chatRoom) async {
     await _navigationService.navigateTo(Routes.chat, arguments: chatRoom);
     init();
   }
@@ -484,6 +537,12 @@ class ChatListViewModel extends BaseViewModel {
 
   // Helper methods for search functionality
   String _getChatTitle(Chats chat) {
+    final type = chat.type.trim().toLowerCase();
+    if (type == 'group') {
+      final groupTitle = (chat.groupTitle ?? '').trim();
+      if (groupTitle.isNotEmpty) return groupTitle.capitalizeWords;
+    }
+
     final ticketNumber = chat.ticket.ticketNumber.trim();
     if (ticketNumber.isNotEmpty) {
       return "Ticket #$ticketNumber";
@@ -527,7 +586,6 @@ class ChatListViewModel extends BaseViewModel {
     AppLogger.info('Refreshing chats for type: $chatType');
     await getChatRooms();
   }
-
   Future<void> loadMoreChatRooms() async {
     if (_isLoadingMore || _isLastPage || _isLoading) return;
 
@@ -535,136 +593,27 @@ class ChatListViewModel extends BaseViewModel {
     notifyListeners();
 
     _currentPage[currentTab]=(_currentPage[currentTab]??1)+1;
-    final nextPage = _currentPage[currentTab] ?? 1;
 
     try {
-      if (currentTab == 'ticket') {
-        final result = await _chatService.getAllChats(page: nextPage, limit: _limit);
+      final result = await _chatService.getAllChats(page:(_currentPage[currentTab]??1) , limit: _limit);
 
-        result.fold(
-              (failure) {
-            AppLogger.error('Failed to load more chats: ${failure.message}');
-            _currentPage[currentTab]=(_currentPage[currentTab]??1)-1;
-          },
-              (response) {
-            final dynamic rawChats = response['data'] ?? response['chats'];
-            final List<dynamic> responseData = rawChats is List ? rawChats : const [];
-            final newChats =
-            responseData
-                .whereType<Map>()
-                .map((e) => Chats.fromJson(Map<String, dynamic>.from(e)))
-                .toList();
+      result.fold(
+            (failure) {
+          AppLogger.error('Failed to load more chats: ${failure.message}');
+          _currentPage[currentTab]=(_currentPage[currentTab]??1)-1;
+        },
+            (response) {
+          final List<dynamic> responseData = response['data'] ?? [];
+          final newChats = responseData.map((e) => Chats.fromJson(e)).toList();
 
-            _allChats.addAll(newChats);
-            _currentPage[currentTab]  = response['page'] ?? nextPage;
-            _totalPages = response['totalPages'] ?? _totalPages;
-            _isLastPage = (_currentPage[currentTab] ?? 1) >= _totalPages;
+          _allChats.addAll(newChats);
+          _currentPage[currentTab]  = response['page'] ?? _currentPage;
+          _totalPages = response['totalPages'] ?? 1;
+          _isLastPage = (_currentPage[currentTab] ?? 1)>= _totalPages;
 
-            AppLogger.info('Successfully loaded ${newChats.length} more chats');
-          },
-        );
-      } else {
-        final result = await _chatContactService.getAllContact(
-          page: nextPage,
-          limit: _limit,
-          tab: currentTab,
-          screen: 'chat',
-        );
-
-        result.fold(
-              (failure) {
-            AppLogger.error('Failed to load more chats: ${failure.message}');
-            _currentPage[currentTab]=(_currentPage[currentTab]??1)-1;
-          },
-              (response) {
-            final dynamic rawContacts = response['data'] ?? response['contacts'];
-            final List<dynamic> responseData = rawContacts is List ? rawContacts : const [];
-
-            final contactChats =
-            responseData
-                .whereType<Map>()
-                .map((e) => ContactChat.fromJson(Map<String, dynamic>.from(e)))
-                .toList();
-
-            final newChats =
-            contactChats
-                .map((contactChat) {
-              final lastMessageAt =
-                  DateTime.tryParse(contactChat.chatRoom.lastMessageTime ?? '') ??
-                      DateTime.now();
-
-              final contactRoomId = contactChat.chatRoom.roomId ?? '';
-              final safeRoomId =
-              contactRoomId.trim().isEmpty ? '' : contactRoomId;
-
-              return Chats(
-                id: contactChat.id,
-                ticket: Ticket(
-                  status: contactChat.chatRoom.exists ? 'Active' : 'Inactive',
-                  id: '',
-                  ticketNumber: '',
-                  problem: '',
-                  errorCode: '',
-                  notes: '',
-                  media: const [],
-                  ticketType: '',
-                  type: '',
-                  isActive: true,
-                  machine: '',
-                  processor: '',
-                  organisation: '',
-                  pricing: '',
-                  paymentStatus: '',
-                  isShowChatOption: true,
-                  isFirstTimeServiceDone: true,
-                  resolvedAt: null,
-                  resolutionDurationMinutes: null,
-                  createdAt: lastMessageAt,
-                  updatedAt: lastMessageAt,
-                  v: 0,
-                  rescheduleTime: null,
-                  rescheduleUpdateTime: null,
-                ),
-                unreadCount: contactChat.chatRoom.unreadCount,
-                lastMessage: LastMessage(
-                  content: contactChat.chatRoom.lastMessage ?? '',
-                  id: '',
-                  room: safeRoomId,
-                  sender: '',
-                  translatedContent: '',
-                  attachments: const [],
-                  replyTo: null,
-                  edited: false,
-                  isDeleted: false,
-                  readBy: const [],
-                  reactions: const [],
-                  createdAt: lastMessageAt,
-                  updatedAt: lastMessageAt,
-                  v: 0,
-                ),
-                chatWith: ChatWith(
-                  id: safeRoomId,
-                  fullName: contactChat.name.capitalizeWords,
-                  email: contactChat.designation.toUpperCase(),
-                  flag: contactChat.flag,
-                  countryCode: '',
-                ),
-                type: contactChat.type,
-                members: const [],
-                updatedAt: lastMessageAt,
-              );
-            })
-                .toList();
-
-            _allChats.addAll(newChats);
-            _currentPage[currentTab]  = response['page'] ?? nextPage;
-            _totalPages = response['totalPages'] ?? _totalPages;
-            _isLastPage = (_currentPage[currentTab] ?? 1) >= _totalPages;
-
-            AppLogger.info('Successfully loaded ${newChats.length} more chats');
-          },
-        );
-      }
+          AppLogger.info('Successfully loaded ${newChats.length} more chats');
+        },
+      );
     } catch (e) {
       AppLogger.error('Error loading more chats: $e');
       _currentPage[currentTab]=(_currentPage[currentTab]??1)-1;
@@ -674,30 +623,23 @@ class ChatListViewModel extends BaseViewModel {
 
     notifyListeners();
   }
-
   void onScanFromCamera(BuildContext context) async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder:
-            (context) => ScanCodeView(
-              attributes: ScanCodeViewAttributes(
-                screen: ScanScreenType.externalContact,
-              ),
-            ),
+    final result = await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => ScanCodeView(
+      attributes: ScanCodeViewAttributes(
+        screen: ScanScreenType.externalContact,
       ),
-    );
+    )));
 
     // If customer was edited from scan code, refresh the customers list
     if (result == true) {
       // await _loadCustomers();
     }
   }
-
   void onSearchByPhone(BuildContext context) async {
     final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const SearchExternalContactView(),
-      ),
+      MaterialPageRoute(builder: (context) => const SearchExternalContactView()),
     );
 
     // If customer was edited from search organization, refresh the customers list
