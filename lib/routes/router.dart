@@ -207,8 +207,14 @@ class AppRouter extends RouterBase {
       );
     },
     GroupInfoScreen: (data) {
+      final args = data.arguments as Map?;
       return MaterialPageRoute(
-        builder: (BuildContext _) => GroupInfoScreen(),
+        builder:
+            (BuildContext _) => GroupInfoScreen(
+          contactNumber: args?['contactNumber'] ?? '',
+          contactName: args?['contactName'] ?? '',
+          roomId: args?['roomId'],
+        ),
         settings: data,
       );
     },

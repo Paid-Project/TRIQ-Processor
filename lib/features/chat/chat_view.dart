@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:manager/features/chat/group_info/group_info.view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
 
@@ -663,7 +664,18 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
             }
 
             if (value == 'Group info') {
-              model.navigateToGroupInfoChats();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder:
+                      (_) => GroupInfoScreen(
+                    contactName: widget.contactName.trim().isNotEmpty
+                        ? widget.contactName
+                        : 'Group',
+                    contactNumber: widget.contactNumber,
+                    roomId: widget.roomId,
+                  ),
+                ),
+              );
               // group info open
             }
           },
@@ -1047,6 +1059,8 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   }
 
   Widget _buildMessageBubble(ChatMessageModel message, ChatViewModel model) {
+    bool isGroupChat = widget.screen == ChatRoomScreenType.groupChat;
+    final showName = isGroupChat && !message.isSentByMe;
     return TweenAnimationBuilder<double>(
       duration: Duration(milliseconds: 300),
       tween: Tween(begin: 0.0, end: 1.0),
@@ -1186,6 +1200,21 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                 crossAxisAlignment:
                                 CrossAxisAlignment.start,
                                 children: [
+                                  /// 👇 NAME (GROUP CHAT ONLY)
+                                  if (isGroupChat ) ...[
+                                    if(showName)
+                                      Padding(
+                                        padding: EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          message.sender.fullName,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.primaryDark,
+                                          ),
+                                        ),
+                                      ),],
+
                                   // Reply reference (if this message is a reply)
                                   if (message.replyTo != null) ...[
                                     Container(
@@ -1646,9 +1675,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   }
 
   Widget _buildMessageSeenStatus(ChatMessageModel message) {
-
-
-    if(message.readBy.length>1) {
+    final membersCount =
+        int.tryParse(widget.contactNumber.split(" ").first) ?? 0;
+    if (membersCount > 0 && message.readBy.length >= membersCount){
       return SizedBox(
         width: 25,
         child: Row(
@@ -1663,16 +1692,33 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
           ],
         ),
       );
-
     } else {
-      return
-        Text(
-          "UNSEEN",
-          style: TextStyle(
-            fontSize: AppSizes.f10,
-            fontWeight: FontWeight.w500,
-          ),
-        );
+      return RichText(
+        text: TextSpan(
+          children: [
+            if (message.readBy.isNotEmpty)
+              TextSpan(
+                text: "${message.readBy.length} ",
+                style: TextStyle(
+                  fontSize: AppSizes.f12, // 👈 BIG SIZE
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.primaryLight,
+                ),
+              ),
+
+            /// 🔴 TEXT (CHHOTA)
+            TextSpan(
+              text: "Unseen",
+              style: TextStyle(
+                fontSize: AppSizes.f10, // 👈 SMALL SIZE
+                fontWeight: FontWeight.w400,
+                color: AppColors.primaryLight,
+              ),
+            ),
+
+          ],
+        ),
+      );
     }
   }
 

@@ -281,4 +281,52 @@ class ChatService {
       return Left(Failure('Failed to upload files: $e'));
     }
   }
+
+
+  ResultFuture<bool> leaveGroup({
+    required String groupId,
+
+  }) async
+  {
+    try {
+      final response = await _apiService.put(
+        url: "${ApiEndpoints.leaveGroup}${groupId}",
+      );
+
+      if (response.data['success'] == true) {
+        return Right(true);
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+        return Left(
+          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
+        );
+      }
+    }
+    return Left(Failure('Failed to verify email'));
+  }
+  ResultFuture<bool> addMember({
+    required String groupId,
+
+  }) async
+  {
+    try {
+      final response = await _apiService.put(
+        url: "${ApiEndpoints.addMembers}${groupId}",
+      );
+
+      if (response.data['success'] == true) {
+        return Right(true);
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+        return Left(
+          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
+        );
+      }
+    }
+    return Left(Failure('Failed to verify email'));
+  }
 }

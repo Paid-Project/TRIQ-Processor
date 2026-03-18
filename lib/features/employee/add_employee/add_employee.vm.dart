@@ -28,6 +28,7 @@ import '../../../services/dialogs.service.dart';
 import '../../../services/team.service.dart';
 import '../../../widgets/common/custom_date_picker.dart';
 import '../../../widgets/dialogs/loader/loader_dialog.view.dart';
+import 'package:country_state_city/country_state_city.dart' as csc;
 
 enum ScreenMode { create, view, edit, partialAdd }
 
@@ -109,15 +110,25 @@ class AddEmployeeViewModel extends ReactiveViewModel {
     ScreenMode.create,
   );
 
+
   // Getter for the UI to access permissions
   Permissions get permissions => _permissions.value;
-
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController stateController = TextEditingController();
+  final TextEditingController countryController = TextEditingController();
+  final TextEditingController pinCodeController = TextEditingController();
   String _countryCode = '';
   Country? _selectedCountry;
   Country? _selectedPersonalCountry;
   DesignationModel? _selectedDesignation;
   String? _selectedBloodGroup;
 
+  // State management
+  final ReactiveValue<String?> _selectedState = ReactiveValue<String?>(null);
+  String? get selectedState => _selectedState.value;
+
+  final ReactiveValue<String?> _selectedFactoryState = ReactiveValue<String?>(null);
+  String? get selectedFactoryState => _selectedFactoryState.value;
   String _countrySearchQuery = '';
   bool _isPartialEdit = false;
   DateTime? startDateTime;
@@ -157,6 +168,14 @@ class AddEmployeeViewModel extends ReactiveViewModel {
   bool get isPartialEdit => _isPartialEdit;
   List<Employee> get reportToList => _reportToList.value;
   List<String> selectedReportToIds = [];
+
+  // Available states based on country
+  List<String> _availableStates = _getStatesForCountry('India');
+  List<String> get availableStates => _availableStates;
+
+  List<String> _availableFactoryStates = _getStatesForCountry('India');
+  List<String> get availableFactoryStates => _availableFactoryStates;
+
   final List<String> bloodGroups = [
     'O+',
     'A+',
@@ -176,20 +195,59 @@ class AddEmployeeViewModel extends ReactiveViewModel {
     'Intern',
     'Consultant',
   ];
-
-  List<Country> get filteredCountries {
-    if (_countrySearchQuery.isEmpty) {
-      return countries.toList();
+  // List of countries for dropdown (from country_state_city package)
+  List<String> _countriesList = [];
+  List<String> get countries {
+    if (_countriesList.isEmpty) {
+      _loadCountries();
+      // Return a default list while loading
+      return ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Armenia', 'Australia',
+        'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium',
+        'Belize', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei',
+        'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon', 'Canada', 'Chad', 'Chile', 'China',
+        'Colombia', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czech Republic', 'Denmark', 'Djibouti',
+        'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Estonia', 'Ethiopia', 'Fiji', 'Finland',
+        'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Guatemala', 'Guinea',
+        'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland',
+        'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kuwait', 'Kyrgyzstan',
+        'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Lithuania', 'Luxembourg', 'Madagascar',
+        'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Mauritania', 'Mauritius', 'Mexico', 'Moldova',
+        'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nepal',
+        'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia',
+        'Norway', 'Oman', 'Pakistan', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines',
+        'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Saudi Arabia', 'Senegal', 'Serbia',
+        'Singapore', 'Slovakia', 'Slovenia', 'Somalia', 'South Africa', 'South Korea', 'South Sudan', 'Spain',
+        'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Taiwan', 'Tajikistan',
+        'Tanzania', 'Thailand', 'Togo', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Uganda',
+        'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan',
+        'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'];
     }
-    return countries
-        .where(
-          (country) => country.name.toLowerCase().contains(
-            _countrySearchQuery.toLowerCase(),
-          ),
-        )
-        .toList();
+    return _countriesList;
+  }
+  static List<String> _getStatesForCountry(String country) {
+    // This is a synchronous fallback for initialization
+    return [];
   }
 
+  Future<void> _loadCountries() async {
+    try {
+      final countriesList = await csc.getAllCountries();
+      _countriesList = countriesList.map((country) => country.name).toList()..sort();
+      notifyListeners();
+    } catch (e) {
+      AppLogger.error('Error getting countries: $e');
+    }
+  }
+  // Country dropdown
+  final ReactiveValue<String> _country = ReactiveValue<String>('India');
+  String get country => _country.value;
+  void updateCountry(String? value) {
+    if (value != null) {
+      _country.value = value;
+      countryController.text = value;
+      notifyListeners();
+    }
+  }
   void init(AddEmployeeViewAttributes attributes) async {
     Get.put(this);
     _attributes = attributes;
@@ -228,6 +286,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
       _screenMode.value = ScreenMode.create;
     }
   }
+
   void toggleReportTo(String id) {
     if (selectedReportToIds.contains(id)) {
       selectedReportToIds.remove(id);
@@ -235,6 +294,25 @@ class AddEmployeeViewModel extends ReactiveViewModel {
       selectedReportToIds.add(id);
     }
     notifyListeners();
+  }
+  void onCountryChanged(String country) async {
+    // Clear current state
+    _selectedState.value = null;
+    stateController.clear();
+    _availableStates = [];
+    notifyListeners();
+
+    // First, try to load from package asynchronously
+    try {
+      final packageStates = await _getStatesForCountryAsync(country);
+      if (packageStates.isNotEmpty) {
+        _availableStates = packageStates;
+        notifyListeners();
+        //  AppLogger.info('Loaded ${packageStates.length} states from package for $country');
+      }
+    } catch (e) {
+      //  AppLogger.error('Error fetching states from package: $e');
+    }
   }
   Future<void> loadEmployeeForEdit(String employeeId) async {
     try {
@@ -313,20 +391,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
             }
           }
 
-          // ============ WORK COUNTRY ============
-          if (employee.country != null && employee.country!.isNotEmpty) {
-            try {
-              _selectedCountry = countries.firstWhere(
-                (c) =>
-                    c.code.trim().toLowerCase() ==
-                    employee.country!.trim().toLowerCase(),
-                orElse: () => countries.first,
-              );
-              AppLogger.info("Work country set to: ${_selectedCountry?.name}");
-            } catch (e) {
-              AppLogger.error("Country not found: ${employee.country}");
-            }
-          }
+
 
           // ============ DEPARTMENT ============
           if (employee.department != null && _myDepartment.value.isNotEmpty) {
@@ -376,26 +441,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
             pr_stateController.text = address.state?.trim() ?? '';
             pr_pincodeController.text = address.pincode?.trim() ?? '';
 
-            // Personal Country
-            if (address.country != null && address.country!.isNotEmpty) {
-              try {
-                _selectedPersonalCountry = countries.firstWhere(
-                  (c) =>
-                      c.code.trim().toLowerCase() ==
-                      address.country!.trim().toLowerCase(),
-                  orElse: () => countries.first,
-                );
-                pr_countryController.text =
-                    _selectedPersonalCountry?.code ?? '';
-                AppLogger.info(
-                  "  Personal country set to: ${_selectedPersonalCountry?.name}",
-                );
-              } catch (e) {
-                AppLogger.error(
-                  "Personal country not found: ${address.country}",
-                );
-              }
-            }
+
           }
 
           // ============ EMERGENCY CONTACT ============
@@ -849,7 +895,43 @@ class AddEmployeeViewModel extends ReactiveViewModel {
   //   notifyListeners();
   //   _updateFormValidity();
   // }
+  static Future<List<String>> _getStatesForCountryAsync(String country) async {
+    try {
+      // Get all countries first
+      final allCountries = await csc.getAllCountries();
 
+      // Find the matching country
+      final matchedCountry = allCountries.firstWhere(
+            (c) => c.name.toLowerCase() == country.toLowerCase(),
+        orElse: () => allCountries.firstWhere(
+              (c) => c.name.toLowerCase().contains(country.toLowerCase()),
+          orElse: () => csc.Country(
+              name: '',
+              isoCode: '',
+              phoneCode: '',
+              currency: '',
+              latitude: '',
+              longitude: '',
+              flag: ''
+          ),
+        ),
+      );
+
+      if (matchedCountry.isoCode.isNotEmpty) {
+        // Get states for the country using ISO code
+        final states = await csc.getStatesOfCountry(matchedCountry.isoCode);
+        if (states.isNotEmpty) {
+          return states.map((state) => state.name).toList()..sort();
+        }
+      }
+
+      // Fallback to empty list if no states found
+      return [];
+    } catch (e) {
+      //  AppLogger.error('Error getting states from country_state_city: $e');
+      return [];
+    }
+  }
   Future<void> loadMyDepartment() async {
     _isLoadingmyDepartment.value = true;
     notifyListeners();
@@ -1046,7 +1128,11 @@ class AddEmployeeViewModel extends ReactiveViewModel {
     // Turn off dialog loader
     setBusyForObject('dialog', false);
   }
-
+  void updateState(String? value) {
+    _selectedState.value = value;
+    stateController.text = value ?? '';
+    notifyListeners();
+  }
   Future<void> submitDetails(GlobalKey<FormState> formKey) async {
     // 1. ========= VALIDATE THE FORM ==================
     if (!(formKey.currentState?.validate() ?? false)) {
@@ -1083,10 +1169,10 @@ class AddEmployeeViewModel extends ReactiveViewModel {
         final personalAddress = PersonalAddress(
           addressLine1: address_line_1Controller.text.trim(),
           addressLine2: address_line_2Controller.text.trim(),
-          city: pr_cityController.text.trim(),
-          state: pr_stateController.text.trim(),
-          country: _selectedPersonalCountry?.code ?? 'IN',
-          pincode: pr_pincodeController.text.trim(),
+          city:  cityController.text.trim(),
+          state: stateController.text.trim(),
+          country: _country.value ?? 'IN',
+          pincode:  pinCodeController.text.trim(),
         );
 
         final emergencyContact = EmergencyContact(

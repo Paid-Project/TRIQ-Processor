@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl_phone_field/countries.dart';
+import 'package:phone_input/src/number_parser/models/phone_number.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:manager/features/employee/add_employee/add_employee.vm.dart';
@@ -14,9 +14,9 @@ import 'package:manager/widgets/common_text_field.dart';
 import 'package:manager/widgets/dialogs/country_picker.dart';
 import 'package:manager/widgets/extantion/common_extantion.dart';
 import 'package:stacked/stacked.dart';
-import '../../../core/models/department.model.dart';
+
 import '../../../core/models/employee.dart';
-import '../../../core/models/machine.dart';
+
 import '../../machines/machines_dropdown.dart';
 import '../../tasks/create_task/widgets/add_media_widget.dart';
 import '../department/department_dropdown.dart';
@@ -899,99 +899,184 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
                               ),
                             ),
+
                             AppGaps.h16,
+
+                            // Country and City in same row
                             Row(
                               children: [
                                 Expanded(
-                                  child: _FormSection(
-                                    label: LanguageService.get('current_city'),
-                                    child: CommonTextField(
-                                      controller: viewModel.pr_cityController,
-                                      placeholder: LanguageService.get(
-                                        'current_city',
-                                      ),
-                                      readOnly: viewModel.isViewMode, // ✅ FIXED
-                                      validator:
-                                          (value) =>
-                                              value?.isEmpty == true
-                                                  ? LanguageService.get(
-                                                    'Please Fill City Name',
-                                                  )
-                                                  : null,
-                                    ),
+                                  child: buildCountryDropdown(
+                                    context,
+                                    viewModel,
+
+                                    viewModel.country,
+                                        (value) {
+                                          viewModel.updateCountry(value);
+                                          viewModel.onCountryChanged(value ?? 'India');
+                                    },
+                                     false,
                                   ),
                                 ),
-                                AppGaps.w16,
+                                const SizedBox(width: 15),
+
                                 Expanded(
-                                  child: _FormSection(
-                                    label: LanguageService.get(
-                                      'state_province',
+                                  child: CommonTextField(
+                                    enabled:true,
+                                    controller: viewModel.cityController,
+                                    label: LanguageService.get("city"),
+                                    placeholder: LanguageService.get("city"),
+                                    readOnly:  false,
+                                    contentPadding: EdgeInsets.all(12),
+                                    textStyle: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    child: CommonTextField(
-                                      controller: viewModel.pr_stateController,
-                                      placeholder: LanguageService.get(
-                                        'state_province',
-                                      ),
-                                      readOnly: viewModel.isViewMode, // ✅ FIXED
-                                      validator:
-                                          (value) =>
-                                              value?.isEmpty == true
-                                                  ? LanguageService.get(
-                                                    'Please Fill State Name',
-                                                  )
-                                                  : null,
-                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return LanguageService.get("please_enter_city");
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 ),
                               ],
                             ),
-                            AppGaps.h16,
+                            const SizedBox(height: 15),
+
+                            // State and PIN Code in same row
                             Row(
                               children: [
                                 Expanded(
-                                  child: _FormSection(
-                                    label: 'Country',
-                                    child: CommonCountryPicker(
-                                      selectedCountry:
-                                          viewModel.selectedPersonalCountry,
-                                      onCountryChanged:
-                                          viewModel
-                                              .updateSelectedPersonalCountry,
-                                      isReadOnly: viewModel.isViewMode,
-                                      hintText: 'Select Country',
-                                      validator: (value) {
-                                        if (value == null) {
-                                          return 'Please select country';
-                                        }
-                                        return null;
-                                      },
+                                  child: AbsorbPointer(
+                                    absorbing:false,
+                                    child: buildStateDropdown(
+                                      context,
+                                      viewModel,
+                                      viewModel.selectedState,
+                                          (value) => viewModel.updateState(value),
+                                      false,
+                                      viewModel.availableStates, // Pass corporate states list
                                     ),
                                   ),
                                 ),
-                                AppGaps.w16,
+                                const SizedBox(width: 15),
+
                                 Expanded(
-                                  child: _FormSection(
-                                    label: LanguageService.get('Pincode'),
-                                    child: CommonTextField(
-                                      keyboardType:TextInputType.phone ,
-                                      controller:
-                                          viewModel.pr_pincodeController,
-                                      placeholder: LanguageService.get(
-                                        'Pincode',
-                                      ),
-                                      readOnly: viewModel.isViewMode, // ✅ FIXED
-                                      validator:
-                                          (value) =>
-                                              value?.isEmpty == true
-                                                  ? LanguageService.get(
-                                                    'Please Fill Area Pincode',
-                                                  )
-                                                  : null,
+                                  child: CommonTextField(
+                                    enabled: true,
+                                    controller: viewModel.pinCodeController,
+                                    label: LanguageService.get("pin_code"),
+                                    placeholder: LanguageService.get("pin_code"),
+                                    readOnly:  false,
+                                    contentPadding: EdgeInsets.all(12),
+                                    textStyle: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
                                     ),
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return LanguageService.get("please_enter_pin_code");
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 25),
+                            // Row(
+                            //   children: [
+                            //     Expanded(
+                            //       child: _FormSection(
+                            //         label: LanguageService.get('current_city'),
+                            //         child: CommonTextField(
+                            //           controller: viewModel.pr_cityController,
+                            //           placeholder: LanguageService.get(
+                            //             'current_city',
+                            //           ),
+                            //           readOnly: viewModel.isViewMode, // ✅ FIXED
+                            //           validator:
+                            //               (value) =>
+                            //                   value?.isEmpty == true
+                            //                       ? LanguageService.get(
+                            //                         'Please Fill City Name',
+                            //                       )
+                            //                       : null,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     AppGaps.w16,
+                            //     Expanded(
+                            //       child: _FormSection(
+                            //         label: LanguageService.get(
+                            //           'state_province',
+                            //         ),
+                            //         child: CommonTextField(
+                            //           controller: viewModel.pr_stateController,
+                            //           placeholder: LanguageService.get(
+                            //             'state_province',
+                            //           ),
+                            //           readOnly: viewModel.isViewMode, // ✅ FIXED
+                            //           validator:
+                            //               (value) =>
+                            //                   value?.isEmpty == true
+                            //                       ? LanguageService.get(
+                            //                         'Please Fill State Name',
+                            //                       )
+                            //                       : null,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+                            // AppGaps.h16,
+                            // Row(
+                            //   children: [
+                            //     Expanded(
+                            //       child: _FormSection(
+                            //         label: 'Country',
+                            //         child: CommonCountryPicker(
+                            //           selectedCountry:
+                            //               viewModel.selectedPersonalCountry,
+                            //           onCountryChanged:
+                            //               viewModel
+                            //                   .updateSelectedPersonalCountry,
+                            //           isReadOnly: viewModel.isViewMode,
+                            //           hintText: 'Select Country',
+                            //           validator: (value) {
+                            //             if (value == null) {
+                            //               return 'Please select country';
+                            //             }
+                            //             return null;
+                            //           },
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     AppGaps.w16,
+                            //     Expanded(
+                            //       child: _FormSection(
+                            //         label: LanguageService.get('Pincode'),
+                            //         child: CommonTextField(
+                            //           keyboardType:TextInputType.phone ,
+                            //           controller:
+                            //               viewModel.pr_pincodeController,
+                            //           placeholder: LanguageService.get(
+                            //             'Pincode',
+                            //           ),
+                            //           readOnly: viewModel.isViewMode, // ✅ FIXED
+                            //           validator:
+                            //               (value) =>
+                            //                   value?.isEmpty == true
+                            //                       ? LanguageService.get(
+                            //                         'Please Fill Area Pincode',
+                            //                       )
+                            //                       : null,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ],
                         ),
                         AppGaps.h16,
@@ -1424,4 +1509,95 @@ class _FormSection extends StatelessWidget {
 String capitalize(String text) {
   if (text.isEmpty) return text;
   return text[0].toUpperCase() + text.substring(1);
+}
+
+Widget buildCountryDropdown(
+    BuildContext context,
+    AddEmployeeViewModel model,
+    String selectedValue,
+    Function(String?) onChanged,
+    bool isReadOnly,
+    ) {
+  // Ensure the selected value is in the countries list, otherwise use default
+  String validSelectedValue = selectedValue;
+  if (!model.countries.contains(selectedValue)) {
+    validSelectedValue = 'India'; // Default fallback
+  }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        LanguageService.get("country"),
+        style: const TextStyle(
+          fontSize: 12,
+          color: AppColors.textGrey,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 8),
+      CustomDropdownFormField<String>(
+        isExpanded: true,
+        label: LanguageService.get("country"),
+        hintText: LanguageService.get('select_country'),
+        value: validSelectedValue,
+        items: model.countries.map((String country) {
+          return DropdownMenuItem<String>(
+            value: country,
+            child: Text(country),
+          );
+        }).toList(),
+        onChanged: isReadOnly ? null : onChanged,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return LanguageService.get('please_select_country');
+          }
+          return null;
+        },
+      )
+    ],
+  );
+}
+
+Widget buildStateDropdown(
+    BuildContext context,
+    AddEmployeeViewModel model,
+    String? selectedValue,
+    Function(String?) onChanged,
+    bool isReadOnly,
+    List<String> statesList, // Direct states list parameter
+    ) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        LanguageService.get("state_province"),
+        style: const TextStyle(
+          fontSize: 12,
+          color: AppColors.textGrey,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 8),
+      CustomDropdownFormField<String>(
+        isExpanded: true,
+        label: LanguageService.get("state_province"),
+        hintText: LanguageService.get('select_state'),
+        value: selectedValue,
+        items: statesList.map((String state) {
+          return DropdownMenuItem<String>(
+            value: state,
+            child: Text(state),
+          );
+        }).toList(),
+        onChanged: isReadOnly ? null : onChanged,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return LanguageService.get('please_select_state');
+          }
+          return null;
+        },
+      )
+    ],
+  );
 }

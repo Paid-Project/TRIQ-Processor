@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -256,33 +257,90 @@ class ChatViewModel extends ReactiveViewModel {
   }
   /// Handle new incoming messages
   void _handleNewMessage(dynamic data) {
-    if (data is! Map<String, dynamic>) {
-      AppLogger.warning('Received unsupported message payload: ${data.runtimeType}');
+
+    print("SOCKET MESSAGE RECEIVED: $data");
+
+    dynamic payload = data;
+    if (payload is String) {
+      try {
+        payload = jsonDecode(payload);
+      } catch (_) {
+        // Ignore, will fail validation below.
+      }
+    }
+
+    if (payload is! Map) {
+      AppLogger.warning(
+        'Received unsupported message payload: ${payload.runtimeType}',
+      );
       return;
     }
 
     try {
-      final message = ChatMessageModel.fromJson(data);
+      final rootMap = Map<String, dynamic>.from(payload);
+      final dynamic inner =
+      (rootMap['data'] is Map)
+          ? rootMap['data']
+          : (rootMap['message'] is Map)
+          ? rootMap['message']
+          : (rootMap['payload'] is Map)
+          ? rootMap['payload']
+          : rootMap;
+
+      if (inner is! Map) {
+        AppLogger.warning(
+          'Received unsupported message inner payload: ${inner.runtimeType}',
+        );
+        return;
+      }
+
+      final message = ChatMessageModel.fromJson(
+        Map<String, dynamic>.from(inner),
+      );
+      // ✅ DUPLICATE CHECK
+      final exists = _messages.any((m) => m.id == message.id);
+      if (exists) {
+        print("⚠️ Duplicate message skipped: ${message.id}");
+        return;
+      }
       message.isSentByMe = message.sender.id == userData.id;
+      final shouldAutoScroll = message.isSentByMe ? true : _isNearBottom();
 
       if (message.isSentByMe) {
         final localIndex = _findOptimisticMessageIndex(message);
         if (localIndex != -1) {
           _messages[localIndex] = message;
         } else {
-          _messages.insert(0, message);
+          _messages.add(message);
         }
       } else {
-        _messages.insert(0, message);
+        // Insert in chronological order (oldest -> newest).
+        final insertAt = _messages.indexWhere(
+              (m) => m.createdAt.isAfter(message.createdAt),
+        );
+        if (insertAt == -1) {
+          _messages.add(message);
+        } else {
+          _messages.insert(insertAt, message);
+        }
+        _markMessageAsSeen(message);
       }
-
+      notifyListeners();
       _resolveReplyReferences();
       notifyListeners();
+      if (shouldAutoScroll) {
+        _scrollToBottom(animated: true);
+      }
     } catch (e) {
       AppLogger.error('Error parsing incoming message: $e');
     }
   }
-
+  bool _isNearBottom([double threshold = 220]) {
+    if (!scrollController.hasClients) return true;
+    final position = scrollController.position;
+    final remaining = position.maxScrollExtent - position.pixels;
+    return remaining <= threshold;
+  }
   int _findOptimisticMessageIndex(ChatMessageModel serverMessage) {
     return _messages.indexWhere((localMessage) {
       if (!localMessage.isSentByMe || localMessage.id == serverMessage.id) {
@@ -339,19 +397,31 @@ class ChatViewModel extends ReactiveViewModel {
   Future<void> fetchInitialData({
     required String? roomId1,
     ChatRoomScreenType? screen,
-  }) async {
+  })
+  async {
     _isLoading = true;
     _currentPage = 1;
     _hasMoreMessages = true;
     _messages.clear();
     notifyListeners();
-
+    _socketService.off(chatEvents[chatRoomScreenType.name]['newMessage']);
+    _socketService.off('userTyping');
+    _socketService.off('messageReactionUpdated');
+    _socketService.off('messageReacted');
+    _socketService.off('seenMessage');
+    _socketService.off('error');
     _chatRoomScreenType = screen ?? ChatRoomScreenType.mainChat;
     roomId = roomId1 ?? roomId;
     await Future.wait([initializeSocket(), loadMessages()]);
 
     _isLoading = false;
     notifyListeners();
+
+    // WhatsApp-like: keep the latest message visible at the bottom.
+    _scrollToBottom(animated: false);
+
+// 👇 ADD THIS
+    _markAllIncomingMessagesAsSeen();
   }
 
   /// Socket implementation
@@ -666,6 +736,7 @@ class ChatViewModel extends ReactiveViewModel {
     );
     _messages.add(localMessage);
     notifyListeners();
+    _scrollToBottom(animated: true);
   }
   void _scheduleChatListRefreshForSeenUpdates() {
     _seenRefreshDebounceTimer?.cancel();
@@ -746,7 +817,24 @@ class ChatViewModel extends ReactiveViewModel {
       notifyListeners();
     }
   }
-
+  void _scrollToBottom({bool animated = true}) {
+    if (!scrollController.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!scrollController.hasClients) return;
+      final target = scrollController.position.maxScrollExtent;
+      if (animated) {
+        scrollController.animateTo(
+          target,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      } else {
+        scrollController.jumpTo(target);
+      }
+      // 👇 ADD THIS
+      _markAllIncomingMessagesAsSeen();
+    });
+  }
   /// Pick multiple media (images and videos) from album
   Future<void> pickMultipleMediaFromAlbum() async {
     try {

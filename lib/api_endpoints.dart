@@ -69,7 +69,9 @@ abstract class ApiEndpoints {
   static const String holdTicket = 'ticket/status';
   static const String uploadImages = 'upload/images';
   // static const String profile = 'auth/profile';
-
+  ////leave Group
+  static const String leaveGroup = 'groupChat/leave/';
+  static const String addMembers = 'groupChat/add-members/';
   // static const String updateFcmToken = 'auth/update-fcm-token';
   static const String resolveTicket = 'ticket/resolve';
   static const String requestResolveTicket = 'ticket/resolve-request';
