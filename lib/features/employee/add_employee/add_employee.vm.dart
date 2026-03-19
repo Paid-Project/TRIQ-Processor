@@ -54,7 +54,8 @@ class AddEmployeeViewModel extends ReactiveViewModel {
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-
+  final ReactiveValue<String?> _selectedPrState = ReactiveValue<String?>(null);
+  String? get selectedPrState => _selectedPrState.value;
   final TextEditingController address_line_1Controller =
       TextEditingController();
   final TextEditingController address_line_2Controller =
@@ -175,7 +176,22 @@ class AddEmployeeViewModel extends ReactiveViewModel {
 
   List<String> _availableFactoryStates = _getStatesForCountry('India');
   List<String> get availableFactoryStates => _availableFactoryStates;
-
+  void updatePrState(String? value) {
+    _selectedPrState.value = value;
+    if (value != null) {
+      pr_stateController.text = value;
+    }
+    notifyListeners();
+  }
+  List<String> _availablePrStates = _getStatesForCountry('India');
+  List<String> get availablePrStates => _availablePrStates;
+  void onPrCountryChanged(String country) {
+    _availablePrStates = _getStatesForCountry(country);
+    print("value state 1:${_availablePrStates}");
+    _selectedPrState.value = null;
+    pr_stateController.clear();
+    notifyListeners();
+  }
   final List<String> bloodGroups = [
     'O+',
     'A+',
@@ -224,6 +240,10 @@ class AddEmployeeViewModel extends ReactiveViewModel {
     }
     return _countriesList;
   }
+
+  List<String> orgCountries = [
+    "Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belgium", "Brazil", "Brunei", "Bulgaria", "Cambodia", "Canada", "Chile", "China", "Colombia", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Egypt", "Estonia", "Finland", "France", "Georgia", "Germany", "Greece", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Japan", "Jordan", "Kazakhstan", "Kuwait", "Kyrgyzstan", "Latvia", "Lebanon", "Lithuania", "Luxembourg", "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand", "Norway", "Oman", "Pakistan", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Saudi Arabia", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uzbekistan", "Vietnam",
+  ];
   static List<String> _getStatesForCountry(String country) {
     // This is a synchronous fallback for initialization
     return [];
@@ -296,6 +316,7 @@ class AddEmployeeViewModel extends ReactiveViewModel {
     notifyListeners();
   }
   void onCountryChanged(String country) async {
+    _availablePrStates = _getStatesForCountry(country);
     // Clear current state
     _selectedState.value = null;
     stateController.clear();

@@ -919,13 +919,33 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   ),
                                 ),
                                 const SizedBox(width: 15),
+                                Expanded(
+                                  child: AbsorbPointer(
+                                    absorbing:false,
+                                    child: buildStateDropdown(
+                                      context,
+                                      viewModel,
+                                      viewModel.selectedState,
+                                          (value) => viewModel.updateState(value),
+                                      false,
+                                      viewModel.availableStates, // Pass corporate states list
+                                    ),
+                                  ),
+                                ),
 
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+
+                            // State and PIN Code in same row
+                            Row(
+                              children: [
                                 Expanded(
                                   child: CommonTextField(
                                     enabled:true,
                                     controller: viewModel.cityController,
-                                    label: LanguageService.get("city"),
-                                    placeholder: LanguageService.get("city"),
+                                    label: LanguageService.get("current_city"),
+                                    placeholder: LanguageService.get("current_city"),
                                     readOnly:  false,
                                     contentPadding: EdgeInsets.all(12),
                                     textStyle: const TextStyle(
@@ -938,26 +958,6 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                       }
                                       return null;
                                     },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-
-                            // State and PIN Code in same row
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: AbsorbPointer(
-                                    absorbing:false,
-                                    child: buildStateDropdown(
-                                      context,
-                                      viewModel,
-                                      viewModel.selectedState,
-                                          (value) => viewModel.updateState(value),
-                                      false,
-                                      viewModel.availableStates, // Pass corporate states list
-                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 15),

@@ -307,13 +307,17 @@ class ChatService {
     return Left(Failure('Failed to verify email'));
   }
   ResultFuture<bool> addMember({
-    required String groupId,
+    required  groupId,
+    required  List<String> memberIds,
 
   }) async
   {
     try {
       final response = await _apiService.put(
-        url: "${ApiEndpoints.addMembers}${groupId}",
+          url: "${ApiEndpoints.addMembers}${groupId}",
+          data: {
+            "members":memberIds,
+          }
       );
 
       if (response.data['success'] == true) {

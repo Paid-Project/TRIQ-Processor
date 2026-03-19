@@ -110,6 +110,7 @@ class Employee {
   // ==================== Metadata ====================
   String? flag;              // FROM MODEL A
   String? user;              // FROM MODEL A (if needed)
+   String? linkedUser;
   String? createdAt;
   String? updatedAt;
   String? lastLoginAt;
@@ -229,6 +230,7 @@ class Employee {
     // Metadata
     this.flag,              // ADD
     this.user,              // ADD (optional)
+    this.linkedUser,
     this.createdAt,
     this.updatedAt,
     this.lastLoginAt,
@@ -368,7 +370,7 @@ class Employee {
 
       // Preferences
       preferredLanguage: json['preferredLanguage'],
-
+      linkedUser: json["linkedUser"],
       // Metadata
       flag: json['flag'],                    // ADD
       user: json['user'],                    // ADD
@@ -494,6 +496,7 @@ class Employee {
       // Metadata
       'flag': flag,                          // ADD
       'user': user,                          // ADD
+      "linkedUser": linkedUser,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'lastLoginAt': lastLoginAt,
@@ -640,6 +643,7 @@ class Employee {
     String? flag,                // ADD
     String? area,                // ADD
     String? user,                // ADD
+    String? linkedUser,                // ADD
     PersonalAddress? personalAddress,
     EmergencyContact? emergencyContact,
   }) {
@@ -726,6 +730,7 @@ class Employee {
       flag: flag ?? this.flag,                                        // ADD
       area: area ?? this.area,                                        // ADD
       user: user ?? this.user,                                        // ADD
+      linkedUser: linkedUser ?? this.linkedUser,                                        // ADD
       personalAddress: personalAddress ?? this.personalAddress,
       emergencyContact: emergencyContact ?? this.emergencyContact,
     );

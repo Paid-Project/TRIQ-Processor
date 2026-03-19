@@ -577,7 +577,27 @@ class UpdateOrganizationView extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 15),
+              Expanded(
+                child: AbsorbPointer(
+                  absorbing: !(model.isCorporateAddressEditable ?? false),
+                  child: _buildStateDropdown(
+                    context,
+                    model,
+                    model.selectedState,
+                        (value) => model.updateState(value),
+                    !(model.isCorporateAddressEditable ?? false),
+                    model.availableStates, // Pass corporate states list
+                  ),
+                ),
+              ),
 
+            ],
+          ),
+          const SizedBox(height: 15),
+
+          // State and PIN Code in same row
+          Row(
+            children: [
               Expanded(
                 child: CommonTextField(
                   enabled: model.isCorporateAddressEditable ?? false,
@@ -596,26 +616,6 @@ class UpdateOrganizationView extends StatelessWidget {
                     }
                     return null;
                   },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          // State and PIN Code in same row
-          Row(
-            children: [
-              Expanded(
-                child: AbsorbPointer(
-                  absorbing: !(model.isCorporateAddressEditable ?? false),
-                  child: _buildStateDropdown(
-                    context,
-                    model,
-                    model.selectedState,
-                    (value) => model.updateState(value),
-                    !(model.isCorporateAddressEditable ?? false),
-                    model.availableStates, // Pass corporate states list
-                  ),
                 ),
               ),
               const SizedBox(width: 15),
@@ -738,7 +738,29 @@ class UpdateOrganizationView extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 15),
+              Expanded(
+                child: AbsorbPointer(
+                  absorbing: model.sameAsCorpAddress ||
+                      !(model.isCorporateAddressEditable ?? false),
+                  child: _buildStateDropdown(
+                    context,
+                    model,
+                    model.selectedFactoryState,
+                        (value) => model.updateFactoryState(value),
+                    model.sameAsCorpAddress ||
+                        !(model.isCorporateAddressEditable ?? false),
+                    model.availableFactoryStates, // Pass factory states list
+                  ),
+                ),
+              ),
 
+            ],
+          ),
+          const SizedBox(height: 15),
+
+          // Factory State and PIN Code
+          Row(
+            children: [
               Expanded(
                 child: CommonTextField(
                   enabled: model.isCorporateAddressEditable ?? false,
@@ -746,7 +768,7 @@ class UpdateOrganizationView extends StatelessWidget {
                   label: LanguageService.get("city"),
                   placeholder: LanguageService.get("city"),
                   readOnly:
-                      model.sameAsCorpAddress ||
+                  model.sameAsCorpAddress ||
                       !(model.isCorporateAddressEditable ?? false),
                   contentPadding: EdgeInsets.all(12),
                   textStyle: const TextStyle(
@@ -759,28 +781,6 @@ class UpdateOrganizationView extends StatelessWidget {
                     }
                     return null;
                   },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          // Factory State and PIN Code
-          Row(
-            children: [
-              Expanded(
-                child: AbsorbPointer(
-                  absorbing: model.sameAsCorpAddress ||
-                      !(model.isCorporateAddressEditable ?? false),
-                  child: _buildStateDropdown(
-                    context,
-                    model,
-                    model.selectedFactoryState,
-                    (value) => model.updateFactoryState(value),
-                    model.sameAsCorpAddress ||
-                        !(model.isCorporateAddressEditable ?? false),
-                    model.availableFactoryStates, // Pass factory states list
-                  ),
                 ),
               ),
               const SizedBox(width: 15),
