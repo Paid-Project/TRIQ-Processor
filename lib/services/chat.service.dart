@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:manager/core/models/attachments_model.dart';
 import 'package:manager/features/chat/model/chat_message_model.dart';
 
 import '../api_endpoints.dart';
@@ -332,5 +333,41 @@ class ChatService {
       }
     }
     return Left(Failure('Failed to verify email'));
+  }
+
+
+  ResultFuture<AttachmentsModel> getAttachments(
+      {
+        required String roomId,
+        // required int limit,
+      }
+      ) async
+  {
+    try {
+      final response = await _apiService.get(
+        url: "${ApiEndpoints.getAttachments}/$roomId",
+        // queryParameters: {'page': page, 'limit': limit}, // Pagination parameters
+      );
+
+      if (response.statusCode == 200 && response.data is Map) {
+        return Right(
+          AttachmentsModel.fromJson(
+            Map<String, dynamic>.from(response.data as Map),
+          ),
+        );
+      } else {
+        return Left(
+          Failure(response.data['message'] ?? 'Failed to get all chats'),
+        );
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+        return Left(
+          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
+        );
+      }
+      return Left(Failure('Failed to get all chats: $e'));
+    }
   }
 }

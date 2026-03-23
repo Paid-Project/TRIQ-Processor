@@ -779,6 +779,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                 ),
               ),
             ),
+                if(widget.screen == ChatRoomScreenType.groupChat)
             // Mark As Resolved Item
             PopupMenuItem<String>(
               value: 'Group info',
@@ -2890,14 +2891,18 @@ class AttachmentSheet extends StatelessWidget {
                 icon: AppImages.video,
                 label: 'Video Call',
                 color: AppColors.backgroundlightgreen,
-                onTap: () {},
+                onTap: () {
+                  model.openVideoChat();
+                },
               ),
 
               _buildAttachmentMenuItem(
                 icon: AppImages.phone,
                 label: 'Voice Call',
                 color: AppColors.colorFFB141,
-                onTap: () {},
+                onTap: () {
+                  model.openAudioChat();
+                },
               ),
 
               _buildAttachmentMenuItem(

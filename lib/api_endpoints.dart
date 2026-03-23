@@ -36,7 +36,7 @@ abstract class ApiEndpoints {
   static const String getEmployees = 'employee/org';
   static const String employee = 'employee';
   // static const String allEmployee = 'employee/get-all';
-
+  static const String getAttachments = 'groupChatMessage/attachments';
   static const String addNewEmployee = 'employee/add-new';
   static const String login = 'auth/login';
   static const String acceptRequest = 'org/accept-partner';
