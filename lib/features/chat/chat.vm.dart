@@ -115,6 +115,34 @@ class ChatViewModel extends ReactiveViewModel {
 
   List<ChatMessageModel> get messages => _messages.toList();
 
+  String senderDisplayName(ChatMessageModel message) {
+    final directName = message.sender.fullName.trim();
+    if (directName.isNotEmpty) {
+      return directName;
+    }
+
+    for (final existingMessage in _messages.reversed) {
+      if (existingMessage.sender.id != message.sender.id) {
+        continue;
+      }
+
+      final cachedName = existingMessage.sender.fullName.trim();
+      if (cachedName.isNotEmpty) {
+        return cachedName;
+      }
+    }
+
+    if (message.sender.id == (userData.id ?? '')) {
+      final myName = (userData.name ?? userData.fullName ?? '').trim();
+      if (myName.isNotEmpty) {
+        return myName;
+      }
+      return 'You';
+    }
+
+    return 'Unknown User';
+  }
+
   // Getters
   bool get isSendingMessage => _isSendingMessage;
   bool get showAttachment => _showAttachment;
@@ -294,9 +322,11 @@ class ChatViewModel extends ReactiveViewModel {
         return;
       }
 
-      final message = ChatMessageModel.fromJson(
+      final normalizedMessagePayload = _normalizeIncomingMessagePayload(
+        rootMap,
         Map<String, dynamic>.from(inner),
       );
+      final message = ChatMessageModel.fromJson(normalizedMessagePayload);
       // ✅ DUPLICATE CHECK
       final exists = _messages.any((m) => m.id == message.id);
       if (exists) {
@@ -304,7 +334,7 @@ class ChatViewModel extends ReactiveViewModel {
         return;
       }
       message.isSentByMe = message.sender.id == userData.id;
-      final shouldAutoScroll = message.isSentByMe ? true : _isNearBottom();
+      final shouldAutoScroll = true;
 
       if (message.isSentByMe) {
         final localIndex = _findOptimisticMessageIndex(message);
@@ -335,12 +365,80 @@ class ChatViewModel extends ReactiveViewModel {
       AppLogger.error('Error parsing incoming message: $e');
     }
   }
-  bool _isNearBottom([double threshold = 220]) {
-    if (!scrollController.hasClients) return true;
-    final position = scrollController.position;
-    final remaining = position.maxScrollExtent - position.pixels;
-    return remaining <= threshold;
+
+  Map<String, dynamic> _normalizeIncomingMessagePayload(
+      Map<String, dynamic> rootMap,
+      Map<String, dynamic> messageMap,
+      )
+  {
+    final normalized = Map<String, dynamic>.from(messageMap);
+    final rawRootSender = rootMap['sender'];
+    final rootSender =
+    rawRootSender is Map ? Map<String, dynamic>.from(rawRootSender) : null;
+    final rawMessageSender = normalized['sender'];
+    final fallbackSenderName = _firstNonEmptyString([
+      normalized['senderName'],
+      normalized['sender_name'],
+      normalized['userName'],
+      rootSender?['fullName'],
+      rootSender?['name'],
+      rootMap['senderName'],
+      rootMap['sender_name'],
+      rootMap['userName'],
+      rootMap['name'],
+    ]);
+
+    if (rawMessageSender is Map ||
+        rootSender != null ||
+        rawMessageSender != null ||
+        rawRootSender != null ||
+        fallbackSenderName.isNotEmpty) {
+      final senderMap =
+      rawMessageSender is Map
+          ? Map<String, dynamic>.from(rawMessageSender)
+          : <String, dynamic>{};
+
+      if (rootSender != null) {
+        senderMap['_id'] ??= rootSender['_id'] ?? rootSender['id'];
+        senderMap['id'] ??= rootSender['id'] ?? rootSender['_id'];
+        senderMap['email'] ??= rootSender['email'];
+      }
+
+      if (rawMessageSender is! Map && rawMessageSender != null) {
+        senderMap['_id'] ??= rawMessageSender.toString();
+        senderMap['id'] ??= rawMessageSender.toString();
+      }
+
+      if (rawRootSender is! Map && rawRootSender != null) {
+        senderMap['_id'] ??= rawRootSender.toString();
+        senderMap['id'] ??= rawRootSender.toString();
+      }
+
+      if (fallbackSenderName.isNotEmpty) {
+        senderMap['fullName'] ??= fallbackSenderName;
+        senderMap['name'] ??= fallbackSenderName;
+        normalized['senderName'] ??= fallbackSenderName;
+        normalized['sender_name'] ??= fallbackSenderName;
+      }
+
+      if (senderMap.isNotEmpty) {
+        normalized['sender'] = senderMap;
+      }
+    }
+
+    return normalized;
   }
+
+  String _firstNonEmptyString(Iterable<dynamic> values) {
+    for (final value in values) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
+  }
+
   int _findOptimisticMessageIndex(ChatMessageModel serverMessage) {
     return _messages.indexWhere((localMessage) {
       if (!localMessage.isSentByMe || localMessage.id == serverMessage.id) {
@@ -393,7 +491,6 @@ class ChatViewModel extends ReactiveViewModel {
       notifyListeners();
     }
   }
-
   Future<void> fetchInitialData({
     required String? roomId1,
     ChatRoomScreenType? screen,

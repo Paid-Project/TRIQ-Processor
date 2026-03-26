@@ -779,24 +779,24 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                 ),
               ),
             ),
-                if(widget.screen == ChatRoomScreenType.groupChat)
             // Mark As Resolved Item
-            PopupMenuItem<String>(
-              value: 'Group info',
-              child: Container(
-                width: 250, // Match width with reschedule item
-                padding: EdgeInsets.only(top: 10, bottom: 10),
+            if( widget.screen == ChatRoomScreenType.groupChat)
+              PopupMenuItem<String>(
+                value: 'Group info',
+                child: Container(
+                  width: 250, // Match width with reschedule item
+                  padding: EdgeInsets.only(top: 10, bottom: 10),
 
-                child: Text(
-                  'Group Info',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                  child: Text(
+                    'Group Info',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
-            ),
             // Divider
             PopupMenuItem<String>(
               enabled: false,
@@ -1207,7 +1207,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                       Padding(
                                         padding: EdgeInsets.only(bottom: 4),
                                         child: Text(
-                                          message.sender.fullName,
+                                          model.senderDisplayName(message),
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -1258,10 +1258,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                         CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            message
-                                                .replyTo!
-                                                .sender
-                                                .fullName,
+                                            model.senderDisplayName(
+                                              message.replyTo!,
+                                            ),
                                             style: TextStyle(
                                               color:
                                               message.isSentByMe
@@ -2461,7 +2460,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  model.replyMessage!.sender.fullName,
+                                  model.senderDisplayName(
+                                    model.replyMessage!,
+                                  ),
                                   style: TextStyle(
                                     color: AppColors.primaryDark,
                                     fontSize: 13,

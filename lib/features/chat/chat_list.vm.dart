@@ -258,10 +258,10 @@ class ChatListViewModel extends BaseViewModel {
       },
       onConnected: () {
         _socketService.registerUser(userData.id ?? 'default_user');
+        _socketService.off('updateChatList');
 
         _socketService.on('updateChatList', (data) {
           _handleChatListUpdate(data);
-          _socketService.onUpdateChatList(data);
         });
 
       },
@@ -275,15 +275,37 @@ class ChatListViewModel extends BaseViewModel {
 
     try {
       if (data is! Map) return;
-      final updatedChat = Chats.fromJson(Map<String, dynamic>.from(data));
+      final rootMap = Map<String, dynamic>.from(data);
+      Map<String, dynamic> chatMap = rootMap;
+
+      for (final key in const ['data', 'chat', 'payload']) {
+        final candidate = rootMap[key];
+        if (candidate is Map) {
+          chatMap = Map<String, dynamic>.from(candidate);
+          break;
+        }
+      }
+
+      final updatedChat = Chats.fromJson(chatMap);
       if (updatedChat.id.trim().isEmpty) return;
 
       // List mein existing chat dhoondhein
       final index = _allChats.indexWhere((chat) => chat.id == updatedChat.id);
 
       if (index != -1) {
-        // Agar mil gaya, to replace karein
-        _allChats[index] = updatedChat;
+        final existingChat = _allChats.removeAt(index);
+
+        if (updatedChat.chatWith.fullName.trim().isEmpty &&
+            existingChat.chatWith.fullName.trim().isNotEmpty) {
+          updatedChat.chatWith.fullName = existingChat.chatWith.fullName;
+        }
+
+        if ((updatedChat.groupTitle ?? '').trim().isEmpty &&
+            (existingChat.groupTitle ?? '').trim().isNotEmpty) {
+          updatedChat.groupTitle = existingChat.groupTitle;
+        }
+
+        _allChats.insert(0, updatedChat);
         AppLogger.info("Socket update: Replaced chat ${updatedChat.id}");
       } else {
         // Agar naya chat hai, to list mein sabse upar add karein

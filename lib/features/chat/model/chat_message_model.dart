@@ -45,28 +45,59 @@ class ChatMessageModel {
   });
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
+    final senderFallbackName = _readFirstNonEmptyString([
+      json['senderName'],
+      json['sender_name'],
+      json['userName'],
+      json['fullName'],
+      json['name'],
+    ]);
+    final senderFallbackEmail = _readFirstNonEmptyString([
+      json['senderEmail'],
+      json['sender_email'],
+      json['email'],
+    ]);
+
     Sender sender;
     if (json['sender'] is String) {
       sender = Sender(
         id: json['sender'] as String,
-        fullName: 'Unknown User',
-        email: '',
+        fullName:
+        senderFallbackName.isNotEmpty ? senderFallbackName : 'Unknown User',
+        email: senderFallbackEmail,
       );
     } else {
-      sender = Sender.fromJson(json['sender']);
+      final senderMap =
+      json['sender'] is Map
+          ? Map<String, dynamic>.from(json['sender'] as Map)
+          : <String, dynamic>{};
+
+      if (_readFirstNonEmptyString([senderMap['fullName'], senderMap['name']])
+          .isEmpty &&
+          senderFallbackName.isNotEmpty) {
+        senderMap['fullName'] = senderFallbackName;
+        senderMap['name'] = senderFallbackName;
+      }
+
+      if (_readFirstNonEmptyString([senderMap['email']]).isEmpty &&
+          senderFallbackEmail.isNotEmpty) {
+        senderMap['email'] = senderFallbackEmail;
+      }
+
+      sender = Sender.fromJson(senderMap);
     }
 
     final attachments =
         (json['attachments'] as List<dynamic>?)
             ?.map((e) => Attachment.fromJson(e))
             .toList() ??
-        [];
+            [];
     final rawMessageType =
-        (json['messageType'] ?? json['type'] ?? '').toString().trim().toLowerCase();
+    (json['messageType'] ?? json['type'] ?? '').toString().trim().toLowerCase();
     final resolvedMessageType =
-        rawMessageType.isNotEmpty
-            ? rawMessageType
-            : _resolveMessageTypeFromAttachments(attachments);
+    rawMessageType.isNotEmpty
+        ? rawMessageType
+        : _resolveMessageTypeFromAttachments(attachments);
 
     return ChatMessageModel(
       id: json['_id'] ?? '',
@@ -78,18 +109,18 @@ class ChatMessageModel {
       translatedContent: json['translatedContent'] ?? '',
       attachments: attachments,
       replyTo:
-          (json['replyTo'] != null && json['replyTo'] is Map<String, dynamic>)
-              ? ChatMessageModel.fromJson(json['replyTo'])
-              : null,
+      (json['replyTo'] != null && json['replyTo'] is Map<String, dynamic>)
+          ? ChatMessageModel.fromJson(json['replyTo'])
+          : null,
       replyToId:
-          json['replyTo'] is String
-              ? json['replyTo']
-              : (json['replyTo'] is Map ? json['replyTo']['_id'] : null),
+      json['replyTo'] is String
+          ? json['replyTo']
+          : (json['replyTo'] is Map ? json['replyTo']['_id'] : null),
       readBy: List<String>.from(json['readBy'] ?? []),
       reactions:
-          (json['reactions'] as List<dynamic>?)
-              ?.map((e) => Reaction.fromJson(e))
-              .toList() ??
+      (json['reactions'] as List<dynamic>?)
+          ?.map((e) => Reaction.fromJson(e))
+          .toList() ??
           [],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
@@ -97,7 +128,7 @@ class ChatMessageModel {
       isSentByMe: false,
       isDeleted: json['isDeleted'] ?? false,
       clientMessageId:
-          json['clientMessageId']?.toString() ??
+      json['clientMessageId']?.toString() ??
           json['client_message_id']?.toString(),
       status: MessageStatusX.fromString(MessageStatus.sent.name),
     );
@@ -129,11 +160,11 @@ class ChatMessageModel {
 
   bool get isImageMessage =>
       messageType == 'image' ||
-      attachments.any((attachment) => attachment.type == 'image');
+          attachments.any((attachment) => attachment.type == 'image');
 
   bool get isVideoMessage =>
       messageType == 'video' ||
-      attachments.any((attachment) => attachment.type == 'video');
+          attachments.any((attachment) => attachment.type == 'video');
 
   Attachment? get audioAttachment {
     for (final attachment in attachments) {
@@ -189,9 +220,17 @@ class Sender {
 
   factory Sender.fromJson(Map<String, dynamic> json) {
     return Sender(
-      id: json['_id'] ?? '',
-      fullName: json['fullName'] ?? '',
-      email: json['email'] ?? '',
+      id:
+      (json['_id'] ?? json['id'] ?? json['userId'] ?? json['senderId'] ?? '')
+          .toString(),
+      fullName: _readFirstNonEmptyString([
+        json['fullName'],
+        json['name'],
+        json['senderName'],
+        json['sender_name'],
+        json['userName'],
+      ]),
+      email: (json['email'] ?? json['senderEmail'] ?? '').toString(),
     );
   }
 
@@ -275,4 +314,14 @@ class Reaction {
   Map<String, dynamic> toJson() {
     return {'user': user, 'emoji': emoji};
   }
+}
+
+String _readFirstNonEmptyString(Iterable<dynamic> values) {
+  for (final value in values) {
+    final text = value?.toString().trim() ?? '';
+    if (text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
+    }
+  }
+  return '';
 }

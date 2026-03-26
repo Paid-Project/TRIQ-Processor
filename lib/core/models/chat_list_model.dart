@@ -115,7 +115,8 @@ class Chats {
   }
 
   factory Chats.fromJson(Map<String, dynamic> json) => Chats(
-    id: (json["_id"] ?? "").toString(),
+    id: (json["_id"] ?? json["roomId"] ?? json["room"] ?? json["id"] ?? "")
+        .toString(),
     type: (json["type"] ?? "").toString(),
     groupTitle: _extractGroupTitle(json),
     ticket:
@@ -170,8 +171,8 @@ class ChatWith {
   });
 
   factory ChatWith.fromJson(Map<String, dynamic> json) => ChatWith(
-    id: (json["_id"] ?? "").toString(),
-    fullName: (json["fullName"] ?? "").toString(),
+    id: (json["_id"] ?? json["id"] ?? "").toString(),
+    fullName: (json["fullName"] ?? json["name"] ?? "").toString(),
     email: (json["email"] ?? "").toString(),
     countryCode: (json["countryCode"] ?? "").toString(),
     flag: json["flag"]?.toString(),
