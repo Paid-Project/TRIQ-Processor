@@ -9,7 +9,6 @@ import 'package:manager/core/locator.dart';
 import 'package:manager/services/api.service.dart';
 import 'package:manager/services/file_picker.service.dart';
 import 'package:manager/services/profile.service.dart';
-import 'package:manager/services/location.service.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:manager/configs.dart';
 import 'package:dio/dio.dart';
@@ -22,7 +21,6 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
   final _apiService = locator<ApiService>();
   final _filePickerService = FilePickerService();
   final _profileService = locator<ProfileService>();
-  final _locationService = locator<LocationService>();
 
   // ProfileModel to store API response
   final ReactiveValue<ProfileModel?> _profileModel =
@@ -88,13 +86,56 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
   // Language selection
   String _language = 'English';
   String get language => _language;
+
   bool validateCorporateAddressForm() {
     return corporateAddressFormKey.currentState?.validate() ?? false;
   }
 
   bool validateFactoryAddressForm() {
+    if (sameAsCorpAddress) {
+      return true;
+    }
     return factoryAddressFormKey.currentState?.validate() ?? false;
   }
+
+  bool validateAddressForms() {
+    final isCorporateValid = validateCorporateAddressForm();
+    final isFactoryValid = validateFactoryAddressForm();
+
+    if (!isCorporateValid || !isFactoryValid) {
+      Fluttertoast.showToast(
+        msg: LanguageService.get('please_fill_all_required_fields'),
+        backgroundColor: Colors.red,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  String? get corporateCountryValue {
+    if (countryController.text.trim().isEmpty) {
+      return null;
+    }
+    return _country.value;
+  }
+
+  String? get factoryCountryValue {
+    if (factoryCountryController.text.trim().isEmpty) {
+      return null;
+    }
+    return _factoryCountry.value;
+  }
+
+  Future<bool> submitAddressSection() async {
+    if (!validateAddressForms()) {
+      return false;
+    }
+
+    await updateCorporateAddress();
+    return true;
+  }
+
   void updateLanguage(String value) {
     _language = value;
     notifyListeners();
@@ -297,17 +338,7 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
   }
   void toggleCorporateAddressEdit() async {
     if (isCorporateAddressEditable ?? false) {
-      if (!validateCorporateAddressForm()) return;
-      // Currently in edit mode, validate and save the data
-      if (formKey.currentState?.validate() ?? false) {
-        await updateCorporateAddress();
-      } else {
-        // Show error message if validation fails
-        Fluttertoast.showToast(
-          msg: LanguageService.get('please_fill_all_required_fields'),
-          backgroundColor: Colors.red,
-        );
-      }
+      await submitAddressSection();
     } else {
       // Currently in view mode, switch to edit mode
       isCorporateAddressEditable = true;
@@ -333,22 +364,14 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
     factoryAddressLine2Controller.text = addressLine2Controller.text;
     factoryCityController.text = cityController.text;
     factoryPinCodeController.text = pinCodeController.text;
-    
-    // Copy country and update factory country
+
+    // Copy country and state selection from corporate address.
     _factoryCountry.value = _country.value;
     factoryCountryController.text = _country.value;
-    _availableFactoryStates = _getStatesForCountry(_factoryCountry.value);
-    _selectedFactoryState.value =
-    _availableFactoryStates.contains(factoryStateController.text.trim())
-        ? factoryStateController.text.trim()
-        : null;
-    // Copy available states first
-    // _availableFactoryStates = List.from(_availableStates);
-    
-    // Copy state value
-    // _selectedFactoryState.value = _selectedState.value;
+    _availableFactoryStates = List<String>.from(_availableStates);
+    _selectedFactoryState.value = _selectedState.value;
     factoryStateController.text = stateController.text;
-    
+
     notifyListeners();
   }
 

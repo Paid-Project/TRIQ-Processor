@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:dropdown_flutter/custom_dropdown.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_popup/flutter_popup.dart';
 import 'package:get/get.dart';
 import 'package:manager/resources/multimedia_resources/resources.dart';
 import 'package:manager/core/models/organization.dart';
 import 'package:manager/services/language.service.dart';
 import 'package:phone_input/phone_input_package.dart';
-import 'package:phone_input/src/number_parser/models/phone_number.dart';
 import 'package:stacked/stacked.dart';
 import 'package:manager/widgets/common_text_field.dart';
 import 'package:manager/widgets/common_elevated_button.dart';
@@ -512,98 +509,26 @@ class UpdateOrganizationView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Corporate Address Title
-          Text(
-            LanguageService.get("corporate_address"),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          CommonTextField(
-            enabled: model.isCorporateAddressEditable ?? false,
-            controller: model.addressLine1Controller,
-            label: LanguageService.get("address_line_1"),
-            placeholder: LanguageService.get("address_line_1"),
-            readOnly: !(model.isCorporateAddressEditable ?? false),
-            contentPadding: EdgeInsets.all(12),
-            textStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return LanguageService.get("please_enter_address_line_1");
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 15),
-
-          CommonTextField(
-            enabled: model.isCorporateAddressEditable ?? false,
-            controller: model.addressLine2Controller,
-            label: LanguageService.get("address_line_2"),
-            placeholder: LanguageService.get("address_line_2"),
-            readOnly: !(model.isCorporateAddressEditable ?? false),
-            contentPadding: EdgeInsets.all(12),
-            textStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 15),
-
-          // Country and City in same row
-          Row(
-            children: [
-              Expanded(
-                child: AbsorbPointer(
-                  absorbing: !(model.isCorporateAddressEditable ?? false),
-                  child: _buildCountryDropdown(
-                    context,
-                    model,
-                    model.profileModel?.profile?.corporateAddress?.country ??
-                        model.country,
-                    (value) {
-                      model.updateCountry(value);
-                      model.onCountryChanged(value ?? 'India');
-                    },
-                    !(model.isCorporateAddressEditable ?? false),
+          Form(
+            key: model.corporateAddressFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  LanguageService.get("corporate_address"),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryDark,
                   ),
                 ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: AbsorbPointer(
-                  absorbing: !(model.isCorporateAddressEditable ?? false),
-                  child: _buildStateDropdown(
-                    context,
-                    model,
-                    model.selectedState,
-                        (value) => model.updateState(value),
-                    !(model.isCorporateAddressEditable ?? false),
-                    model.availableStates, // Pass corporate states list
-                  ),
-                ),
-              ),
+                const SizedBox(height: 12),
 
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          // State and PIN Code in same row
-          Row(
-            children: [
-              Expanded(
-                child: CommonTextField(
+                CommonTextField(
                   enabled: model.isCorporateAddressEditable ?? false,
-                  controller: model.cityController,
-                  label: LanguageService.get("city"),
-                  placeholder: LanguageService.get("city"),
+                  controller: model.addressLine1Controller,
+                  label: LanguageService.get("address_line_1"),
+                  placeholder: LanguageService.get("address_line_1"),
                   readOnly: !(model.isCorporateAddressEditable ?? false),
                   contentPadding: EdgeInsets.all(12),
                   textStyle: const TextStyle(
@@ -611,186 +536,166 @@ class UpdateOrganizationView extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                   validator: (value) {
+                    if (!(model.isCorporateAddressEditable ?? false)) {
+                      return null;
+                    }
                     if (value == null || value.trim().isEmpty) {
-                      return LanguageService.get("please_enter_city");
+                      return LanguageService.get("please_enter_address_line_1");
                     }
                     return null;
                   },
                 ),
-              ),
-              const SizedBox(width: 15),
+                const SizedBox(height: 15),
 
-              Expanded(
-                child: CommonTextField(
+                CommonTextField(
                   enabled: model.isCorporateAddressEditable ?? false,
-                  controller: model.pinCodeController,
-                  label: LanguageService.get("pin_code"),
-                  placeholder: LanguageService.get("pin_code"),
+                  controller: model.addressLine2Controller,
+                  label: LanguageService.get("address_line_2"),
+                  placeholder: LanguageService.get("address_line_2"),
                   readOnly: !(model.isCorporateAddressEditable ?? false),
                   contentPadding: EdgeInsets.all(12),
                   textStyle: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return LanguageService.get("please_enter_pin_code");
-                    }
-                    return null;
-                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 15),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: AbsorbPointer(
+                        absorbing: !(model.isCorporateAddressEditable ?? false),
+                        child: _buildCountryDropdown(
+                          context,
+                          model,
+                          model.corporateCountryValue,
+                          (value) {
+                            model.updateCountry(value);
+                            model.onCountryChanged(value ?? 'India');
+                          },
+                          !(model.isCorporateAddressEditable ?? false),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: AbsorbPointer(
+                        absorbing: !(model.isCorporateAddressEditable ?? false),
+                        child: _buildStateDropdown(
+                          context,
+                          model,
+                          model.selectedState,
+                          (value) => model.updateState(value),
+                          !(model.isCorporateAddressEditable ?? false),
+                          model.availableStates,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: CommonTextField(
+                        enabled: model.isCorporateAddressEditable ?? false,
+                        controller: model.cityController,
+                        label: LanguageService.get("city"),
+                        placeholder: LanguageService.get("city"),
+                        readOnly: !(model.isCorporateAddressEditable ?? false),
+                        contentPadding: EdgeInsets.all(12),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        validator: (value) {
+                          if (!(model.isCorporateAddressEditable ?? false)) {
+                            return null;
+                          }
+                          if (value == null || value.trim().isEmpty) {
+                            return LanguageService.get("please_enter_city");
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: CommonTextField(
+                        enabled: model.isCorporateAddressEditable ?? false,
+                        controller: model.pinCodeController,
+                        label: LanguageService.get("pin_code"),
+                        placeholder: LanguageService.get("pin_code"),
+                        readOnly: !(model.isCorporateAddressEditable ?? false),
+                        contentPadding: EdgeInsets.all(12),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        validator: (value) {
+                          if (!(model.isCorporateAddressEditable ?? false)) {
+                            return null;
+                          }
+                          if (value == null || value.trim().isEmpty) {
+                            return LanguageService.get("please_enter_pin_code");
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 25),
 
-          // Factory Address Section
-          Text(
-            LanguageService.get("factory_address"),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-            ),
-          ),
-          const SizedBox(height: 9),
-
-          // Same as Corporate Address checkbox
-          Row(
-            children: [
-              Checkbox(
-                value: model.sameAsCorpAddress,
-                onChanged:
-                    (model.isCorporateAddressEditable ?? false)
-                        ? (value) => model.toggleSameAsCorpAddress(value ?? false)
-                        : null,
-              ),
-              SizedBox(width: 6),
-              Text(
-                LanguageService.get("same_as_corporate_address"),
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textGrey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          CommonTextField(
-            enabled: model.isCorporateAddressEditable ?? false,
-            controller: model.factoryAddressLine1Controller,
-            label: LanguageService.get("address_line_1"),
-            placeholder: LanguageService.get("address_line_1"),
-            readOnly:
-                model.sameAsCorpAddress ||
-                !(model.isCorporateAddressEditable ?? false),
-            contentPadding: EdgeInsets.all(12),
-            textStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return LanguageService.get("please_enter_address_line_1");
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 15),
-
-          CommonTextField(
-            enabled: model.isCorporateAddressEditable ?? false,
-            controller: model.factoryAddressLine2Controller,
-            label: LanguageService.get("address_line_2"),
-            placeholder: LanguageService.get("address_line_2"),
-            readOnly:
-                model.sameAsCorpAddress ||
-                !(model.isCorporateAddressEditable ?? false),
-            contentPadding: EdgeInsets.all(12),
-            textStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 15),
-
-          // Factory Country and City
-          Row(
-            children: [
-              Expanded(
-                child: AbsorbPointer(
-                  absorbing: model.sameAsCorpAddress ||
-                      !(model.isCorporateAddressEditable ?? false),
-                  child: _buildCountryDropdown(
-                    context,
-                    model,
-                    model.profileModel?.profile?.factoryAddress?.country ??
-                        model.factoryCountry,
-                    (value) {
-                      model.updateFactoryCountry(value);
-                      model.onFactoryCountryChanged(value ?? 'India');
-                    },
-                    model.sameAsCorpAddress ||
-                        !(model.isCorporateAddressEditable ?? false),
+          Form(
+            key: model.factoryAddressFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  LanguageService.get("factory_address"),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryDark,
                   ),
                 ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: AbsorbPointer(
-                  absorbing: model.sameAsCorpAddress ||
-                      !(model.isCorporateAddressEditable ?? false),
-                  child: _buildStateDropdown(
-                    context,
-                    model,
-                    model.selectedFactoryState,
-                        (value) => model.updateFactoryState(value),
-                    model.sameAsCorpAddress ||
-                        !(model.isCorporateAddressEditable ?? false),
-                    model.availableFactoryStates, // Pass factory states list
-                  ),
+                const SizedBox(height: 9),
+
+                Row(
+                  children: [
+                    Checkbox(
+                      value: model.sameAsCorpAddress,
+                      onChanged:
+                          (model.isCorporateAddressEditable ?? false)
+                              ? (value) => model.toggleSameAsCorpAddress(
+                                value ?? false,
+                              )
+                              : null,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      LanguageService.get("same_as_corporate_address"),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 12),
 
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          // Factory State and PIN Code
-          Row(
-            children: [
-              Expanded(
-                child: CommonTextField(
+                CommonTextField(
                   enabled: model.isCorporateAddressEditable ?? false,
-                  controller: model.factoryCityController,
-                  label: LanguageService.get("city"),
-                  placeholder: LanguageService.get("city"),
-                  readOnly:
-                  model.sameAsCorpAddress ||
-                      !(model.isCorporateAddressEditable ?? false),
-                  contentPadding: EdgeInsets.all(12),
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return LanguageService.get("please_enter_city");
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 15),
-
-              Expanded(
-                child: CommonTextField(
-                  enabled: model.isCorporateAddressEditable ?? false,
-                  controller: model.factoryPinCodeController,
-                  label: LanguageService.get("pin_code"),
-                  placeholder: LanguageService.get("pin_code"),
+                  controller: model.factoryAddressLine1Controller,
+                  label: LanguageService.get("address_line_1"),
+                  placeholder: LanguageService.get("address_line_1"),
                   readOnly:
                       model.sameAsCorpAddress ||
                       !(model.isCorporateAddressEditable ?? false),
@@ -800,14 +705,134 @@ class UpdateOrganizationView extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                   validator: (value) {
+                    if (model.sameAsCorpAddress ||
+                        !(model.isCorporateAddressEditable ?? false)) {
+                      return null;
+                    }
                     if (value == null || value.trim().isEmpty) {
-                      return LanguageService.get("please_enter_pin_code");
+                      return LanguageService.get("please_enter_address_line_1");
                     }
                     return null;
                   },
                 ),
-              ),
-            ],
+                const SizedBox(height: 15),
+
+                CommonTextField(
+                  enabled: model.isCorporateAddressEditable ?? false,
+                  controller: model.factoryAddressLine2Controller,
+                  label: LanguageService.get("address_line_2"),
+                  placeholder: LanguageService.get("address_line_2"),
+                  readOnly:
+                      model.sameAsCorpAddress ||
+                      !(model.isCorporateAddressEditable ?? false),
+                  contentPadding: EdgeInsets.all(12),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: AbsorbPointer(
+                        absorbing:
+                            model.sameAsCorpAddress ||
+                            !(model.isCorporateAddressEditable ?? false),
+                        child: _buildCountryDropdown(
+                          context,
+                          model,
+                          model.factoryCountryValue,
+                          (value) {
+                            model.updateFactoryCountry(value);
+                            model.onFactoryCountryChanged(value ?? 'India');
+                          },
+                          model.sameAsCorpAddress ||
+                              !(model.isCorporateAddressEditable ?? false),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: AbsorbPointer(
+                        absorbing:
+                            model.sameAsCorpAddress ||
+                            !(model.isCorporateAddressEditable ?? false),
+                        child: _buildStateDropdown(
+                          context,
+                          model,
+                          model.selectedFactoryState,
+                          (value) => model.updateFactoryState(value),
+                          model.sameAsCorpAddress ||
+                              !(model.isCorporateAddressEditable ?? false),
+                          model.availableFactoryStates,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: CommonTextField(
+                        enabled: model.isCorporateAddressEditable ?? false,
+                        controller: model.factoryCityController,
+                        label: LanguageService.get("city"),
+                        placeholder: LanguageService.get("city"),
+                        readOnly:
+                            model.sameAsCorpAddress ||
+                            !(model.isCorporateAddressEditable ?? false),
+                        contentPadding: EdgeInsets.all(12),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        validator: (value) {
+                          if (model.sameAsCorpAddress ||
+                              !(model.isCorporateAddressEditable ?? false)) {
+                            return null;
+                          }
+                          if (value == null || value.trim().isEmpty) {
+                            return LanguageService.get("please_enter_city");
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: CommonTextField(
+                        enabled: model.isCorporateAddressEditable ?? false,
+                        controller: model.factoryPinCodeController,
+                        label: LanguageService.get("pin_code"),
+                        placeholder: LanguageService.get("pin_code"),
+                        readOnly:
+                            model.sameAsCorpAddress ||
+                            !(model.isCorporateAddressEditable ?? false),
+                        contentPadding: EdgeInsets.all(12),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        validator: (value) {
+                          if (model.sameAsCorpAddress ||
+                              !(model.isCorporateAddressEditable ?? false)) {
+                            return null;
+                          }
+                          if (value == null || value.trim().isEmpty) {
+                            return LanguageService.get("please_enter_pin_code");
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1111,14 +1136,15 @@ class UpdateOrganizationView extends StatelessWidget {
   Widget _buildCountryDropdown(
     BuildContext context,
     UpdateOrganizationViewModel model,
-    String selectedValue,
+    String? selectedValue,
     Function(String?) onChanged,
     bool isReadOnly,
   ) {
-    // Ensure the selected value is in the countries list, otherwise use default
-    String validSelectedValue = selectedValue;
-    if (!model.countries.contains(selectedValue)) {
-      validSelectedValue = 'India'; // Default fallback
+    String? validSelectedValue = selectedValue;
+    if (selectedValue != null &&
+        selectedValue.isNotEmpty &&
+        !model.countries.contains(selectedValue)) {
+      validSelectedValue = null;
     }
 
     return Column(
@@ -1164,6 +1190,13 @@ class UpdateOrganizationView extends StatelessWidget {
     bool isReadOnly,
     List<String> statesList, // Direct states list parameter
   ) {
+    String? validSelectedValue = selectedValue;
+    if (selectedValue != null &&
+        selectedValue.isNotEmpty &&
+        !statesList.contains(selectedValue)) {
+      validSelectedValue = null;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1180,7 +1213,7 @@ class UpdateOrganizationView extends StatelessWidget {
           isExpanded: true,
           label: LanguageService.get("state_province"),
           hintText: LanguageService.get('select_state'),
-          value: selectedValue,
+          value: validSelectedValue,
           items: statesList.map((String state) {
             return DropdownMenuItem<String>(
               value: state,
@@ -1402,7 +1435,10 @@ class UpdateOrganizationView extends StatelessWidget {
                   await model.updatePersonalInfo();
                 }
                 if (model.isCorporateAddressEditable == true) {
-                  await model.updateCorporateAddress();
+                  final isSaved = await model.submitAddressSection();
+                  if (!isSaved) {
+                    return;
+                  }
                 }
                 Navigator.of(context).pop(true); // Allow navigation
               },
