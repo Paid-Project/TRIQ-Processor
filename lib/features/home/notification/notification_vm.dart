@@ -10,6 +10,7 @@ import '../../../core/utils/app_logger.dart';
 import '../../../services/api.service.dart';
 import '../../../services/customer.service.dart';
 import '../../../services/dialogs.service.dart';
+import '../../../services/notification.service.dart';
 import '../../../widgets/dialogs/loader/loader_dialog.view.dart';
 import '../../tickets/ticket_details/ticket_details.view.dart';
 
@@ -161,6 +162,22 @@ class NotificationViewModel extends ReactiveViewModel {
     // Mark as read when tapped
     markAsRead(notification.id ?? '');
     final _navigationService = locator<NavigationService>();
+    final payload = <String, dynamic>{
+      ...?notification.data?.toJson(),
+      'title': notification.title,
+      'body': notification.body,
+      'type': notification.type,
+    };
+
+    final hasRoutePayload =
+        (payload['screenName']?.toString().trim().isNotEmpty ?? false) ||
+        (payload['roomId']?.toString().trim().isNotEmpty ?? false);
+
+    if (hasRoutePayload) {
+      await FirebaseNotificationService.notificationNavigation(data: payload);
+      return;
+    }
+
     // Handle different notification types
     switch (notification.type) {
       case 'organizationRequest':
@@ -170,7 +187,7 @@ class NotificationViewModel extends ReactiveViewModel {
         _navigationService.navigateToView(
           TicketDetailsView(ticketId: notification.data?.ticketId),
         );
-
+        return;
 
       default:
         AppLogger.info('Unknown notification type: ${notification.type}');

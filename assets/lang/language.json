@@ -4067,6 +4067,28 @@
     "Malay/Indonesian": "Masuk dengan kata sandi",
     "Ukrainian": "Увійти з паролем"
   },
+  "no_notifications_found": {
+    "English": "No notifications found",
+    "Hindi": "कोई अधिसूचना नहीं मिली",
+    "Chinese (Simplified)": "未找到通知",
+    "Spanish": "No se encontraron notificaciones",
+    "Japanese": "通知が見つかりませんでした",
+    "German": "Keine Benachrichtigungen gefunden",
+    "French": "Aucune notification trouvée",
+    "Arabic": "لم يتم العثور على إشعارات",
+    "Portuguese": "Nenhuma notificação encontrada",
+    "Russian": "Уведомления не найдены",
+    "Bengali": "কোন বিজ্ঞপ্তি পাওয়া যায়নি",
+    "Turkish": "Bildirim bulunamadı",
+    "Italian": "Nessuna notifica trovata",
+    "Korean": "알림을 찾을 수 없습니다",
+    "Vietnamese": "Không tìm thấy thông báo",
+    "Thai": "ไม่พบการแจ้งเตือน",
+    "Dutch": "Geen meldingen gevonden",
+    "Polish": "Nie znaleziono powiadomień",
+    "Malay/Indonesian": "Tidak ada notifikasi ditemukan",
+    "Ukrainian": "Сповіщення не знайдено"
+  },
   "update_profile": {
     "English": "Update Profile",
     "Hindi": "प्रोफाइल अपडेट करें",

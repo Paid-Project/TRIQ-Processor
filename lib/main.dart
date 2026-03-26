@@ -10,7 +10,6 @@ import 'package:manager/services/notification.service.dart';
 
 import 'app/app.view.dart';
 import 'core/locator.dart';
-import 'core/storage/prefs.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,4 +38,8 @@ void main() async {
   await notificationService.getToken();
 
   runApp(AppView());
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    FirebaseNotificationService.handlePendingNavigation();
+  });
 }

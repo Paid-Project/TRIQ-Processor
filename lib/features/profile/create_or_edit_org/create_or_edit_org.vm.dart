@@ -51,7 +51,8 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
   final TextEditingController stateController = TextEditingController();
   final TextEditingController countryController = TextEditingController();
   final TextEditingController pinCodeController = TextEditingController();
-
+  final corporateAddressFormKey = GlobalKey<FormState>();
+  final factoryAddressFormKey = GlobalKey<FormState>();
   // Factory Address controllers
   final TextEditingController factoryAddressLine1Controller =
       TextEditingController();
@@ -87,7 +88,13 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
   // Language selection
   String _language = 'English';
   String get language => _language;
+  bool validateCorporateAddressForm() {
+    return corporateAddressFormKey.currentState?.validate() ?? false;
+  }
 
+  bool validateFactoryAddressForm() {
+    return factoryAddressFormKey.currentState?.validate() ?? false;
+  }
   void updateLanguage(String value) {
     _language = value;
     notifyListeners();
@@ -290,6 +297,7 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
   }
   void toggleCorporateAddressEdit() async {
     if (isCorporateAddressEditable ?? false) {
+      if (!validateCorporateAddressForm()) return;
       // Currently in edit mode, validate and save the data
       if (formKey.currentState?.validate() ?? false) {
         await updateCorporateAddress();
@@ -309,6 +317,7 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
 
   void toggleFactoryAddressEdit() async {
     if (isFactoryAddressEditable ?? false) {
+      if (!validateFactoryAddressForm()) return;
       // Currently in edit mode, save the data
       await updateFactoryAddress();
     } else {
@@ -328,12 +337,16 @@ class UpdateOrganizationViewModel extends ReactiveViewModel {
     // Copy country and update factory country
     _factoryCountry.value = _country.value;
     factoryCountryController.text = _country.value;
-    
+    _availableFactoryStates = _getStatesForCountry(_factoryCountry.value);
+    _selectedFactoryState.value =
+    _availableFactoryStates.contains(factoryStateController.text.trim())
+        ? factoryStateController.text.trim()
+        : null;
     // Copy available states first
-    _availableFactoryStates = List.from(_availableStates);
+    // _availableFactoryStates = List.from(_availableStates);
     
     // Copy state value
-    _selectedFactoryState.value = _selectedState.value;
+    // _selectedFactoryState.value = _selectedState.value;
     factoryStateController.text = stateController.text;
     
     notifyListeners();

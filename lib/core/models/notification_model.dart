@@ -87,6 +87,12 @@ class Data {
   String? ticketId;
   String? machineId;
   String? customerId;
+  String? roomId;
+  String? contactName;
+  String? contactNumber;
+  String? ticketNumber;
+  String? ticketStatus;
+  String? flag;
 
   Data({
     this.action, 
@@ -95,6 +101,12 @@ class Data {
     this.ticketId,
     this.machineId,
     this.customerId,
+    this.roomId,
+    this.contactName,
+    this.contactNumber,
+    this.ticketNumber,
+    this.ticketStatus,
+    this.flag,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -104,6 +116,12 @@ class Data {
     ticketId: json["ticketId"],
     machineId: json["machineId"],
     customerId: json["customerId"],
+    roomId: json["roomId"] ?? json["room_id"],
+    contactName: json["contactName"] ?? json["sender_name"],
+    contactNumber: json["contactNumber"],
+    ticketNumber: json["ticketNumber"],
+    ticketStatus: json["ticketStatus"],
+    flag: json["flag"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -113,5 +131,11 @@ class Data {
     "ticketId": ticketId,
     "machineId": machineId,
     "customerId": customerId,
+    "roomId": roomId,
+    "contactName": contactName,
+    "contactNumber": contactNumber,
+    "ticketNumber": ticketNumber,
+    "ticketStatus": ticketStatus,
+    "flag": flag,
   };
 }

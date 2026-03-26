@@ -1,20 +1,13 @@
 import "dart:async";
 import "dart:convert";
-import "dart:developer";
 import "dart:io";
 import "package:firebase_core/firebase_core.dart";
 import "package:firebase_messaging/firebase_messaging.dart";
-import "package:flutter/cupertino.dart";
 import "package:flutter/foundation.dart";
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import "package:get/get.dart";
-import "package:get/get_core/src/get_main.dart";
 import "package:manager/api_endpoints.dart";
-import "package:manager/features/chat/video_chat/demo/call_screen.dart";
-import "package:manager/features/stage/widgets/call_requiest_dialog.dart";
 import "package:manager/routes/routes.dart";
 import "package:manager/core/storage/storage.dart";
-import "package:manager/services/chat.service.dart";
 import "package:stacked_services/stacked_services.dart";
 
 import "../core/locator.dart";
@@ -38,8 +31,7 @@ void onDidReceiveNotificationResponse(
     print("onDidReceiveNotificationResponse: $payload");
   }
   if (payload != null) {
-    var jsonData = jsonDecode(payload);
-    FirebaseNotificationService.notificationNavigation(data: jsonData);
+    await FirebaseNotificationService.notificationNavigation(data: payload);
   }
 }
 
@@ -129,6 +121,9 @@ class FirebaseNotificationService {
   static int item = 1;
   static bool _isInitializing = false;
   static bool _isInitialized = false;
+  static Map<String, dynamic>? _pendingNavigationData;
+  static String? _lastNavigationFingerprint;
+  static DateTime? _lastNavigationAt;
 
   static Future<void> initializeService() async {
     // Check initialization status
@@ -160,6 +155,8 @@ class FirebaseNotificationService {
 
       // 2. Foreground Listeners set karein
       getNotification();
+
+      await _captureInitialNotificationTap();
 
       String? apnsToken;
       if (Platform.isIOS) {
@@ -199,7 +196,7 @@ class FirebaseNotificationService {
 
     // App Open Listener
     FirebaseMessaging.onMessageOpenedApp.listen((message) async {
-      notificationNavigation(data: message.data);
+      await notificationNavigation(data: message.data);
     });
   }
 
@@ -247,88 +244,250 @@ class FirebaseNotificationService {
     );
   }
 
-  // ... baaki methods same rahenge (navigation, etc.) ...
-  static notificationNavigation({data}) async {
-    // Aapka purana logic same rahega
-    String screenName = data["screenName"] ?? '';
-    final _navigationService = locator<NavigationService>();
+  static Future<void> handlePendingNavigation() async {
+    if (_pendingNavigationData == null) return;
+    if (!_isNavigatorReady) return;
 
-    if (screenName != '') {
-      if (screenName == "chatView") {
+    final pendingData = Map<String, dynamic>.from(_pendingNavigationData!);
+    _pendingNavigationData = null;
+    await notificationNavigation(
+      data: pendingData,
+      deferIfNavigatorUnavailable: false,
+    );
+  }
 
-        final String? contactName = data['contactName'];
-        final String? contactNumber = data['ticketNumber'];
-        final String? roomId = data['roomId'];
-        final String? ticketStatus = data['ticketStatus'];
-        final String? ticketId = data['ticketId'];
-        final String? flag = data['flag'];
-
-        final String contactInitials =
-        (contactName != null && contactName.isNotEmpty)
-            ? contactName[0].toUpperCase()
-            : '?';
-
-        if (contactName != null && roomId != null && ticketId != null) {
-          _navigationService.navigateToView(
-            ChatView(
-              contactName: contactName,
-              contactNumber: contactNumber ?? '',
-              contactInitials: contactInitials,
-              roomId: roomId,
-              ticketStatus: ticketStatus ?? '',
-              ticketId: ticketId,
-              flag: flag,
-            ),
-          );
-        }
+  static Future<void> notificationNavigation({
+    dynamic data,
+    bool deferIfNavigatorUnavailable = true,
+  }) async {
+    final normalizedData = _normalizeNavigationData(data);
+    if (normalizedData == null) {
+      if (_isNavigatorReady) {
+        locator<NavigationService>().navigateTo(Routes.notification);
       }
-      else if (screenName == "TicketDetailsView") {
-        final String? ticketId = data['ticketId'];
-        if (ticketId != null) {
-          _navigationService.navigateToView(
-            TicketDetailsView(ticketId: ticketId),
-          );
-        }
-      }
-      else if (screenName == "video_call_view" || screenName == "audio_call_view") {
-
-
-        final String? roomId = data['room_id'];
-        final String? ticketStatus = data['ticketStatus'];
-        final String? ticketId = data['ticketId'];
-        String sender_name=data['sender_name'];
-        String receiver_name=data['receiver_name'];
-        final String? flag = data['flag'];
-        final String? profile_pic = data['profile_pic'];
-        final String? eventType = data['eventType'];
-        final String? callType = data['callType'];
-        final String? token = data['roomToken'];
-        final String? user_id = data['user_id'];
-        bool isVoice=callType=='audio';
-
-
-          await _navigationService.navigateToView(
-            ChatView(
-              contactName: sender_name,
-              contactNumber: '',
-              contactInitials: sender_name.substring(0, 1).toUpperCase()??"",
-              roomId: roomId,
-              ticketStatus: ticketStatus ?? '',
-              ticketId: ticketId,
-              flag: flag,
-              incomingCallData: data
-            ),
-          );
-
-      }
-      else {
-        // If screenName doesn't match any known type, redirect to Notification screen
-        _navigationService.navigateTo(Routes.notification);
-      }
-    } else {
-      // If no screenName provided, redirect to Notification screen by default
-      _navigationService.navigateTo(Routes.notification);
+      return;
     }
+
+    if (!_isNavigatorReady) {
+      if (deferIfNavigatorUnavailable) {
+        _pendingNavigationData = normalizedData;
+      }
+      return;
+    }
+
+    if (_shouldSkipDuplicateNavigation(normalizedData)) {
+      return;
+    }
+
+    final screenName = _readValue(
+      normalizedData,
+      ['screenName', 'screen', 'targetScreen', 'route'],
+    );
+    final _navigationService = locator<NavigationService>();
+    final shouldOpenChat =
+        _isChatScreen(screenName) ||
+        (screenName.isEmpty &&
+            _readValue(normalizedData, ['roomId', 'room_id', 'chatRoomId'])
+                .isNotEmpty);
+
+    if (shouldOpenChat) {
+      final contactName = _readValue(
+        normalizedData,
+        ['contactName', 'sender_name', 'senderName', 'name', 'title'],
+      );
+      final contactNumber = _readValue(
+        normalizedData,
+        ['contactNumber', 'ticketNumber', 'phone', 'mobile', 'email'],
+      );
+      final roomId = _readValue(
+        normalizedData,
+        ['roomId', 'room_id', 'chatRoomId'],
+      );
+      final ticketStatus = _readValue(
+        normalizedData,
+        ['ticketStatus', 'status'],
+      );
+      final ticketId = _readValue(
+        normalizedData,
+        ['ticketId', 'ticket_id'],
+      );
+      final flag = _readValue(normalizedData, ['flag', 'countryFlag']);
+
+      if (roomId.isNotEmpty) {
+        final resolvedContactName =
+            contactName.isNotEmpty ? contactName : 'Chat';
+        await _navigationService.navigateToView(
+          ChatView(
+            contactName: resolvedContactName,
+            contactNumber: contactNumber,
+            contactInitials: resolvedContactName.substring(0, 1).toUpperCase(),
+            roomId: roomId,
+            ticketStatus: ticketStatus,
+            ticketId: ticketId.isEmpty ? null : ticketId,
+            flag: flag.isEmpty ? null : flag,
+          ),
+        );
+        return;
+      }
+    }
+
+    if (_isTicketDetailsScreen(screenName)) {
+      final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
+      if (ticketId.isNotEmpty) {
+        await _navigationService.navigateToView(
+          TicketDetailsView(ticketId: ticketId),
+        );
+        return;
+      }
+    }
+
+    if (_isCallScreen(screenName)) {
+      final roomId = _readValue(normalizedData, ['room_id', 'roomId']);
+      final ticketStatus = _readValue(normalizedData, ['ticketStatus']);
+      final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
+      final senderName = _readValue(
+        normalizedData,
+        ['sender_name', 'senderName', 'contactName', 'title'],
+      );
+      final flag = _readValue(normalizedData, ['flag']);
+
+      if (roomId.isNotEmpty) {
+        final resolvedSenderName =
+            senderName.isNotEmpty ? senderName : 'Caller';
+        await _navigationService.navigateToView(
+          ChatView(
+            contactName: resolvedSenderName,
+            contactNumber: '',
+            contactInitials: resolvedSenderName.substring(0, 1).toUpperCase(),
+            roomId: roomId,
+            ticketStatus: ticketStatus,
+            ticketId: ticketId.isEmpty ? null : ticketId,
+            flag: flag.isEmpty ? null : flag,
+            incomingCallData: normalizedData,
+          ),
+        );
+        return;
+      }
+    }
+
+    _navigationService.navigateTo(Routes.notification);
+  }
+
+  static Future<void> _captureInitialNotificationTap() async {
+    final localLaunchDetails =
+        await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+    final localPayload =
+        localLaunchDetails?.notificationResponse?.payload?.trim();
+
+    if (localLaunchDetails?.didNotificationLaunchApp == true &&
+        localPayload != null &&
+        localPayload.isNotEmpty) {
+      final normalizedData = _normalizeNavigationData(localPayload);
+      if (normalizedData != null) {
+        _pendingNavigationData = normalizedData;
+      }
+    }
+
+    final initialMessage = await firebaseMessaging.getInitialMessage();
+    if (initialMessage == null) return;
+
+    final normalizedData = _normalizeNavigationData(initialMessage.data);
+    if (normalizedData != null) {
+      _pendingNavigationData = normalizedData;
+    }
+  }
+
+  static Map<String, dynamic>? _normalizeNavigationData(dynamic data) {
+    if (data == null) return null;
+
+    dynamic payload = data;
+    if (payload is String) {
+      final trimmed = payload.trim();
+      if (trimmed.isEmpty) return null;
+      try {
+        payload = jsonDecode(trimmed);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (payload is! Map) {
+      return null;
+    }
+
+    final root = Map<String, dynamic>.from(payload);
+    final normalized = <String, dynamic>{};
+
+    final nestedData = root['data'];
+    if (nestedData is Map) {
+      normalized.addAll(Map<String, dynamic>.from(nestedData));
+    }
+
+    final nestedPayload = root['payload'];
+    if (nestedPayload is Map) {
+      normalized.addAll(Map<String, dynamic>.from(nestedPayload));
+    }
+
+    normalized.addAll(root);
+    return normalized;
+  }
+
+  static String _readValue(
+    Map<String, dynamic> data,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final rawValue = data[key];
+      if (rawValue == null) continue;
+
+      final value = rawValue.toString().trim();
+      if (value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  static bool get _isNavigatorReady =>
+      StackedService.navigatorKey?.currentState != null;
+
+  static bool _isChatScreen(String screenName) {
+    final normalized = screenName.trim().toLowerCase();
+    return normalized == 'chatview' ||
+        normalized == 'chat_view' ||
+        normalized == 'chat';
+  }
+
+  static bool _isTicketDetailsScreen(String screenName) {
+    final normalized = screenName.trim().toLowerCase();
+    return normalized == 'ticketdetailsview' ||
+        normalized == 'ticketdetails' ||
+        normalized == 'ticket_details_view';
+  }
+
+  static bool _isCallScreen(String screenName) {
+    final normalized = screenName.trim().toLowerCase();
+    return normalized == 'video_call_view' || normalized == 'audio_call_view';
+  }
+
+  static bool _shouldSkipDuplicateNavigation(Map<String, dynamic> data) {
+    final fingerprint = [
+      _readValue(data, ['screenName', 'screen', 'targetScreen', 'route']),
+      _readValue(data, ['roomId', 'room_id', 'chatRoomId']),
+      _readValue(data, ['ticketId', 'ticket_id']),
+      _readValue(data, ['messageId', 'message_id']),
+    ].join('|');
+
+    final now = DateTime.now();
+    if (_lastNavigationFingerprint == fingerprint &&
+        _lastNavigationAt != null &&
+        now.difference(_lastNavigationAt!) < const Duration(seconds: 2)) {
+      return true;
+    }
+
+    _lastNavigationFingerprint = fingerprint;
+    _lastNavigationAt = now;
+    return false;
   }
 
 
