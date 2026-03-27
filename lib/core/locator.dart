@@ -30,6 +30,7 @@ import '../services/customer_storage.service.dart';
 import '../services/profile.service.dart';
 import '../services/location.service.dart';
 import '../services/organization_request.service.dart';
+import '../services/secure_api_service.dart';
 
 
 final GetIt locator = GetIt.instance;
@@ -57,6 +58,7 @@ void setUpLocators() {
   locator.registerLazySingleton(() => AccountManagerService.instance);
   locator.registerLazySingleton(() => MachineStorageService());
   locator.registerLazySingleton(() => CustomerService());
+  locator.registerLazySingleton(() => SecureApiService());
   locator.registerLazySingleton(() => FilePickerService());
   locator.registerLazySingleton(() => MachineSupplierService());
   locator.registerLazySingleton(() => MachineSupplierDetailsService());

@@ -18,6 +18,8 @@ abstract class Routes {
 
   /// Route for the login screen.
   static const String login = '/login';
+  static const String splash = '/splash';
+  static const String updateRequired = '/update-required';
 
 
   /// Route for the registration screen.

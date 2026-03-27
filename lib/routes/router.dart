@@ -16,6 +16,8 @@ import 'package:manager/features/home/pi/pi_invoice_record_view.dart';
 import 'package:manager/features/home/warrenty/warrenty_tracker.dart';
 import 'package:manager/features/image/image_full_screen.view.dart';
 import 'package:manager/features/profile/scan_code/scan_code.view.dart';
+import 'package:manager/screens/splash/splash_screen.dart';
+import 'package:manager/screens/update_required/update_required_screen.dart';
 import 'package:manager/features/video/video_player.view.dart';
 import 'package:manager/features/tickets/ticket_details/ticket_details.view.dart';
 import 'package:manager/features/organization/add_partner/add_partner.view.dart';
@@ -102,6 +104,18 @@ class AppRouter extends RouterBase {
     RootWrapper: (data) {
       return MaterialPageRoute(
         builder: (BuildContext _) => RootWrapper(arguments: data.arguments),
+        settings: data,
+      );
+    },
+    SplashScreen: (data) {
+      return MaterialPageRoute(
+        builder: (BuildContext _) => const SplashScreen(),
+        settings: data,
+      );
+    },
+    UpdateRequiredScreen: (data) {
+      return MaterialPageRoute(
+        builder: (BuildContext _) => const UpdateRequiredScreen(),
         settings: data,
       );
     },
@@ -641,6 +655,8 @@ class AppRouter extends RouterBase {
   /// Internal list of route definitions.
   final _routes = <RouteDef>[
     RouteDef(Routes.root, page: RootWrapper),
+    RouteDef(Routes.splash, page: SplashScreen),
+    RouteDef(Routes.updateRequired, page: UpdateRequiredScreen),
     RouteDef(Routes.login, page: LoginView),
 
     RouteDef(Routes.register, page: RegisterView),
@@ -742,5 +758,4 @@ class RootWrapper extends StatelessWidget {
     );
   }
 }
-
 

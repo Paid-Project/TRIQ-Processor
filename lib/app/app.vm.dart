@@ -28,14 +28,7 @@ class AppViewModel extends ReactiveViewModel {
   }
 
   String getInitialRoute() {
-    if (isFirstTimeUser()) {
-      return Routes.languageSelection;
-    }
-
-    if (getUser().token?.isNotEmpty == true) {
-      return Routes.stage;
-    }
-    return Routes.login;
+    return Routes.splash;
   }
 
 

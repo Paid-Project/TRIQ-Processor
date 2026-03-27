@@ -38,8 +38,4 @@ void main() async {
   await notificationService.getToken();
 
   runApp(AppView());
-
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    FirebaseNotificationService.handlePendingNavigation();
-  });
 }
