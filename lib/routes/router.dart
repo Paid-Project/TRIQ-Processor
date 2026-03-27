@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:manager/core/locator.dart';
 import 'package:manager/core/storage/storage.dart';
+import 'package:manager/core/utils/app_logger.dart';
 
 import 'package:manager/features/chat/chat_list.view.dart';
 import 'package:manager/features/chat/chat_view.dart';
@@ -16,7 +18,6 @@ import 'package:manager/features/home/pi/pi_invoice_record_view.dart';
 import 'package:manager/features/home/warrenty/warrenty_tracker.dart';
 import 'package:manager/features/image/image_full_screen.view.dart';
 import 'package:manager/features/profile/scan_code/scan_code.view.dart';
-import 'package:manager/screens/splash/splash_screen.dart';
 import 'package:manager/screens/update_required/update_required_screen.dart';
 import 'package:manager/features/video/video_player.view.dart';
 import 'package:manager/features/tickets/ticket_details/ticket_details.view.dart';
@@ -29,6 +30,8 @@ import 'package:manager/features/search/search_view.dart';
 import 'package:manager/features/stage/stage.view.dart';
 import 'package:manager/features/language/language_selection_view.dart';
 import 'package:manager/routes/routes.dart';
+import 'package:manager/services/notification.service.dart';
+import 'package:manager/services/secure_api_service.dart';
 import 'package:stacked/stacked.dart';
 import 'package:manager/features/teams/department/team_list.view.dart';
 import 'package:manager/core/models/pending_ticket_data.dart';
@@ -107,12 +110,6 @@ class AppRouter extends RouterBase {
         settings: data,
       );
     },
-    SplashScreen: (data) {
-      return MaterialPageRoute(
-        builder: (BuildContext _) => const SplashScreen(),
-        settings: data,
-      );
-    },
     UpdateRequiredScreen: (data) {
       return MaterialPageRoute(
         builder: (BuildContext _) => const UpdateRequiredScreen(),
@@ -120,7 +117,6 @@ class AppRouter extends RouterBase {
       );
     },
     LoginView: (data) {
-
       return MaterialPageRoute(
         builder: (BuildContext _) => LoginView(),
         settings: data,
@@ -655,7 +651,6 @@ class AppRouter extends RouterBase {
   /// Internal list of route definitions.
   final _routes = <RouteDef>[
     RouteDef(Routes.root, page: RootWrapper),
-    RouteDef(Routes.splash, page: SplashScreen),
     RouteDef(Routes.updateRequired, page: UpdateRequiredScreen),
     RouteDef(Routes.login, page: LoginView),
 
@@ -736,9 +731,53 @@ class AppRouter extends RouterBase {
   ];
 }
 
-class RootWrapper extends StatelessWidget {
+class RootWrapper extends StatefulWidget {
   final dynamic arguments;
   const RootWrapper({super.key, this.arguments});
+
+  @override
+  State<RootWrapper> createState() => _RootWrapperState();
+}
+
+class _RootWrapperState extends State<RootWrapper> {
+  final SecureApiService _secureApiService = locator<SecureApiService>();
+  bool _hasRedirectedToUpdate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _runStartupAvailabilityCheck();
+    });
+  }
+
+  Future<void> _runStartupAvailabilityCheck() async {
+    bool shouldAllowAppEntry = true;
+
+    try {
+      shouldAllowAppEntry = await _secureApiService.isManufacturerEnabled();
+    } catch (error) {
+      AppLogger.warning(
+        'Startup availability check failed. Allowing app entry. Error: $error',
+      );
+    }
+
+    if (!mounted) return;
+
+    if (!shouldAllowAppEntry) {
+      _hasRedirectedToUpdate = true;
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        Routes.updateRequired,
+        (Route<dynamic> route) => false,
+      );
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hasRedirectedToUpdate) return;
+      FirebaseNotificationService.handlePendingNavigation();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -749,8 +788,8 @@ class RootWrapper extends StatelessWidget {
         if (getUser().token?.isNotEmpty != true) return model.homeNavigation();
 
         // If logged in, we can use the arguments to set the tab
-        final attributes = arguments is StageViewAttributes
-            ? arguments as StageViewAttributes
+        final attributes = widget.arguments is StageViewAttributes
+            ? widget.arguments as StageViewAttributes
             : StageViewAttributes(selectedBottomNavIndex: 0);
 
         return StageView(attributes: attributes);
@@ -758,4 +797,3 @@ class RootWrapper extends StatelessWidget {
     );
   }
 }
-

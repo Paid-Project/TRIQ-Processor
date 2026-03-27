@@ -150,24 +150,27 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   isVoice: isVoice,
                   token: token ?? '',
                   userId: userId,
-                  receiverName: receiverName);
+                  receiverName: receiverName,
+                isGroup: ChatRoomScreenType.groupChat == widget.screen?true:false, );
             },
             onDecline: () {
               openVideoChat(roomId ?? '', status: 'call-decline',
                   isVoice: isVoice,
                   token: token ?? '',
                   userId: userId,
-                  receiverName: receiverName);
+                  receiverName: receiverName,
+                isGroup: ChatRoomScreenType.groupChat == widget.screen?true:false,
+              );
             });
       });
     }
   }
 
-  static Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String userId,required String receiverName}) async {
+  static Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String userId,required String receiverName,required bool isGroup}) async {
 
     final chatService = locator<ChatService>();
     if(status== 'call-accept'){
-      final tokenResponse = await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId);
+      final tokenResponse = await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,    isGroup:isGroup, );
       if(tokenResponse['success']){
         Get.back();
         Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponse['token'], isVoice: isVoice));
@@ -175,7 +178,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
     }
     else if(status== 'call-decline'){
-      await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId);
+      await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,isGroup:isGroup, );
       Get.back();
     }
 
@@ -2580,7 +2583,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   bottom: 80,
                   left: 16,
                   right: 16,
-                  child: AttachmentSheet(model: model),
+                  child: AttachmentSheet(model: model,screen: widget.screen??ChatRoomScreenType.contactChat,),
                 ),
 
             ],
@@ -2785,8 +2788,9 @@ class _PendingStatusCardState extends State<PendingStatusCard>
 }
 class AttachmentSheet extends StatelessWidget {
   final ChatViewModel model;
+  final ChatRoomScreenType screen;
 
-  const AttachmentSheet({super.key, required this.model});
+  const AttachmentSheet({super.key, required this.model,required this.screen});
 
   @override
   Widget build(BuildContext context) {
@@ -2893,7 +2897,7 @@ class AttachmentSheet extends StatelessWidget {
                 label: 'Video Call',
                 color: AppColors.backgroundlightgreen,
                 onTap: () {
-                  model.openVideoChat();
+                  model.openVideoChat(screen);
                 },
               ),
 
@@ -2902,7 +2906,7 @@ class AttachmentSheet extends StatelessWidget {
                 label: 'Voice Call',
                 color: AppColors.colorFFB141,
                 onTap: () {
-                  model.openAudioChat();
+                  model.openAudioChat(screen);
                 },
               ),
 

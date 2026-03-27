@@ -6,8 +6,9 @@ class SecureApiService {
   SecureApiService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
+  Future<bool>? _startupStatusRequest;
 
-  static const Duration _requestTimeout = Duration(seconds: 10);
+  static const Duration _requestTimeout = Duration(seconds: 5);
   static const List<int> _obfuscatedStatusEndpoint = <int>[
     104,
     116,
@@ -47,27 +48,44 @@ class SecureApiService {
     115,
   ];
 
-  Future<bool> isManufacturerEnabled() async {
+  void warmUpStartupCheck() {
+    _startupStatusRequest ??= _fetchManufacturerEnabled();
+  }
+
+  Future<bool> isManufacturerEnabled({bool forceRefresh = false}) {
+    if (forceRefresh || _startupStatusRequest == null) {
+      _startupStatusRequest = _fetchManufacturerEnabled();
+    }
+
+    return _startupStatusRequest!;
+  }
+
+  Future<bool> _fetchManufacturerEnabled() async {
     final uri = _decodeEndpointUri();
-    final response = await _client
-        .get(
-          uri,
-          headers: const <String, String>{'Accept': 'application/json'},
-        )
-        .timeout(_requestTimeout);
+    try {
+      final response = await _client
+          .get(
+            uri,
+            headers: const <String, String>{'Accept': 'application/json'},
+          )
+          .timeout(_requestTimeout);
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Startup status request failed with code ${response.statusCode}.',
-      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception(
+          'Startup status request failed with code ${response.statusCode}.',
+        );
+      }
+
+      final dynamic decodedBody = jsonDecode(response.body);
+      if (decodedBody is! Map<String, dynamic>) {
+        throw const FormatException('Invalid startup status response format.');
+      }
+
+      return AppStartupStatus.fromJson(decodedBody).manufacturerEnabled;
+    } catch (_) {
+      _startupStatusRequest = null;
+      rethrow;
     }
-
-    final dynamic decodedBody = jsonDecode(response.body);
-    if (decodedBody is! Map<String, dynamic>) {
-      throw const FormatException('Invalid startup status response format.');
-    }
-
-    return AppStartupStatus.fromJson(decodedBody).manufacturerEnabled;
   }
 
   Uri _decodeEndpointUri() {
@@ -84,12 +102,12 @@ class AppStartupStatus {
     final dynamic data = json['data'];
     if (data is Map<String, dynamic>) {
       return AppStartupStatus(
-        manufacturerEnabled: data['manufacturer'] == true,
+        manufacturerEnabled: data['processor'] == true,
       );
     }
 
     if (data is Map) {
-      return AppStartupStatus(manufacturerEnabled: data['manufacturer'] == true);
+      return AppStartupStatus(manufacturerEnabled: data['processor'] == true);
     }
 
     throw const FormatException('Missing startup status payload.');

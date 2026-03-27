@@ -7,6 +7,7 @@ import 'package:manager/services/bottom_sheets.service.dart';
 import 'package:manager/services/dialogs.service.dart';
 import 'package:manager/services/language.service.dart';
 import 'package:manager/services/notification.service.dart';
+import 'package:manager/services/secure_api_service.dart';
 
 import 'app/app.view.dart';
 import 'core/locator.dart';
@@ -31,6 +32,7 @@ void main() async {
   setUpLocators();
   setUpBottomSheets();
   setUpDialogs();
+  locator<SecureApiService>().warmUpStartupCheck();
   await LanguageService.load();
 
   final notificationService = NotificationService();

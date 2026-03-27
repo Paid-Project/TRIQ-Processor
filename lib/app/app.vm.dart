@@ -22,16 +22,16 @@ class AppViewModel extends ReactiveViewModel {
     }
 
     if (getUser().token?.isNotEmpty == true) {
-      return StageView(attributes: StageViewAttributes(selectedBottomNavIndex: 0));
+      return StageView(
+        attributes: StageViewAttributes(selectedBottomNavIndex: 0),
+      );
     }
     return LoginView();
   }
 
   String getInitialRoute() {
-    return Routes.splash;
+    return Routes.root;
   }
-
-
 
   bool isFirstTimeUser() {
     return !hasLanguageBeenSelected();

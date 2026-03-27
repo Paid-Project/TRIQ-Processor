@@ -1438,13 +1438,14 @@ class ChatViewModel extends ReactiveViewModel {
     }
   }
 
-  Future<void> openVideoChat() async {
+  Future<void> openVideoChat(screen) async {
     final tokenResponse = await _chatService.sendVChatStatus(
       roomName: roomId,
       status: 'call-request',
       callType: 'video',
       name: userData.name ?? 'User',
       users: userData.id ?? '',
+        isGroup: ChatRoomScreenType.groupChat == screen?true:false
     );
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
@@ -1454,13 +1455,14 @@ class ChatViewModel extends ReactiveViewModel {
     }
   }
 
-  Future<void> openAudioChat() async {
+  Future<void> openAudioChat(screen) async {
     final tokenResponse = await _chatService.sendVChatStatus(
       roomName: roomId,
       status: 'call-request',
       callType: 'audio',
       name: userData.name ?? 'User',
       users: userData.id ?? '',
+        isGroup: ChatRoomScreenType.groupChat == screen?true:false
     );
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {

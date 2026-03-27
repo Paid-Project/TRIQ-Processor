@@ -46,6 +46,7 @@ class ChatService {
     required String callType,
     required String name,
     required String users,
+    required bool isGroup ,
   }) async {
     try {
       final response = await _apiService.post(
@@ -56,7 +57,8 @@ class ChatService {
           'name': name,
           'users': users,
           'identity':name,
-          'callType':callType
+          'callType':callType,
+          'isGroupCall':isGroup
         },
       );
 
