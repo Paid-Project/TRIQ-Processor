@@ -11,6 +11,7 @@ import "package:manager/core/storage/storage.dart";
 import "package:stacked_services/stacked_services.dart";
 
 import "../core/locator.dart";
+import "../features/chat/chat.vm.dart";
 import "../features/chat/chat_view.dart";
 import "../features/tickets/ticket_details/ticket_details.view.dart";
 import "api.service.dart";
@@ -283,55 +284,19 @@ class FirebaseNotificationService {
       normalizedData,
       ['screenName', 'screen', 'targetScreen', 'route'],
     );
+    final notificationType = _readValue(
+      normalizedData,
+      ['type', 'notificationType', 'notification_type', 'chatType'],
+    );
+    final roomId = _readValue(
+      normalizedData,
+      ['roomId', 'room_id', 'chatRoomId'],
+    );
+    final isTicketDetailsScreen = _isTicketDetailsScreen(screenName);
+    final isCallScreen = _isCallScreen(screenName);
     final _navigationService = locator<NavigationService>();
-    final shouldOpenChat =
-        _isChatScreen(screenName) ||
-        (screenName.isEmpty &&
-            _readValue(normalizedData, ['roomId', 'room_id', 'chatRoomId'])
-                .isNotEmpty);
 
-    if (shouldOpenChat) {
-      final contactName = _readValue(
-        normalizedData,
-        ['contactName', 'sender_name', 'senderName', 'name', 'title'],
-      );
-      final contactNumber = _readValue(
-        normalizedData,
-        ['contactNumber', 'ticketNumber', 'phone', 'mobile', 'email'],
-      );
-      final roomId = _readValue(
-        normalizedData,
-        ['roomId', 'room_id', 'chatRoomId'],
-      );
-      final ticketStatus = _readValue(
-        normalizedData,
-        ['ticketStatus', 'status'],
-      );
-      final ticketId = _readValue(
-        normalizedData,
-        ['ticketId', 'ticket_id'],
-      );
-      final flag = _readValue(normalizedData, ['flag', 'countryFlag']);
-
-      if (roomId.isNotEmpty) {
-        final resolvedContactName =
-            contactName.isNotEmpty ? contactName : 'Chat';
-        await _navigationService.navigateToView(
-          ChatView(
-            contactName: resolvedContactName,
-            contactNumber: contactNumber,
-            contactInitials: resolvedContactName.substring(0, 1).toUpperCase(),
-            roomId: roomId,
-            ticketStatus: ticketStatus,
-            ticketId: ticketId.isEmpty ? null : ticketId,
-            flag: flag.isEmpty ? null : flag,
-          ),
-        );
-        return;
-      }
-    }
-
-    if (_isTicketDetailsScreen(screenName)) {
+    if (isTicketDetailsScreen) {
       final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
       if (ticketId.isNotEmpty) {
         await _navigationService.navigateToView(
@@ -341,8 +306,7 @@ class FirebaseNotificationService {
       }
     }
 
-    if (_isCallScreen(screenName)) {
-      final roomId = _readValue(normalizedData, ['room_id', 'roomId']);
+    if (isCallScreen) {
       final ticketStatus = _readValue(normalizedData, ['ticketStatus']);
       final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
       final senderName = _readValue(
@@ -364,6 +328,71 @@ class FirebaseNotificationService {
             ticketId: ticketId.isEmpty ? null : ticketId,
             flag: flag.isEmpty ? null : flag,
             incomingCallData: normalizedData,
+          ),
+        );
+        return;
+      }
+    }
+
+    final chatScreenType = _resolveChatScreenType(
+      screenName: screenName,
+      notificationType: notificationType,
+      roomId: roomId,
+    );
+    final shouldOpenChat = roomId.isNotEmpty && chatScreenType != null;
+
+    if (shouldOpenChat) {
+      final contactName = _readValue(
+        normalizedData,
+        ['contactName', 'sender_name', 'senderName', 'name', 'title'],
+      );
+      final contactNumber = _readValue(
+        normalizedData,
+        ['contactNumber', 'ticketNumber', 'phone', 'mobile', 'email'],
+      );
+      final ticketStatus = _readValue(
+        normalizedData,
+        ['ticketStatus', 'status'],
+      );
+      final ticketId = _readValue(
+        normalizedData,
+        ['ticketId', 'ticket_id'],
+      );
+      final flag = _readValue(normalizedData, ['flag', 'countryFlag']);
+
+      if (roomId.isNotEmpty) {
+        final resolvedContactName =
+            contactName.isNotEmpty
+                ? contactName
+                : (chatScreenType == ChatRoomScreenType.groupChat
+                    ? 'Group'
+                    : 'Chat');
+        await _navigationService.navigateToView(
+          ChatView(
+            isVisible: chatScreenType == ChatRoomScreenType.mainChat,
+            contactName: resolvedContactName,
+            contactNumber:
+                contactNumber.isNotEmpty
+                    ? contactNumber
+                    : (chatScreenType == ChatRoomScreenType.groupChat
+                        ? 'Group'
+                        : ''),
+            contactInitials: resolvedContactName.substring(0, 1).toUpperCase(),
+            roomId: roomId,
+            ticketStatus:
+                chatScreenType == ChatRoomScreenType.mainChat
+                    ? ticketStatus
+                    : null,
+            ticketId:
+                chatScreenType == ChatRoomScreenType.mainChat &&
+                        ticketId.isNotEmpty
+                    ? ticketId
+                    : null,
+            flag:
+                chatScreenType == ChatRoomScreenType.groupChat || flag.isEmpty
+                    ? null
+                    : flag,
+            screen: chatScreenType,
           ),
         );
         return;
@@ -451,28 +480,78 @@ class FirebaseNotificationService {
   static bool get _isNavigatorReady =>
       StackedService.navigatorKey?.currentState != null;
 
-  static bool _isChatScreen(String screenName) {
-    final normalized = screenName.trim().toLowerCase();
-    return normalized == 'chatview' ||
-        normalized == 'chat_view' ||
-        normalized == 'chat';
-  }
-
   static bool _isTicketDetailsScreen(String screenName) {
-    final normalized = screenName.trim().toLowerCase();
+    final normalized = _normalizeIdentifier(screenName);
     return normalized == 'ticketdetailsview' ||
-        normalized == 'ticketdetails' ||
-        normalized == 'ticket_details_view';
+        normalized == 'ticketdetails';
   }
 
   static bool _isCallScreen(String screenName) {
-    final normalized = screenName.trim().toLowerCase();
-    return normalized == 'video_call_view' || normalized == 'audio_call_view';
+    final normalized = _normalizeIdentifier(screenName);
+    return normalized == 'videocallview' || normalized == 'audiocallview';
+  }
+
+  static ChatRoomScreenType? _resolveChatScreenType({
+    required String screenName,
+    required String notificationType,
+    required String roomId,
+  }) {
+    final normalizedScreen = _normalizeIdentifier(screenName);
+    final normalizedType = _normalizeIdentifier(notificationType);
+
+    if (_isGroupChatIdentifier(normalizedScreen) ||
+        _isGroupChatIdentifier(normalizedType)) {
+      return ChatRoomScreenType.groupChat;
+    }
+
+    if (_isContactChatIdentifier(normalizedScreen) ||
+        _isContactChatIdentifier(normalizedType)) {
+      return ChatRoomScreenType.contactChat;
+    }
+
+    if (_isMainChatIdentifier(normalizedScreen) ||
+        _isMainChatIdentifier(normalizedType)) {
+      return ChatRoomScreenType.mainChat;
+    }
+
+    // Keep legacy behavior for older chat payloads that only provide a room id.
+    if (roomId.isNotEmpty &&
+        normalizedScreen.isEmpty &&
+        normalizedType.isEmpty) {
+      return ChatRoomScreenType.mainChat;
+    }
+
+    return null;
+  }
+
+  static bool _isMainChatIdentifier(String normalized) {
+    return normalized == 'chatview' ||
+        normalized == 'chat' ||
+        normalized == 'mainchat' ||
+        normalized == 'ticketchat' ||
+        normalized == 'chatnotification';
+  }
+
+  static bool _isContactChatIdentifier(String normalized) {
+    return normalized == 'contactchat' ||
+        normalized == 'contactchatview' ||
+        normalized == 'externalchat' ||
+        normalized == 'externalchatview' ||
+        normalized == 'directchat';
+  }
+
+  static bool _isGroupChatIdentifier(String normalized) {
+    return normalized == 'groupchat' || normalized == 'groupchatview';
+  }
+
+  static String _normalizeIdentifier(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
   }
 
   static bool _shouldSkipDuplicateNavigation(Map<String, dynamic> data) {
     final fingerprint = [
       _readValue(data, ['screenName', 'screen', 'targetScreen', 'route']),
+      _readValue(data, ['type', 'notificationType', 'notification_type']),
       _readValue(data, ['roomId', 'room_id', 'chatRoomId']),
       _readValue(data, ['ticketId', 'ticket_id']),
       _readValue(data, ['messageId', 'message_id']),

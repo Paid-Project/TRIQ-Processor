@@ -168,10 +168,16 @@ class NotificationViewModel extends ReactiveViewModel {
       'body': notification.body,
       'type': notification.type,
     };
+    final screenName = payload['screenName']?.toString().trim() ?? '';
+    final roomId = payload['roomId']?.toString().trim() ?? '';
+    final normalizedType =
+        (payload['type']?.toString().trim().toLowerCase() ?? '')
+            .replaceAll(RegExp(r'[^a-z0-9]+'), '');
 
     final hasRoutePayload =
-        (payload['screenName']?.toString().trim().isNotEmpty ?? false) ||
-        (payload['roomId']?.toString().trim().isNotEmpty ?? false);
+        screenName.isNotEmpty ||
+        (roomId.isNotEmpty &&
+            (normalizedType.isEmpty || normalizedType.contains('chat')));
 
     if (hasRoutePayload) {
       await FirebaseNotificationService.notificationNavigation(data: payload);

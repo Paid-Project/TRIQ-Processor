@@ -214,7 +214,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
         return Scaffold(
           backgroundColor: AppColors.scaffoldBackground,
           appBar: _buildAppBar(context, model),
-          body: model.isLoading?Center(child: CircularProgressIndicator(color: AppColors.primary)):Container(
+          body: Container(
             color: AppColors.white,
             child: SafeArea(
               child: Column(
@@ -339,7 +339,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
       actions: [
         InkWell(onTap: _toggleSearch, child: Image.asset(AppImages.search, width: 21, height: 21, color: AppColors.white)),
         SizedBox(width: 20),
-        InkWell(onTap: () => model.loadTickets(), child: Image.asset(AppImages.refresh, width: 21, height: 21, color: AppColors.white)),
+        InkWell(onTap: () => model.loadTickets(forceRefresh: true), child: Image.asset(AppImages.refresh, width: 21, height: 21, color: AppColors.white)),
         SizedBox(width: AppSizes.w8),
       ],
     );
@@ -418,9 +418,14 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
   }
 
   Widget _buildTicketsListWithPagination(BuildContext context, TicketsListViewModel model, List<TicketList> tickets, {required bool isActive}) {
+    final tabIndex = isActive ? 0 : 1;
+    final hasMoreTickets = isActive ? model.hasMoreActive : model.hasMoreResolved;
+    final isCurrentTab = model.selectedTabIndex == tabIndex;
+    final isLoadingMore = model.isLoadingMore && isCurrentTab;
+
     return NotificationListener<ScrollNotification>(
       onNotification: (ScrollNotification scrollInfo) {
-        if (!model.isLoadingMore && model.hasMoreTickets && scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+        if (isCurrentTab && !isLoadingMore && hasMoreTickets && scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
           // User has scrolled near the bottom (within 200 pixels), load more tickets
           model.loadMoreTickets();
         }
@@ -428,7 +433,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
       },
       child: ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: AppSizes.w20, vertical: AppSizes.h16),
-        itemCount: tickets.length + (model.isLoadingMore ? 1 : 0),
+        itemCount: tickets.length + (isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == tickets.length) {
             return _buildLoadingIndicator(context, model);

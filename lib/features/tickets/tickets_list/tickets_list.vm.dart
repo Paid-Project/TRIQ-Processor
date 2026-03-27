@@ -31,6 +31,7 @@ class TicketsListViewModel extends ReactiveViewModel {
   final _stageService = locator<StageService>();
   final _apiService = locator<ApiService>();
   final SocketService _socketService = SocketService();
+  bool _isSocketInitialized = false;
   // Search query
   String _searchQuery = '';
 
@@ -91,10 +92,14 @@ class TicketsListViewModel extends ReactiveViewModel {
   }
 
   void init() {
-    initializeSocket();
-    _loadTicketsForCurrentTab();
+    if (!_isSocketInitialized) {
+      initializeSocket();
+    }
+    _loadTicketsForCurrentTab(forceRefresh: true);
   }
   Future<void> initializeSocket() async {
+    if (_isSocketInitialized) return;
+    _isSocketInitialized = true;
 
     _socketService.initializeSocket(
       serverUrl: '${Configurations().url}/',
@@ -113,14 +118,33 @@ class TicketsListViewModel extends ReactiveViewModel {
   }
 
   Future<void>_handleTicketUpdate(data) async {
-    await loadActiveTickets();
+    await _reloadActivePages();
     log("ValueListenableBuilder rebuilt with status ===> ${data}");
     print("SOCKET UPDATE HASHCODE: ${this.hashCode}");
-   // if(currentOpenTicketId==data['_id']){
-      currentOpenTicketStatus.value = data['status'];
-    //}
-     notifyListeners();
+    if (data is Map) {
+      currentOpenTicketStatus.value = data['status']?.toString() ?? currentOpenTicketStatus.value;
+    }
+    notifyListeners();
   }
+
+  Future<void> _reloadActivePages() async {
+    final targetPage = _activePage.value;
+
+    _activePage.value = 1;
+    _hasMoreActive.value = true;
+
+    for (var page = 1; page <= targetPage; page++) {
+      final didLoadPage = await loadActiveTickets();
+      if (!didLoadPage || !_hasMoreActive.value) {
+        break;
+      }
+
+      if (page < targetPage) {
+        _activePage.value = page + 1;
+      }
+    }
+  }
+
   Future<void> _loadTicketsForCurrentTab({bool forceRefresh = false}) async {
 
     if (forceRefresh) {
@@ -141,11 +165,16 @@ class TicketsListViewModel extends ReactiveViewModel {
     notifyListeners();
   }
 
-  Future<void> loadActiveTickets() async {
-    if (_isLoading.value) return;
+  Future<bool> loadActiveTickets() async {
+    if (_isLoading.value) return false;
 
-    _isLoading.value = true;
-    notifyListeners();
+    final shouldShowPageLoader = _activePage.value == 1 && _activeTickets.value.isEmpty;
+    if (shouldShowPageLoader) {
+      _isLoading.value = true;
+      notifyListeners();
+    }
+
+    var didLoadSuccessfully = false;
 
     try {
       // Load tickets with status "Active" and "In Progress"
@@ -163,6 +192,7 @@ class TicketsListViewModel extends ReactiveViewModel {
           print('Error loading active tickets: ${failure.message}');
         },
         (paginatedResponse) {
+          didLoadSuccessfully = true;
           combinedTickets.addAll(paginatedResponse.data ?? []);
         },
       );
@@ -189,15 +219,23 @@ class TicketsListViewModel extends ReactiveViewModel {
 
     // Update filtered tickets after loading
     _applySearchFilters();
-    _isLoading.value = false;
+    if (shouldShowPageLoader) {
+      _isLoading.value = false;
+    }
     notifyListeners();
+    return didLoadSuccessfully;
   }
 
-  Future<void> _loadResolvedTickets() async {
-    if (_isLoading.value) return;
+  Future<bool> _loadResolvedTickets() async {
+    if (_isLoading.value) return false;
 
-    _isLoading.value = true;
-    notifyListeners();
+    final shouldShowPageLoader = _resolvedPage.value == 1 && _resolvedTickets.value.isEmpty;
+    if (shouldShowPageLoader) {
+      _isLoading.value = true;
+      notifyListeners();
+    }
+
+    var didLoadSuccessfully = false;
 
     try {
       // Load tickets with status "Resolved" and "Rejected"
@@ -216,6 +254,7 @@ class TicketsListViewModel extends ReactiveViewModel {
           print('Error loading resolved tickets: ${failure.message}');
         },
         (paginatedResponse) {
+          didLoadSuccessfully = true;
           combinedTickets.addAll(paginatedResponse.data ?? []);
         },
       );
@@ -243,8 +282,11 @@ class TicketsListViewModel extends ReactiveViewModel {
 
     // Update filtered tickets after loading
     _applySearchFilters();
-    _isLoading.value = false;
+    if (shouldShowPageLoader) {
+      _isLoading.value = false;
+    }
     notifyListeners();
+    return didLoadSuccessfully;
   }
 
   Future<void> loadMoreTickets() async {
@@ -255,11 +297,19 @@ class TicketsListViewModel extends ReactiveViewModel {
 
     try {
       if (selectedTabIndex == 0) {
+        final previousPage = _activePage.value;
         _activePage.value++;
-        await loadActiveTickets();
+        final didLoadPage = await loadActiveTickets();
+        if (!didLoadPage) {
+          _activePage.value = previousPage;
+        }
       } else {
+        final previousPage = _resolvedPage.value;
         _resolvedPage.value++;
-        await _loadResolvedTickets();
+        final didLoadPage = await _loadResolvedTickets();
+        if (!didLoadPage) {
+          _resolvedPage.value = previousPage;
+        }
       }
     } finally {
       _isLoadingMore.value = false;
