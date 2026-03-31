@@ -129,7 +129,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   _handleCallRecieve(){
     if(widget.incomingCallData!=null) {
       final data=widget.incomingCallData??{};
-      final String? roomId = data['room_id'];
+      final String? roomId =
+          data['room_id']?.toString() ??
+          data['roomId']?.toString() ??
+          widget.roomId;
       final String senderName = data['sender_name'] ?? '';
       final String receiverName = data['receiver_name'] ?? '';
       final String? flag = data['flag'];
@@ -151,6 +154,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   token: token ?? '',
                   userId: userId,
                   receiverName: receiverName,
+
                 isGroup: ChatRoomScreenType.groupChat == widget.screen?true:false, );
             },
             onDecline: () {
@@ -170,7 +174,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
     final chatService = locator<ChatService>();
     if(status== 'call-accept'){
-      final tokenResponse = await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,    isGroup:isGroup, );
+      final tokenResponse = await chatService.sendVChatStatus(
+        identity: "identity",
+        roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,    isGroup:isGroup, );
       if(tokenResponse['success']){
         Get.back();
         Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponse['token'], isVoice: isVoice));
@@ -178,7 +184,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
     }
     else if(status== 'call-decline'){
-      await chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,isGroup:isGroup, );
+      await chatService.sendVChatStatus(
+        identity: "identity",
+        roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,isGroup:isGroup, );
       Get.back();
     }
 

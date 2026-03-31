@@ -288,10 +288,7 @@ class FirebaseNotificationService {
       normalizedData,
       ['type', 'notificationType', 'notification_type', 'chatType'],
     );
-    final roomId = _readValue(
-      normalizedData,
-      ['roomId', 'room_id', 'chatRoomId'],
-    );
+    final roomId = _readRoomId(normalizedData);
     final isTicketDetailsScreen = _isTicketDetailsScreen(screenName);
     final isCallScreen = _isCallScreen(screenName);
     final _navigationService = locator<NavigationService>();
@@ -477,6 +474,28 @@ class FirebaseNotificationService {
     return '';
   }
 
+  static String _readRoomId(Map<String, dynamic> data) {
+    final directRoomId = _readValue(
+      data,
+      ['room_id', 'roomId', 'chatRoomId', 'chat_room_id'],
+    );
+    if (directRoomId.isNotEmpty) {
+      return directRoomId;
+    }
+
+    for (final key in const ['data', 'payload', 'notificationData']) {
+      final nestedValue = data[key];
+      if (nestedValue is Map) {
+        final nestedRoomId = _readRoomId(Map<String, dynamic>.from(nestedValue));
+        if (nestedRoomId.isNotEmpty) {
+          return nestedRoomId;
+        }
+      }
+    }
+
+    return '';
+  }
+
   static bool get _isNavigatorReady =>
       StackedService.navigatorKey?.currentState != null;
 
@@ -552,7 +571,7 @@ class FirebaseNotificationService {
     final fingerprint = [
       _readValue(data, ['screenName', 'screen', 'targetScreen', 'route']),
       _readValue(data, ['type', 'notificationType', 'notification_type']),
-      _readValue(data, ['roomId', 'room_id', 'chatRoomId']),
+      _readRoomId(data),
       _readValue(data, ['ticketId', 'ticket_id']),
       _readValue(data, ['messageId', 'message_id']),
     ].join('|');

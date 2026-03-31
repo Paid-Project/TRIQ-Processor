@@ -154,7 +154,9 @@ class StageViewModel extends ReactiveViewModel {
   }
   Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String receiver_name}) async {
     if(status== 'call-accept'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userData.id??'',isGroup: false);
+      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userData.id??'',isGroup: false, identity: 'identity');
+
+
       if(tokenResponce['success']){
         Get.back();
         Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponce['token'], isVoice: isVoice));
@@ -162,7 +164,7 @@ class StageViewModel extends ReactiveViewModel {
 
     }
     else if(status== 'call-decline'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userData.id??'',isGroup: false);
+      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userData.id??'',isGroup: false, identity: 'identity');
       Get.back();
     }
 

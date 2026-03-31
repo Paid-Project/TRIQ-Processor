@@ -45,6 +45,7 @@ class ChatService {
     required String status,
     required String callType,
     required String name,
+    required String identity,
     required String users,
     required bool isGroup ,
   }) async {
@@ -56,7 +57,7 @@ class ChatService {
           'eventType': status,
           'name': name,
           'users': users,
-          'identity':name,
+          'identity':"69c11eee959f3f9a2dc8178d",
           'callType':callType,
           'isGroupCall':isGroup
         },

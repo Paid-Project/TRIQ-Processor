@@ -1443,6 +1443,7 @@ class ChatViewModel extends ReactiveViewModel {
       roomName: roomId,
       status: 'call-request',
       callType: 'video',
+      identity: "identity",
       name: userData.name ?? 'User',
       users: userData.id ?? '',
         isGroup: ChatRoomScreenType.groupChat == screen?true:false
@@ -1461,6 +1462,7 @@ class ChatViewModel extends ReactiveViewModel {
       status: 'call-request',
       callType: 'audio',
       name: userData.name ?? 'User',
+      identity: "identity",
       users: userData.id ?? '',
         isGroup: ChatRoomScreenType.groupChat == screen?true:false
     );
