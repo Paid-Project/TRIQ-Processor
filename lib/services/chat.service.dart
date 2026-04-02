@@ -57,7 +57,7 @@ class ChatService {
           'eventType': status,
           'name': name,
           'users': users,
-          'identity':"69c11eee959f3f9a2dc8178d",
+          'identity':identity,
           'callType':callType,
           'isGroupCall':isGroup
         },

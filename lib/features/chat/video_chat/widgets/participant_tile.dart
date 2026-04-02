@@ -62,25 +62,29 @@ class ParticipantTile extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                              vertical: 4.0,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isVideoAvailable
-                                  ? Colors.black.withOpacity(0.3)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            child: Text(
-                              _participantName(context),
-                              style: TextStyle(
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                                vertical: 4.0,
+                              ),
+                              decoration: BoxDecoration(
                                 color: isVideoAvailable
-                                    ? Colors.white
-                                    : Colors.black87,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                    ? Colors.black.withOpacity(0.3)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Text(
+                                _participantName(context),
+                                style: TextStyle(
+                                  color: isVideoAvailable
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),

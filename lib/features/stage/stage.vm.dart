@@ -128,6 +128,7 @@ class StageViewModel extends ReactiveViewModel {
     String flag=data['flag'];
     String token=data['token'];
     String status=data['eventType'];
+    String userId=data['user_id'] ?? '';
 
     bool isVoice=call_type=='audio';
 
@@ -138,23 +139,27 @@ class StageViewModel extends ReactiveViewModel {
             call_type: call_type,
             flag: flag,
             onAccept: () {
+          print("stage vm id passsd");
               openVideoChat(roomid, status: 'call-accept',
                   isVoice: isVoice,
                   token: token,
+                  userId: userId,
                   receiver_name: receiver_name);
             },
             onDecline: () {
               openVideoChat(roomid, status: 'call-decline',
                   isVoice: isVoice,
                   token: token,
+                  userId: userId,
                   receiver_name: receiver_name);
             });
       });
     }
   }
-  Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String receiver_name}) async {
+  Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,String userId = '',required String receiver_name}) async {
+    final effectiveUserId = userId.isNotEmpty ? userId : (userData.id ?? '');
     if(status== 'call-accept'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userData.id??'',isGroup: false, identity: 'identity');
+      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: effectiveUserId,isGroup: false, identity: 'identity');
 
 
       if(tokenResponce['success']){
@@ -164,7 +169,7 @@ class StageViewModel extends ReactiveViewModel {
 
     }
     else if(status== 'call-decline'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: userData.id??'',isGroup: false, identity: 'identity');
+      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: effectiveUserId,isGroup: false, identity: 'identity');
       Get.back();
     }
 

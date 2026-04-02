@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:manager/core/storage/storage.dart';
 import 'package:manager/features/chat/group_info/group_info.view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
@@ -28,6 +29,7 @@ import 'package:stacked/stacked.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import '../../api_endpoints.dart';
 import '../../core/locator.dart';
+import '../../core/models/hive/user/user.dart';
 import '../../core/utils/app_logger.dart';
 import '../../resources/app_resources/app_resources.dart';
 import '../../resources/enums/chat_enum.dart';
@@ -129,19 +131,20 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   _handleCallRecieve(){
     if(widget.incomingCallData!=null) {
       final data=widget.incomingCallData??{};
+      print("notification data:- ${data}");
       final String? roomId =
           data['room_id']?.toString() ??
           data['roomId']?.toString() ??
           widget.roomId;
       final String senderName = data['sender_name'] ?? '';
-      final String receiverName = data['receiver_name'] ?? '';
+      final String receiverName = data['receiver_name'] ??data['name']??"";
       final String? flag = data['flag'];
       final String? profilePic = data['profile_pic'];
       final String? callType = data['callType'];
       final String? token = data['roomToken'];
-      final String userId = data['user_id'] ?? '';
-      final bool isVoice = callType == 'audio';
 
+      final bool isVoice = callType == 'audio';
+      User userData = getUser();
 
       WidgetsBinding.instance.addPostFrameCallback((c) {
         showCallRequestDialog(profile: profilePic ?? '',
@@ -149,19 +152,22 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
             call_type: callType ?? '',
             flag: flag ?? '',
             onAccept: () {
+
+              print("notification data accept");
               openVideoChat(roomId ?? '', status: 'call-accept',
                   isVoice: isVoice,
                   token: token ?? '',
-                  userId: userId,
+                  userId: userData.id.toString(),
                   receiverName: receiverName,
-
+identity:userData.name.toString(),
                 isGroup: ChatRoomScreenType.groupChat == widget.screen?true:false, );
             },
             onDecline: () {
               openVideoChat(roomId ?? '', status: 'call-decline',
                   isVoice: isVoice,
                   token: token ?? '',
-                  userId: userId,
+                  userId: userData.id.toString(),
+                  identity: userData.name.toString(),
                   receiverName: receiverName,
                 isGroup: ChatRoomScreenType.groupChat == widget.screen?true:false,
               );
@@ -170,13 +176,13 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     }
   }
 
-  static Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String userId,required String receiverName,required bool isGroup}) async {
+  static Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String identity,required String userId,required String receiverName,required bool isGroup}) async {
 
     final chatService = locator<ChatService>();
     if(status== 'call-accept'){
       final tokenResponse = await chatService.sendVChatStatus(
-        identity: "identity",
-        roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,    isGroup:isGroup, );
+        identity: identity,
+        roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,  isGroup:isGroup, );
       if(tokenResponse['success']){
         Get.back();
         Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponse['token'], isVoice: isVoice));
@@ -185,7 +191,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     }
     else if(status== 'call-decline'){
       await chatService.sendVChatStatus(
-        identity: "identity",
+        identity: identity,
         roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,isGroup:isGroup, );
       Get.back();
     }
