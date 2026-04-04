@@ -147,13 +147,14 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       User userData = getUser();
 
       WidgetsBinding.instance.addPostFrameCallback((c) {
-        showCallRequestDialog(profile: profilePic ?? '',
+        showCallRequestDialog(
+            profile: profilePic ?? '',
             name: senderName,
             call_type: callType ?? '',
             flag: flag ?? '',
             onAccept: () {
 
-              print("notification data accept");
+              print("notification data accept(${widget.screen })");
               openVideoChat(roomId ?? '', status: 'call-accept',
                   isVoice: isVoice,
                   token: token ?? '',

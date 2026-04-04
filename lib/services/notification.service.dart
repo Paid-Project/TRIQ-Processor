@@ -308,13 +308,15 @@ class FirebaseNotificationService {
       final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
       final senderName = _readValue(
         normalizedData,
-        ['sender_name', 'senderName', 'contactName', 'title'],
+        ['sender_name', 'senderName', 'contactName', 'name'],
       );
       final flag = _readValue(normalizedData, ['flag']);
 
       if (roomId.isNotEmpty) {
         final resolvedSenderName =
             senderName.isNotEmpty ? senderName : 'Caller';
+        print("resolvedSenderName::-${resolvedSenderName}");
+
         await _navigationService.navigateToView(
           ChatView(
             contactName: resolvedSenderName,
@@ -629,7 +631,7 @@ class NotificationService {
     try {
       final apiService = locator<ApiService>();
       final response = await apiService.get(url: ApiEndpoints.getUnreadNotificationCount);
-      
+
       if (response.statusCode == 200) {
         // Check if response.data is a Map with unreadCount
         if (response.data is Map && response.data.containsKey('unreadCount')) {

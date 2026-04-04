@@ -1451,7 +1451,7 @@ class ChatViewModel extends ReactiveViewModel {
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
       Get.to(
-            () => VideoCallScreen(roomName: roomId, token: tokenResponse['token']),
+            () => VideoCallScreen(roomName: roomId, token: tokenResponse['token'],),
       );
     }
   }
