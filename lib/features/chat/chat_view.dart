@@ -645,22 +645,22 @@ identity:userData.name.toString(),
             ),
 
             // Mark As Resolved Item
-            PopupMenuItem<String>(
-              value: 'resolve',
-              child: Container(
-                width: 250, // Match width with reschedule item
-                padding: EdgeInsets.only(top: 10, bottom: 10),
-
-                child: Text(
-                  'Mark As Resolved',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
+            // PopupMenuItem<String>(
+            //   value: 'resolve',
+            //   child: Container(
+            //     width: 250, // Match width with reschedule item
+            //     padding: EdgeInsets.only(top: 10, bottom: 10),
+            //
+            //     child: Text(
+            //       'Mark As Resolved',
+            //       style: TextStyle(
+            //         fontSize: 14,
+            //         fontWeight: FontWeight.w600,
+            //         color: AppColors.textPrimary,
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

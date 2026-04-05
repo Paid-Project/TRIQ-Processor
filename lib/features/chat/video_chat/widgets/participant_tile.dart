@@ -12,18 +12,20 @@ class ParticipantTile extends StatelessWidget {
   const ParticipantTile({super.key, required this.participantState});
 
   String _participantName(BuildContext context) {
-    String name = "Anonymous";
-    if (participantState.participant.name.isNotEmpty) {
-      name = participantState.participant.name;
-    } else if (participantState.participant.identity.isNotEmpty) {
-      name = participantState.participant.identity;
+    final p = participantState.participant;
+    final room = context.read<CallViewModel>().room;
+    final isLocal = p is LocalParticipant || p == room?.localParticipant;
+    if (isLocal) {
+      return 'You';
     }
 
-    final room = context.read<CallViewModel>().room;
-    if (participantState.participant == room?.localParticipant) {
-      name = '$name (You)';
+    if (p.name.isNotEmpty) {
+      return p.name;
     }
-    return name;
+    if (p.identity.isNotEmpty) {
+      return p.identity;
+    }
+    return 'Anonymous';
   }
 
   @override

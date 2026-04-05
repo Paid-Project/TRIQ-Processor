@@ -262,6 +262,7 @@ class FirebaseNotificationService {
     bool deferIfNavigatorUnavailable = true,
   }) async {
     final normalizedData = _normalizeNavigationData(data);
+    print("normal data:-${normalizedData}");
     if (normalizedData == null) {
       if (_isNavigatorReady) {
         locator<NavigationService>().navigateTo(Routes.notification);
@@ -283,6 +284,9 @@ class FirebaseNotificationService {
     final screenName = _readValue(
       normalizedData,
       ['screenName', 'screen', 'targetScreen', 'route'],
+    );    final isGroupCall = _readValue(
+      normalizedData,
+      ['isGroupCall',],
     );
     final notificationType = _readValue(
       normalizedData,
@@ -311,11 +315,11 @@ class FirebaseNotificationService {
         ['sender_name', 'senderName', 'contactName', 'name'],
       );
       final flag = _readValue(normalizedData, ['flag']);
-
+      final isGroupId  = _readValue(normalizedData, ['isGroupCall']);
       if (roomId.isNotEmpty) {
         final resolvedSenderName =
             senderName.isNotEmpty ? senderName : 'Caller';
-        print("resolvedSenderName::-${resolvedSenderName}");
+        print("resolvedSenderName::-${ isGroupId == "true" }");
 
         await _navigationService.navigateToView(
           ChatView(
@@ -324,6 +328,7 @@ class FirebaseNotificationService {
             contactInitials: resolvedSenderName.substring(0, 1).toUpperCase(),
             roomId: roomId,
             ticketStatus: ticketStatus,
+            screen: isGroupId == "true"?ChatRoomScreenType.groupChat:ChatRoomScreenType.contactChat,
             ticketId: ticketId.isEmpty ? null : ticketId,
             flag: flag.isEmpty ? null : flag,
             incomingCallData: normalizedData,
@@ -338,7 +343,7 @@ class FirebaseNotificationService {
       notificationType: notificationType,
       roomId: roomId,
     );
-    final shouldOpenChat = roomId.isNotEmpty && chatScreenType != null;
+    final shouldOpenChat = roomId.isNotEmpty && chatScreenType != null && isGroupCall == "true";
 
     if (shouldOpenChat) {
       final contactName = _readValue(
