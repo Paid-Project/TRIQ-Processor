@@ -16,15 +16,21 @@ showCallRequestDialog({
   showCustomActionDialog(
     context: Get.context!,
     image:profile??'',
-    title: (isVoiceCall?'Voice Call': 'Video Call') +" From ${name}",
+    title: "${isVoiceCall?'Voice Call': 'Video Call'} From ${name}",
     subtitle: 'Confirm Send Request',
     primaryButtonText: 'Accept',
     secondaryButtonText: 'Decline',
     badge:flag,
     onPrimaryButtonPressed: () async {
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
       onAccept();
     },
     onSecondaryButtonPressed: () {
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
       onDecline();
     },
   );
