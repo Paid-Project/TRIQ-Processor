@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
@@ -194,7 +193,6 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
               machineId: machineId,
 
             );
-            model.continueToPay();
           },
           onCancel: () {
             // Handle cancel action if needed

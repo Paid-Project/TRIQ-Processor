@@ -119,6 +119,11 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
       notifyListeners();
 
       try {
+        // Close dialog first so submit action continues on next screen cleanly.
+        if (context.mounted) {
+          Navigator.of(context).pop(DialogResponse(confirmed: true));
+        }
+
         await _attributes?.onSubmit?.call(
           problemController.text.trim(),
           errorCodeController.text.trim(),
@@ -127,11 +132,6 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
           selectedMachineId ?? "",
           selectedOrganizationId ?? "",
         );
-
-        // Close dialog after successful submission
-        if (context.mounted) {
-          Navigator.of(context).pop(DialogResponse(confirmed: true));
-        }
       } catch (e) {
         AppLogger.error('Error in onSubmit: $e');
       } finally {

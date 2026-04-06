@@ -1,7 +1,5 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart' show GetNavigation;
 
 import 'package:stacked_services/stacked_services.dart';
 import 'package:stacked/stacked.dart';
@@ -216,6 +214,8 @@ class ReviewTicketViewModel extends ReactiveViewModel {
   }
 
   Future<void> ticketNotification() async {
+    if (_isSubmitting) return;
+
     // Check if ticketId is available
     if (_ticketId == null || _ticketId!.isEmpty) {
       Fluttertoast.showToast(
@@ -256,29 +256,12 @@ print("Ticket response.statusCod:- ${response.statusCode}");
           backgroundColor: Colors.green,
         );
 
-        // Update the tab selection first so StageView shows Tickets when we return.
+        // Always land on Tickets Summary after Continue.
         _stageService.updateSelectedBottomNavIndex(1);
-
-        // Safely pop back to StageView if it's already in the stack.
-        final navigator = StackedService.navigatorKey?.currentState;
-        bool foundStage = false;
-        if (navigator != null) {
-          navigator.popUntil((route) {
-            if (route.settings.name == Routes.stage) {
-              foundStage = true;
-              return true;
-            }
-            return route.isFirst;
-          });
-        }
-
-        // If StageView wasn't in the stack, replace the current route with it.
-        if (!foundStage) {
-          await _navigationService.replaceWith(
-            Routes.stage,
-            arguments: StageViewAttributes(selectedBottomNavIndex: 1),
-          );
-        }
+        await _navigationService.replaceWith(
+          Routes.stage,
+          arguments: StageViewAttributes(selectedBottomNavIndex: 1),
+        );
 
 
 

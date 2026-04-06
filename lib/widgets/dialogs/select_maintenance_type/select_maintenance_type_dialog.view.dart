@@ -327,15 +327,6 @@ class SelectMaintenanceTypeDialog extends StatelessWidget {
                                                 await model.submit(
                                                   model.selectedType!,
                                                   (maintenanceType) async {
-                                                    await attributes?.onSubmit?.call(
-                                                      maintenanceType,
-                                                      model.selectedOrganizationId ??
-                                                          "",
-                                                      model.selectedMachineId ??
-                                                          "",
-                                                    );
-
-                                                    // Close dialog after successful submission
                                                     if (context1.mounted) {
                                                       Navigator.of(
                                                         context1,
@@ -345,6 +336,14 @@ class SelectMaintenanceTypeDialog extends StatelessWidget {
                                                         ),
                                                       );
                                                     }
+
+                                                    await attributes?.onSubmit?.call(
+                                                      maintenanceType,
+                                                      model.selectedOrganizationId ??
+                                                          "",
+                                                      model.selectedMachineId ??
+                                                          "",
+                                                    );
                                                   },
                                                 );
                                               }

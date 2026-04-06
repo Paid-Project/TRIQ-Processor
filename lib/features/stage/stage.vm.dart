@@ -53,7 +53,10 @@ class StageViewModel extends ReactiveViewModel {
   User userData = getUser();
 
   void init(StageViewAttributes attributes) {
-    updateSelectedBottomNavIndex(attributes.selectedBottomNavIndex);
+    // Defer to next frame to avoid "markNeedsBuild called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      updateSelectedBottomNavIndex(attributes.selectedBottomNavIndex);
+    });
     initializeSocket();
     profileService.initializeProfile();
   }
@@ -172,7 +175,15 @@ print("stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm s
 
     }
     else if(status== 'call-decline'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: effectiveUserId,isGroup: isGroup, identity: 'identity');
+      await _chatService.sendVChatStatus(
+        roomName: roomId,
+        status: status,
+        callType: isVoice ? 'audio' : 'video',
+        name: receiver_name,
+        users: effectiveUserId,
+        isGroup: isGroup,
+        identity: 'identity',
+      );
       Get.back();
     }
 

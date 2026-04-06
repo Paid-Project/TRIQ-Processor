@@ -5,7 +5,6 @@ import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:manager/configs.dart';
 import 'package:manager/routes/routes.dart';
 import 'package:manager/services/socket_service.dart';
@@ -95,7 +94,10 @@ class TicketsListViewModel extends ReactiveViewModel {
     if (!_isSocketInitialized) {
       initializeSocket();
     }
-    _loadTicketsForCurrentTab(forceRefresh: true);
+    // Defer initial load to next frame to avoid "markNeedsBuild called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTicketsForCurrentTab(forceRefresh: true);
+    });
   }
   Future<void> initializeSocket() async {
     if (_isSocketInitialized) return;
@@ -415,6 +417,7 @@ class TicketsListViewModel extends ReactiveViewModel {
   }
   Future<void> _submitPendingTicket() async {
     if (_pendingTicketData == null) return;
+    if (_isSubmitting) return;
 
     _isSubmitting = true;
     notifyListeners();

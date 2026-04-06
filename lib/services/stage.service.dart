@@ -16,6 +16,7 @@ class StageService with ListenableServiceMixin {
   }
 
   updateSelectedBottomNavIndex(int index) {
+    if (selectedBottomNavIndex.value == index) return;
     selectedBottomNavIndex.value = index;
     notifyListeners();
   }
