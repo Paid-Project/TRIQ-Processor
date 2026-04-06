@@ -125,6 +125,43 @@ class FirebaseNotificationService {
   static Map<String, dynamic>? _pendingNavigationData;
   static String? _lastNavigationFingerprint;
   static DateTime? _lastNavigationAt;
+  static Timer? _pendingNavigationRetryTimer;
+
+  /// Cold start / tap-before-navigator-ready: poll until [StackedService] navigator exists, then navigate.
+  static void schedulePendingNavigationUntilReady() {
+    _pendingNavigationRetryTimer?.cancel();
+    if (_pendingNavigationData == null) return;
+
+    var attempts = 0;
+    const maxAttempts = 120;
+
+    _pendingNavigationRetryTimer = Timer.periodic(
+      const Duration(milliseconds: 250),
+          (timer) async {
+        attempts++;
+        if (_pendingNavigationData == null) {
+          timer.cancel();
+          return;
+        }
+        if (_isNavigatorReady) {
+          await handlePendingNavigation();
+          if (_pendingNavigationData == null) {
+            timer.cancel();
+            return;
+          }
+        }
+        if (attempts >= maxAttempts) {
+          timer.cancel();
+          if (kDebugMode) {
+            print(
+              'Notification navigation: gave up waiting for navigator '
+                  '(${maxAttempts * 250}ms).',
+            );
+          }
+        }
+      },
+    );
+  }
 
   static Future<void> initializeService() async {
     // Check initialization status
@@ -158,6 +195,10 @@ class FirebaseNotificationService {
       getNotification();
 
       await _captureInitialNotificationTap();
+
+      if (_pendingNavigationData != null) {
+        schedulePendingNavigationUntilReady();
+      }
 
       String? apnsToken;
       if (Platform.isIOS) {
@@ -262,7 +303,6 @@ class FirebaseNotificationService {
     bool deferIfNavigatorUnavailable = true,
   }) async {
     final normalizedData = _normalizeNavigationData(data);
-    print("normal data:-${normalizedData}");
     if (normalizedData == null) {
       if (_isNavigatorReady) {
         locator<NavigationService>().navigateTo(Routes.notification);
@@ -273,6 +313,7 @@ class FirebaseNotificationService {
     if (!_isNavigatorReady) {
       if (deferIfNavigatorUnavailable) {
         _pendingNavigationData = normalizedData;
+        schedulePendingNavigationUntilReady();
       }
       return;
     }
@@ -284,9 +325,6 @@ class FirebaseNotificationService {
     final screenName = _readValue(
       normalizedData,
       ['screenName', 'screen', 'targetScreen', 'route'],
-    );    final isGroupCall = _readValue(
-      normalizedData,
-      ['isGroupCall',],
     );
     final notificationType = _readValue(
       normalizedData,
@@ -312,15 +350,15 @@ class FirebaseNotificationService {
       final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
       final senderName = _readValue(
         normalizedData,
-        ['sender_name', 'senderName', 'contactName', 'name'],
+        ['sender_name', 'senderName', 'contactName', 'title'],
       );
-      final flag = _readValue(normalizedData, ['flag']);
       final isGroupId  = _readValue(normalizedData, ['isGroupCall']);
+
+      final flag = _readValue(normalizedData, ['flag']);
+
       if (roomId.isNotEmpty) {
         final resolvedSenderName =
-            senderName.isNotEmpty ? senderName : 'Caller';
-        print("resolvedSenderName::-${ isGroupId == "true" }");
-
+        senderName.isNotEmpty ? senderName : 'Caller';
         await _navigationService.navigateToView(
           ChatView(
             contactName: resolvedSenderName,
@@ -328,8 +366,8 @@ class FirebaseNotificationService {
             contactInitials: resolvedSenderName.substring(0, 1).toUpperCase(),
             roomId: roomId,
             ticketStatus: ticketStatus,
-            screen: isGroupId == "true"?ChatRoomScreenType.groupChat:ChatRoomScreenType.contactChat,
             ticketId: ticketId.isEmpty ? null : ticketId,
+            screen: isGroupId == "true"?ChatRoomScreenType.groupChat:ChatRoomScreenType.contactChat,
             flag: flag.isEmpty ? null : flag,
             incomingCallData: normalizedData,
           ),
@@ -343,7 +381,10 @@ class FirebaseNotificationService {
       notificationType: notificationType,
       roomId: roomId,
     );
-    final shouldOpenChat = roomId.isNotEmpty && chatScreenType != null && isGroupCall == "true";
+    // Open chat when we have a room and a resolved screen kind (group / contact / main).
+    // Do not require isGroupCall == "true" — that flag is for incoming call payloads; plain
+    // chat pushes (e.g. type: group_chat, roomId: …) omit it and would otherwise hit the inbox only.
+    final shouldOpenChat = roomId.isNotEmpty && chatScreenType != null;
 
     if (shouldOpenChat) {
       final contactName = _readValue(
@@ -366,36 +407,36 @@ class FirebaseNotificationService {
 
       if (roomId.isNotEmpty) {
         final resolvedContactName =
-            contactName.isNotEmpty
-                ? contactName
-                : (chatScreenType == ChatRoomScreenType.groupChat
-                    ? 'Group'
-                    : 'Chat');
+        contactName.isNotEmpty
+            ? contactName
+            : (chatScreenType == ChatRoomScreenType.groupChat
+            ? 'Group'
+            : 'Chat');
         await _navigationService.navigateToView(
           ChatView(
             isVisible: chatScreenType == ChatRoomScreenType.mainChat,
             contactName: resolvedContactName,
             contactNumber:
-                contactNumber.isNotEmpty
-                    ? contactNumber
-                    : (chatScreenType == ChatRoomScreenType.groupChat
-                        ? 'Group'
-                        : ''),
+            contactNumber.isNotEmpty
+                ? contactNumber
+                : (chatScreenType == ChatRoomScreenType.groupChat
+                ? 'Group'
+                : ''),
             contactInitials: resolvedContactName.substring(0, 1).toUpperCase(),
             roomId: roomId,
             ticketStatus:
-                chatScreenType == ChatRoomScreenType.mainChat
-                    ? ticketStatus
-                    : null,
+            chatScreenType == ChatRoomScreenType.mainChat
+                ? ticketStatus
+                : null,
             ticketId:
-                chatScreenType == ChatRoomScreenType.mainChat &&
-                        ticketId.isNotEmpty
-                    ? ticketId
-                    : null,
+            chatScreenType == ChatRoomScreenType.mainChat &&
+                ticketId.isNotEmpty
+                ? ticketId
+                : null,
             flag:
-                chatScreenType == ChatRoomScreenType.groupChat || flag.isEmpty
-                    ? null
-                    : flag,
+            chatScreenType == ChatRoomScreenType.groupChat || flag.isEmpty
+                ? null
+                : flag,
             screen: chatScreenType,
           ),
         );
@@ -408,9 +449,9 @@ class FirebaseNotificationService {
 
   static Future<void> _captureInitialNotificationTap() async {
     final localLaunchDetails =
-        await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+    await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
     final localPayload =
-        localLaunchDetails?.notificationResponse?.payload?.trim();
+    localLaunchDetails?.notificationResponse?.payload?.trim();
 
     if (localLaunchDetails?.didNotificationLaunchApp == true &&
         localPayload != null &&
@@ -421,12 +462,14 @@ class FirebaseNotificationService {
       }
     }
 
+    // Tap opened app via FCM (not only via local notification duplicate).
     final initialMessage = await firebaseMessaging.getInitialMessage();
-    if (initialMessage == null) return;
-
-    final normalizedData = _normalizeNavigationData(initialMessage.data);
-    if (normalizedData != null) {
-      _pendingNavigationData = normalizedData;
+    if (initialMessage != null) {
+      final normalizedData = _normalizeNavigationData(initialMessage.data);
+      if (normalizedData != null) {
+        // Prefer payload from local notification tap (background handler) if both exist.
+        _pendingNavigationData ??= normalizedData;
+      }
     }
   }
 
@@ -466,9 +509,9 @@ class FirebaseNotificationService {
   }
 
   static String _readValue(
-    Map<String, dynamic> data,
-    List<String> keys,
-  ) {
+      Map<String, dynamic> data,
+      List<String> keys,
+      ) {
     for (final key in keys) {
       final rawValue = data[key];
       if (rawValue == null) continue;
@@ -567,6 +610,7 @@ class FirebaseNotificationService {
   }
 
   static bool _isGroupChatIdentifier(String normalized) {
+    // e.g. "group_chat", "group-chat", "Group Chat" → "groupchat"
     return normalized == 'groupchat' || normalized == 'groupchatview';
   }
 
@@ -661,11 +705,11 @@ class NotificationService {
 
   // notification read
   // Get unread notification count
-    Future<int> getUnReadMarkNotificationAsRead({String? id}) async {
+  Future<int> getUnReadMarkNotificationAsRead({String? id}) async {
     try {
       final apiService = locator<ApiService>();
       final response = await apiService.get(url: "${ApiEndpoints.getMarkNotificationAsRead}/$id");
-print("response:- ${response}");
+      print("response:- ${response}");
 
       if (response.statusCode == 200) {
         // Check if response.data is a Map with unreadCount

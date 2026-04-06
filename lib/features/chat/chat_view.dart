@@ -552,7 +552,7 @@ identity:userData.name.toString(),
         // ),
 
         widget.ticketStatus != "Resolved" && widget.userRole == "organization"?
-        PopupMenuButton<String>(
+ PopupMenuButton<String>(
           icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
           menuPadding: EdgeInsets.zero,
           offset: Offset(-10, 40),
@@ -669,7 +669,7 @@ identity:userData.name.toString(),
           shadowColor: AppColors.black.withValues(alpha: 0.1),
           elevation: 8,
         ) :
-        PopupMenuButton<String>(
+        ( widget.screen == ChatRoomScreenType.groupChat)? PopupMenuButton<String>(
           icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
           menuPadding: EdgeInsets.zero,
           offset: Offset(-10, 40),
@@ -781,22 +781,22 @@ identity:userData.name.toString(),
             ),
 
             // Mark As Resolved Item
-            PopupMenuItem<String>(
-              value: 'resolve',
-              child: Container(
-                width: 250, // Match width with reschedule item
-                padding: EdgeInsets.only(top: 10, bottom: 10),
-
-                child: Text(
-                  'Mark As Resolved',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
+            // PopupMenuItem<String>(
+            //   value: 'resolve',
+            //   child: Container(
+            //     width: 250, // Match width with reschedule item
+            //     padding: EdgeInsets.only(top: 10, bottom: 10),
+            //
+            //     child: Text(
+            //       'Mark As Resolved',
+            //       style: TextStyle(
+            //         fontSize: 14,
+            //         fontWeight: FontWeight.w600,
+            //         color: AppColors.textPrimary,
+            //       ),
+            //     ),
+            //   ),
+            // ),
             // Mark As Resolved Item
             if( widget.screen == ChatRoomScreenType.groupChat)
               PopupMenuItem<String>(
@@ -816,6 +816,7 @@ identity:userData.name.toString(),
                 ),
               ),
             // Divider
+                if( widget.screen == ChatRoomScreenType.groupChat)
             PopupMenuItem<String>(
               enabled: false,
               height: 1,
@@ -850,7 +851,7 @@ identity:userData.name.toString(),
           color: AppColors.white,
           shadowColor: AppColors.black.withValues(alpha: 0.1),
           elevation: 8,
-        ),
+        ):SizedBox(),
       ],
     );
   }
