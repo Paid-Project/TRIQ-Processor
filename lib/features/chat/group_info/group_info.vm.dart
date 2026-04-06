@@ -1,34 +1,30 @@
-import 'package:dartz/dartz.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:manager/core/locator.dart';
 import 'package:manager/core/models/attachments_model.dart';
-import 'package:manager/core/models/employee.dart';
+import 'package:manager/core/models/chat_list_model.dart';
 import 'package:manager/core/utils/app_logger.dart';
-import 'package:manager/core/utils/failures.dart';
 import 'package:manager/services/chat.service.dart';
-import 'package:manager/services/employee.service.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
 class GroupInfoViewModel extends ReactiveViewModel {
   final _navigationService = locator<NavigationService>();
   final _chatService = locator<ChatService>();
-  final _employeeService = locator<EmployeeService>();
 
-  bool _isEmployeesLoading = false;
-  bool get isEmployeesLoading => _isEmployeesLoading;
+  bool _isMembersLoading = false;
+  bool get isMembersLoading => _isMembersLoading;
 
   bool _isAttachmentsLoading = false;
   bool get isAttachmentsLoading => _isAttachmentsLoading;
 
-  String? _employeeLoadError;
-  String? get employeeLoadError => _employeeLoadError;
+  String? _membersLoadError;
+  String? get membersLoadError => _membersLoadError;
 
   String? _attachmentsLoadError;
   String? get attachmentsLoadError => _attachmentsLoadError;
 
-  final List<Employee> _employees = [];
-  List<Employee> get employees => _employees;
+  final List<ChatWith> _groupMembers = [];
+  List<ChatWith> get groupMembers => _groupMembers;
 
   final List<AttachmentsDatum> _attachmentsDatum = [];
   List<AttachmentsDatum> get attachmentsDatum => _attachmentsDatum;
@@ -40,7 +36,7 @@ class GroupInfoViewModel extends ReactiveViewModel {
 
   Future<void> init({String? rootID}) async {
     await Future.wait([
-      fetchDropdownData(),
+      if (rootID != null && rootID.trim().isNotEmpty) fetchGroupMembers(roomId: rootID),
       if (rootID != null && rootID.trim().isNotEmpty)
         getAttachmentsData(roomId: rootID),
     ]);
@@ -65,34 +61,56 @@ class GroupInfoViewModel extends ReactiveViewModel {
     }
   }
 
-  Future<void> fetchDropdownData() async {
-    _isEmployeesLoading = true;
-    _employeeLoadError = null;
+  Future<void> fetchGroupMembers({required String roomId}) async {
+    _isMembersLoading = true;
+    _membersLoadError = null;
     notifyListeners();
 
     try {
-      final Either<Failure, List<Employee>> response =
-      await _employeeService.getAllEmployees();
+      // We don't have a dedicated "room details" endpoint in this app.
+      // So we fetch chats and resolve members for the current roomId.
+      const page = 1;
+      const limit = 200;
+      final result = await _chatService.getAllChats(page: page, limit: limit);
 
-      response.fold(
-            (exception) {
-          AppLogger.warning(exception.message);
-          _employees.clear();
-          _employeeLoadError = exception.message;
-        },
-            (allEmployees) {
-          _employees
-            ..clear()
-            ..addAll(allEmployees);
-        },
-      );
+      result.fold((failure) {
+        _groupMembers
+          ..clear();
+        _membersLoadError = failure.message;
+      }, (data) {
+        final chatsRaw = data['chats'] ?? data['data'] ?? data['rooms'];
+        final model = ChatListModel.fromJson({
+          'message': data['message'] ?? '',
+          'total': data['total'] ?? data['count'] ?? 0,
+          'chats': chatsRaw is List ? chatsRaw : const [],
+        });
+
+        final room = model.chats.firstWhere(
+          (c) => c.id == roomId,
+          orElse: () => Chats(
+            id: '',
+            type: '',
+            ticket: Ticket.fromJson(const {}),
+            chatWith: ChatWith.fromJson(const {}),
+            members: const [],
+            lastMessage: null,
+            unreadCount: 0,
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+        final members = room.id.isEmpty ? const <ChatWith>[] : room.members;
+        _groupMembers
+          ..clear()
+          ..addAll(members);
+      });
     } catch (e) {
-      AppLogger.error('Error fetching employee data: $e');
-      _employees.clear();
-      _employeeLoadError = 'Failed to load employees';
+      AppLogger.error('Error fetching group members: $e');
+      _groupMembers.clear();
+      _membersLoadError = 'Failed to load group members';
     }
 
-    _isEmployeesLoading = false;
+    _isMembersLoading = false;
     notifyListeners();
   }
 

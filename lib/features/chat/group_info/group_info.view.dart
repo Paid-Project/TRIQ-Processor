@@ -333,27 +333,27 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
 
                       const Divider(),
 
-                      if (model.isEmployeesLoading)
+                      if (model.isMembersLoading)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 24),
                           child: Center(child: CircularProgressIndicator()),
                         )
-                      else if (model.employeeLoadError != null)
+                      else if (model.membersLoadError != null)
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: Text(
-                            model.employeeLoadError!,
+                            model.membersLoadError!,
                             style: const TextStyle(
                               color: Colors.redAccent,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         )
-                      else if (model.employees.isEmpty)
+                      else if (model.groupMembers.isEmpty)
                           const Padding(
                             padding: EdgeInsets.all(16),
                             child: Text(
-                              "No employees found",
+                              "No members found",
                               style: TextStyle(
                                 color: AppColors.textGrey,
                                 fontWeight: FontWeight.w500,
@@ -364,24 +364,32 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: model.employees.length,
+                            itemCount: model.groupMembers.length,
                             itemBuilder: (context, index) {
-                              final member = model.employees[index];
+                              final member = model.groupMembers[index];
                               final subtitleParts = [
-                                if ((member.designation?.name ?? '').trim().isNotEmpty)
-                                  member.designation!.name!.trim(),
-                                if ((member.phone ?? '').trim().isNotEmpty)
-                                  member.phone!.trim(),
+                                if ((member.email).trim().isNotEmpty)
+                                  member.email.trim(),
+                                if ((member.countryCode).trim().isNotEmpty)
+                                  member.countryCode.trim(),
                               ];
 
                               return Column(
                                 children: [
                                   ListTile(
-                                    leading: const CircleAvatar(
-                                      child: Icon(Icons.person),
+                                    leading: CircleAvatar(
+                                      backgroundColor: AppColors.softGray,
+                                      child: Text(
+                                        (member.fullName.trim().isNotEmpty ? member.fullName.trim()[0] : 'U')
+                                            .toUpperCase(),
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                                     ),
                                     title: Text(
-                                      member.displayName,
+                                      member.fullName,
                                       style: const TextStyle(
                                         color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w600,
@@ -396,7 +404,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                       ),
                                     ),
                                   ),
-                                  if (index != model.employees.length - 1)
+                                  if (index != model.groupMembers.length - 1)
                                     const Divider(height: 5),
                                 ],
                               );
