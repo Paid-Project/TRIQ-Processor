@@ -84,6 +84,23 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   int initCount=0;
   bool _didAutoScrollToLatestOnOpen = false;
 
+  String _readFirstNonEmpty(Map data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key];
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
+  }
+
+  bool _isTrueish(dynamic value) {
+    if (value is bool) return value;
+    final normalized = value?.toString().trim().toLowerCase() ?? '';
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -97,11 +114,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    WidgetsBinding.instance.addPostFrameCallback((v){
+    WidgetsBinding.instance.addPostFrameCallback((v) {
       _handleCallRecieve();
     });
   }
-
 
   @override
   void dispose() {
@@ -128,16 +144,25 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   }
 
 
-  _handleCallRecieve(){
-    if(widget.incomingCallData!=null) {
-      final data=widget.incomingCallData??{};
+  _handleCallRecieve() {
+    if (widget.incomingCallData != null) {
+      final data = widget.incomingCallData ?? {};
       print("notification data:- ${data}");
       final String? roomId =
-          data['room_id']?.toString() ??
-          data['roomId']?.toString() ??
-          widget.roomId;
-      final String senderName = data['sender_name'] ?? '';
-      final String receiverName = data['receiver_name'] ??data['name']??"";
+          data['room_id']?.toString() ?? data['roomId']?.toString() ?? widget.roomId;
+      final bool isGroupCall =
+          _isTrueish(data['isGroupCall']) || widget.screen == ChatRoomScreenType.groupChat;
+      final String senderName = _readFirstNonEmpty(
+        data,
+        ['sender_name', 'senderName'],
+      );
+      final String groupName = _readFirstNonEmpty(
+        data,
+        ['groupTitle', 'groupName', 'group_name', 'title', 'name'],
+      );
+      final String displayName =
+          isGroupCall && groupName.isNotEmpty ? groupName : senderName;
+      final String receiverName = data['receiver_name'] ?? data['name'] ?? "";
       final String? flag = data['flag'];
       final String? profilePic = data['profile_pic'];
       final String? callType = data['callType'];
@@ -148,56 +173,77 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
       WidgetsBinding.instance.addPostFrameCallback((c) {
         showCallRequestDialog(
-            profile: profilePic ?? '',
-            name: senderName,
-            call_type: callType ?? '',
-            flag: flag ?? '',
-            onAccept: () {
-
-              print("notification data accept(${widget.screen })");
-              openVideoChat(roomId ?? '', status: 'call-accept',
-                  isVoice: isVoice,
-                  token: token ?? '',
-                  userId: userData.id.toString(),
-                  receiverName: receiverName,
-identity:userData.name.toString(),
-                isGroup: ChatRoomScreenType.groupChat == widget.screen?true:false, );
-            },
-            onDecline: () {
-              openVideoChat(roomId ?? '', status: 'call-decline',
-                  isVoice: isVoice,
-                  token: token ?? '',
-                  userId: userData.id.toString(),
-                  identity: userData.name.toString(),
-                  receiverName: receiverName,
-                isGroup: ChatRoomScreenType.groupChat == widget.screen?true:false,
-              );
-            });
+          profile: profilePic ?? '',
+          name: displayName.isNotEmpty ? displayName : senderName,
+          call_type: callType ?? '',
+          flag: flag ?? '',
+          onAccept: () {
+            print("notification data accept(${widget.screen })");
+            openVideoChat(
+              roomId ?? '',
+              status: 'call-accept',
+              isVoice: isVoice,
+              token: token ?? '',
+              userId: userData.id.toString(),
+              receiverName: receiverName,
+              identity: userData.name.toString(),
+              isGroup: isGroupCall,
+            );
+          },
+          onDecline: () {
+            openVideoChat(
+              roomId ?? '',
+              status: 'call-decline',
+              isVoice: isVoice,
+              token: token ?? '',
+              userId: userData.id.toString(),
+              identity: userData.name.toString(),
+              receiverName: receiverName,
+              isGroup: isGroupCall,
+            );
+          },
+        );
       });
     }
   }
 
-  static Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,required String identity,required String userId,required String receiverName,required bool isGroup}) async {
-
+  static Future<void> openVideoChat(
+    String roomId, {
+    String status = 'call-request',
+    required bool isVoice,
+    required String token,
+    required String identity,
+    required String userId,
+    required String receiverName,
+    required bool isGroup,
+  }) async {
     final chatService = locator<ChatService>();
-    if(status== 'call-accept'){
+    if (status == 'call-accept') {
       final tokenResponse = await chatService.sendVChatStatus(
         identity: identity,
-        roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,  isGroup:isGroup, );
-      if(tokenResponse['success']){
+        roomName: roomId,
+        status: status,
+        callType: isVoice ? 'audio' : 'video',
+        name: receiverName,
+        users: userId,
+        isGroup: isGroup,
+      );
+      if (tokenResponse['success']) {
         Get.back();
         Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponse['token'], isVoice: isVoice));
       }
-
-    }
-    else if(status== 'call-decline'){
+    } else if (status == 'call-decline') {
       await chatService.sendVChatStatus(
         identity: identity,
-        roomName: roomId, status: status, callType: isVoice ? 'audio' : 'video', name: receiverName, users: userId,isGroup:isGroup, );
+        roomName: roomId,
+        status: status,
+        callType: isVoice ? 'audio' : 'video',
+        name: receiverName,
+        users: userId,
+        isGroup: isGroup,
+      );
       Get.back();
     }
-
-
   }
 
   // Reschedule functionality

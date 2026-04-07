@@ -52,6 +52,23 @@ class StageViewModel extends ReactiveViewModel {
 
   User userData = getUser();
 
+  String _readFirstNonEmpty(Map data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key];
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
+  }
+
+  bool _isTrueish(dynamic value) {
+    if (value is bool) return value;
+    final normalized = value?.toString().trim().toLowerCase() ?? '';
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+
   void init(StageViewAttributes attributes) {
     // Defer to next frame to avoid "markNeedsBuild called during build".
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -98,6 +115,7 @@ class StageViewModel extends ReactiveViewModel {
 
     return dialogResponse?.confirmed ?? false;
   }
+
   Future<void> initializeSocket() async {
     print("🚀 Initializing call-event socket connection...");
 
@@ -109,72 +127,98 @@ class StageViewModel extends ReactiveViewModel {
         _socketService.off('call-event');
       },
       onConnected: () {
-
-
-        _socketService.emit('register',userData.id ?? 'default_user');
+        _socketService.emit('register', userData.id ?? 'default_user');
 
         _socketService.on('incoming-call', (data) {
           _onChatRequest(data);
-          AppLogger.info('incoming-call =  ${data}',);
+          AppLogger.info('incoming-call =  ${data}');
         });
       },
     );
   }
 
-  _onChatRequest(Map data){
+  _onChatRequest(Map data) {
+    String roomid = data['roomName'];
+    String profile = '';
+    String sender_name = _readFirstNonEmpty(data, ['sender_name', 'senderName']);
+    final bool isGroupCall = _isTrueish(data['isGroupCall']);
+    final String groupName = _readFirstNonEmpty(
+      data,
+      ['groupTitle', 'groupName', 'group_name', 'title', 'name'],
+    );
+    final String displayName =
+        isGroupCall && groupName.isNotEmpty ? groupName : sender_name;
+    String receiver_name = data['receiver_name'];
+    String call_type = data['callType'];
+    String flag = data['flag'];
+    String token = data['token'];
+    String status = data['eventType'];
+    String userId = data['user_id'] ?? '';
+    print("stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm ");
 
-    String roomid=data['roomName'];
-    String profile='';
-    String sender_name=data['sender_name'];
-    String receiver_name=data['receiver_name'];
-    String call_type=data['callType'];
-    String flag=data['flag'];
-    String token=data['token'];
-    String status=data['eventType'];
-    String userId=data['user_id'] ?? '';
-print("stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm ");
+    bool isVoice = call_type == 'audio';
 
-    bool isVoice=call_type=='audio';
-
-    if(status=='call-request'){
+    if (status == 'call-request') {
       WidgetsBinding.instance.addPostFrameCallback((c) {
-        showCallRequestDialog(profile: profile,
-            name: sender_name,
-            call_type: call_type,
-            flag: flag,
-            onAccept: () {
-          print("stage vm id passsd");
-              openVideoChat(roomid, status: 'call-accept',
-                  isGroup: false,
-                  isVoice: isVoice,
-                  token: token,
-                  userId: userId,
-                  receiver_name: receiver_name);
-            },
-            onDecline: () {
-              openVideoChat(roomid, status: 'call-decline',
-                  isGroup: false,
-                  isVoice: isVoice,
-                  token: token,
-                  userId: userId,
-                  receiver_name: receiver_name);
-            });
+        showCallRequestDialog(
+          profile: profile,
+          name: displayName.isNotEmpty ? displayName : sender_name,
+          call_type: call_type,
+          flag: flag,
+          onAccept: () {
+            print("stage vm id passsd");
+            openVideoChat(
+              roomid,
+              status: 'call-accept',
+              isGroup: isGroupCall,
+              isVoice: isVoice,
+              token: token,
+              userId: userId,
+              receiver_name: receiver_name,
+            );
+          },
+          onDecline: () {
+            openVideoChat(
+              roomid,
+              status: 'call-decline',
+              isGroup: isGroupCall,
+              isVoice: isVoice,
+              token: token,
+              userId: userId,
+              receiver_name: receiver_name,
+            );
+          },
+        );
       });
     }
   }
-  Future<void> openVideoChat(String roomId,{String status = 'call-request',required bool isVoice,required String token,String userId = '',required String receiver_name,required bool isGroup}) async {
+
+  Future<void> openVideoChat(
+    String roomId, {
+    String status = 'call-request',
+    required bool isVoice,
+    required String token,
+    String userId = '',
+    required String receiver_name,
+    required bool isGroup,
+  }) async {
     final effectiveUserId = userId.isNotEmpty ? userId : (userData.id ?? '');
-    if(status== 'call-accept'){
-      final tokenResponce = await _chatService.sendVChatStatus(roomName: roomId, status: status, callType: isVoice?'audio':'video', name: receiver_name, users: effectiveUserId,isGroup: isGroup, identity: 'identity');
+    if (status == 'call-accept') {
+      final tokenResponce = await _chatService.sendVChatStatus(
+        roomName: roomId,
+        status: status,
+        callType: isVoice ? 'audio' : 'video',
+        name: receiver_name,
+        users: effectiveUserId,
+        isGroup: isGroup,
+        identity: 'identity',
+      );
 
-
-      if(tokenResponce['success']){
+      if (tokenResponce['success']) {
         Get.back();
         Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponce['token'], isVoice: isVoice));
       }
-
-    }
-    else if(status== 'call-decline'){
+    } else if (status == 'call-decline') {
       await _chatService.sendVChatStatus(
         roomName: roomId,
         status: status,
@@ -186,8 +230,6 @@ print("stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm s
       );
       Get.back();
     }
-
-
   }
 
   @override

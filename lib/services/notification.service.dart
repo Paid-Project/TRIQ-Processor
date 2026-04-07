@@ -352,13 +352,20 @@ class FirebaseNotificationService {
         normalizedData,
         ['sender_name', 'senderName', 'contactName', 'title'],
       );
-      final isGroupId  = _readValue(normalizedData, ['isGroupCall']);
+      final groupName = _readValue(
+        normalizedData,
+        ['groupTitle', 'groupName', 'group_name', 'name'],
+      );
+      final isGroupId = _readValue(normalizedData, ['isGroupCall']);
 
       final flag = _readValue(normalizedData, ['flag']);
 
       if (roomId.isNotEmpty) {
+        final isGroupCall = isGroupId.toLowerCase() == "true";
         final resolvedSenderName =
-        senderName.isNotEmpty ? senderName : 'Caller';
+            isGroupCall && groupName.isNotEmpty
+                ? groupName
+                : (senderName.isNotEmpty ? senderName : 'Caller');
         await _navigationService.navigateToView(
           ChatView(
             contactName: resolvedSenderName,
@@ -367,7 +374,9 @@ class FirebaseNotificationService {
             roomId: roomId,
             ticketStatus: ticketStatus,
             ticketId: ticketId.isEmpty ? null : ticketId,
-            screen: isGroupId == "true"?ChatRoomScreenType.groupChat:ChatRoomScreenType.contactChat,
+            screen: isGroupId == "true"
+                ? ChatRoomScreenType.groupChat
+                : ChatRoomScreenType.contactChat,
             flag: flag.isEmpty ? null : flag,
             incomingCallData: normalizedData,
           ),
