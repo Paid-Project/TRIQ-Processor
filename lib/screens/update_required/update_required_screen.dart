@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:manager/resources/app_resources/app_resources.dart';
 
 class UpdateRequiredScreen extends StatelessWidget {
-  const UpdateRequiredScreen({super.key});
+  const UpdateRequiredScreen({super.key, this.message});
+
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedMessage =
+        message?.trim().isNotEmpty == true
+            ? message!.trim()
+            : 'Please update the app or try again later.';
+
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
@@ -31,13 +38,15 @@ class UpdateRequiredScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'App is under maintenance',
+                    resolvedMessage,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.5,
                     ),
                   ),
+                  const SizedBox(height: 12),
+
                 ],
               ),
             ),

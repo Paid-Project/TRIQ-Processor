@@ -111,8 +111,10 @@ class AppRouter extends RouterBase {
       );
     },
     UpdateRequiredScreen: (data) {
+      final updateMessage = data.arguments as String?;
       return MaterialPageRoute(
-        builder: (BuildContext _) => const UpdateRequiredScreen(),
+        builder:
+            (BuildContext _) => UpdateRequiredScreen(message: updateMessage),
         settings: data,
       );
     },
@@ -742,6 +744,7 @@ class RootWrapper extends StatefulWidget {
 class _RootWrapperState extends State<RootWrapper> {
   final SecureApiService _secureApiService = locator<SecureApiService>();
   bool _hasRedirectedToUpdate = false;
+  String? _updateRequiredMessage;
 
   @override
   void initState() {
@@ -755,7 +758,9 @@ class _RootWrapperState extends State<RootWrapper> {
     bool shouldAllowAppEntry = true;
 
     try {
-      shouldAllowAppEntry = await _secureApiService.isManufacturerEnabled();
+      final startupStatus = await _secureApiService.isManufacturerEnabled();
+      shouldAllowAppEntry = startupStatus.manufacturerEnabled;
+      _updateRequiredMessage = startupStatus.message;
     } catch (error) {
       AppLogger.warning(
         'Startup availability check failed. Allowing app entry. Error: $error',
@@ -769,6 +774,7 @@ class _RootWrapperState extends State<RootWrapper> {
       Navigator.of(context).pushNamedAndRemoveUntil(
         Routes.updateRequired,
         (Route<dynamic> route) => false,
+        arguments: _updateRequiredMessage,
       );
       return;
     }

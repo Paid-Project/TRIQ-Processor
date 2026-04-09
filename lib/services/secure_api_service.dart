@@ -6,7 +6,7 @@ class SecureApiService {
   SecureApiService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
-  Future<bool>? _startupStatusRequest;
+  Future<AppStartupStatus>? _startupStatusRequest;
 
   static const Duration _requestTimeout = Duration(seconds: 5);
   static const List<int> _obfuscatedStatusEndpoint = <int>[
@@ -52,7 +52,7 @@ class SecureApiService {
     _startupStatusRequest ??= _fetchManufacturerEnabled();
   }
 
-  Future<bool> isManufacturerEnabled({bool forceRefresh = false}) {
+  Future<AppStartupStatus> isManufacturerEnabled({bool forceRefresh = false}) {
     if (forceRefresh || _startupStatusRequest == null) {
       _startupStatusRequest = _fetchManufacturerEnabled();
     }
@@ -60,7 +60,7 @@ class SecureApiService {
     return _startupStatusRequest!;
   }
 
-  Future<bool> _fetchManufacturerEnabled() async {
+  Future<AppStartupStatus> _fetchManufacturerEnabled() async {
     final uri = _decodeEndpointUri();
     try {
       final response = await _client
@@ -81,7 +81,7 @@ class SecureApiService {
         throw const FormatException('Invalid startup status response format.');
       }
 
-      return AppStartupStatus.fromJson(decodedBody).manufacturerEnabled;
+      return AppStartupStatus.fromJson(decodedBody);
     } catch (_) {
       _startupStatusRequest = null;
       rethrow;
@@ -94,20 +94,22 @@ class SecureApiService {
 }
 
 class AppStartupStatus {
-  const AppStartupStatus({required this.manufacturerEnabled});
+  const AppStartupStatus({
+    required this.manufacturerEnabled,
+    required this.message,
+  });
 
   final bool manufacturerEnabled;
+  final String message;
 
   factory AppStartupStatus.fromJson(Map<String, dynamic> json) {
-    final dynamic data = json['data'];
+    final data = json['data'];
+
     if (data is Map<String, dynamic>) {
       return AppStartupStatus(
         manufacturerEnabled: data['processor'] == true,
+        message: data['message']?.toString() ?? '',
       );
-    }
-
-    if (data is Map) {
-      return AppStartupStatus(manufacturerEnabled: data['processor'] == true);
     }
 
     throw const FormatException('Missing startup status payload.');
