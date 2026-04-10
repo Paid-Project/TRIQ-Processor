@@ -150,9 +150,15 @@ class _MachineSupplierViewState extends State<MachineSupplierView> with TickerPr
     }
 
     if (model.filteredMachines.isEmpty) {
-      return _buildEmptyState(context, model);
+      // 🔥 IMPORTANT LOGIC
+      if (model.isSearching) {
+        return Center(
+          child: Text("No Data Found"),
+        );
+      } else {
+        return _buildEmptyState(context, model);
+      }
     }
-
     return RefreshIndicator(
       onRefresh: model.refreshMachines,
       backgroundColor: AppColors.white,

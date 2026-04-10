@@ -24,7 +24,8 @@ class DummyOrganization {
 
 class MachineSupplierViewModel extends BaseViewModel {
   final MachineSupplierService _machineSupplierService = locator<MachineSupplierService>();
-
+  bool _isSearching = false;
+  bool get isSearching => _isSearching;
   List<MachineSupplier> _machineSupplierData = [];
   List<MachineSupplier> _filteredMachines = [];
   String _searchQuery = '';
@@ -51,6 +52,7 @@ class MachineSupplierViewModel extends BaseViewModel {
   }
 
   void clearSearch() {
+    _isSearching = false; //
     _searchQuery = '';
     _applyFilters();
   }
@@ -91,6 +93,7 @@ class MachineSupplierViewModel extends BaseViewModel {
   }
 
   void onSearchChanged(String query) {
+    _isSearching = query.isNotEmpty;
     _searchQuery = query;
     _applyFilters();
   }

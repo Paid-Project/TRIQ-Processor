@@ -291,8 +291,16 @@ class _MachineOverviewViewState extends State<MachineOverviewView> with TickerPr
     }
 
 
+
     if (viewModel.filteredMachines.isEmpty) {
-      return _buildEmptyState(context);
+      // 🔥 IMPORTANT LOGIC
+      if (viewModel.isSearching) {
+        return Center(
+          child: Text("No Data Found"),
+        );
+      } else {
+        return _buildEmptyState(context);
+      }
     }
     return Column(children: viewModel.filteredMachines.map((machine) => _buildMachineCard(context, machine, viewModel)).toList());
   }

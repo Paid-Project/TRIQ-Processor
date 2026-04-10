@@ -6,7 +6,8 @@ import 'package:manager/core/locator.dart';
 
 class MachineOverviewViewModel extends BaseViewModel {
   final _apiService = locator<ApiService>();
-
+  bool _isSearching = false;
+  bool get isSearching => _isSearching;
   List<MachineOverviewList> _machines = [];
   List<MachineOverviewList> _filteredMachines = [];
   String _searchQuery = '';
@@ -29,6 +30,7 @@ class MachineOverviewViewModel extends BaseViewModel {
   }
 
   void clearSearch() {
+    _isSearching = false; //
     _searchQuery = '';
     _applyFilters();
   }
@@ -67,6 +69,7 @@ class MachineOverviewViewModel extends BaseViewModel {
   }
 
   void onSearchChanged(String query) {
+    _isSearching = query.isNotEmpty;
     _searchQuery = query;
     _applyFilters();
   }
