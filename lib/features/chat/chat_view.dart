@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:manager/core/models/viewers_model.dart';
 import 'package:manager/core/storage/storage.dart';
 import 'package:manager/features/chat/group_info/group_info.view.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1570,7 +1571,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                     SizedBox(width: AppSizes.w6),
                                     GestureDetector(
                                         onTap: () {
-                                          _showRecipientList(message);
+                                          _showRecipientList(message,model);
                                         },
                                         child: _buildMessageSeenStatus(message)),
                                   ],
@@ -1673,7 +1674,14 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               ),
 
               Divider(),
-
+              if(model.chatRoomScreenType == ChatRoomScreenType.groupChat)
+              _optionTile(Icons.info_outline, "Info", () {
+                Navigator.pop(context);
+                Future.delayed(const Duration(milliseconds: 120), () {
+                  if (!mounted) return;
+                  _showRecipientList(message,model);
+                });
+              }),
               _optionTile(Icons.reply, "Reply", () {
                 Navigator.pop(context);
                 model.setReplyMessage(message);
@@ -1801,14 +1809,16 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       return 'Just now';
     }
   }
-  void _showRecipientList(ChatMessageModel message) {
+  void _showRecipientList(ChatMessageModel message,ChatViewModel model) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return RecipientListWidget(message: message);
+        return RecipientListWidget(message: message, model: model,);
       },
     );
   }
@@ -3481,57 +3491,89 @@ void showExitGroupDialog(BuildContext context) {
 }
 class RecipientListWidget extends StatefulWidget {
   final ChatMessageModel message;
+  final ChatViewModel model;
 
-  const RecipientListWidget({super.key, required this.message});
+  const RecipientListWidget({super.key, required this.message,required this.model});
 
   @override
   State<RecipientListWidget> createState() => _RecipientListWidgetState();
 }
 
 class _RecipientListWidgetState extends State<RecipientListWidget> {
+  int _selectedTab = 0;
+  bool _isLoading = false;
+  List<ViewUser> _viewers = const [];
+  int _unreadCount = 0;
+  int _readCount = 0;
 
-  int selectedTab = 0;
+  @override
+  void initState() {
+    super.initState();
+    _selectedTab = widget.model.selectedTab;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadRecipients();
+    });
+  }
+
+  String get _viewerType => _selectedTab == 0 ? 'unseen' : 'seen';
+
+  Future<void> _loadRecipients() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
+
+    final viewers = await widget.model.fetchViewersData(
+      type: _viewerType,
+      messageId: widget.message.id,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _viewers = viewers;
+      if (_selectedTab == 0) {
+        _unreadCount = viewers.length;
+      } else {
+        _readCount = viewers.length;
+      }
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    //
-    // final readUsers = widget.message.readBy;
-    // final unreadUsers = widget.message.sentTo
-    //     .where((u) => !readUsers.any((r) => r.id == u.id))
-    //     .toList();
-
-    // final users = selectedTab == 0 ? unreadUsers : readUsers;
-
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        height: MediaQuery.of(context).size.height * 0.5,
+        height: MediaQuery.of(context).size.height * 0.52,
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x14000000),
+              blurRadius: 24,
+              offset: Offset(0, -8),
+            ),
+          ],
         ),
         child: Column(
           children: [
-
-            /// drag handle
+            const SizedBox(height: 12),
             Container(
-              width: 40,
-              height: 4,
+              width: 54,
+              height: 5,
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
-                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFFD8DDE6),
+                borderRadius: BorderRadius.circular(999),
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            /// header
+            const SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close, color: AppColors.textPrimary),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Expanded(
@@ -3546,110 +3588,183 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 40,)
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            /// tabs
+            const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Row(
-                  children: [
-
-                    _tabButton(
-                      // title: "Unread (${unreadUsers.length})",
-                      title: "Unread ()",
-                      index: 0,
-                    ),
-
-                    _tabButton(
-                      title: "Read ()",
-                      // title: "Read (${readUsers.length})",
-                      index: 1,
-                    ),
-
-                  ],
-                ),
-              ),
+              child: _buildSegmentedControl(),
             ),
-
-            const SizedBox(height: 10),
-
-            /// user list
-            Expanded(
-              child: ListView.builder(
-                itemCount: 10,
-                itemBuilder: (context, index) {
-
-                  // final user = users[index];
-
-                  return Container(
-
-                    padding: EdgeInsets.symmetric(horizontal: AppSizes.f8),
-                    decoration: BoxDecoration(
-
-                      border: Border(
-
-                        bottom: BorderSide(
-                          color: Colors.grey.shade300,
-                          width: 1,
-
-                        ),
-                      ),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.grey.shade200,
-                        child: Text(
-                          "?",
-                        ),
-                      ),
-                      title: Text("Leslie Alexander",style: TextStyle(fontSize: 14,color: AppColors.black),),
-
-                    ),
-                  );
-                },
-              ),
-            )
+            const SizedBox(height: 14),
+            Expanded(child: _buildRecipientsBody()),
           ],
         ),
       ),
     );
   }
 
-  Widget _tabButton({required String title, required int index}) {
+  Widget _buildRecipientsBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    final isSelected = selectedTab == index;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedTab = index;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            borderRadius: selectedTab == 0 ?BorderRadius.horizontal(right: Radius.circular(0),left: Radius.circular(25)):BorderRadius.horizontal(right: Radius.circular(25),left: Radius.circular(0)),
+    if (_viewers.isEmpty) {
+      final label = _selectedTab == 0 ? 'unread' : 'read';
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'No $label recipients found.',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
-          child: Center(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black,
-                fontWeight: FontWeight.w600,
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      itemCount: _viewers.length,
+      separatorBuilder: (_, __) => Divider(
+        height: 0,
+        thickness: 1,
+        color: Colors.grey.shade200,
+      ),
+      itemBuilder: (context, index) {
+        final user = _viewers[index];
+        final displayName =
+        user.fullName.trim().isNotEmpty ? user.fullName : 'Unknown User';
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 0),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: 0,
+            ),
+            leading: CircleAvatar(
+              radius: 22,
+              backgroundColor: AppColors.appBarBackground,
+              child: const Icon(
+                Icons.person_outline_rounded,
+                color: AppColors.primaryDark,
+                size: 22,
               ),
             ),
+            title: Text(
+              displayName,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            subtitle: user.seenAt != null
+                ? Text(
+              user.seenAt!.formatReadableDate(),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            )
+                : null,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSegmentedControl() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          height: 50,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F4F8),
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0F0F172A),
+                blurRadius: 16,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                alignment: _selectedTab == 0
+                    ? Alignment.centerLeft
+                    : Alignment.centerRight,
+                child: Container(
+                  width: (constraints.maxWidth - 8) / 2,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryDark,
+                    // borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.horizontal(left: Radius.circular(_selectedTab == 0?999:0),right:Radius.circular(_selectedTab != 0?999:0) ),
+
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x29003382),
+                        blurRadius: 18,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  _tabButton(
+                    title: 'Unread ($_unreadCount)',
+                    index: 0,
+                  ),
+                  _tabButton(
+                    title: 'Read ($_readCount)',
+                    index: 1,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _tabButton({required String title, required int index}) {
+    final isSelected = _selectedTab == index;
+
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: index == _selectedTab
+            ? null
+            : () {
+          setState(() {
+            _selectedTab = index;
+          });
+          _loadRecipients();
+        },
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            style: TextStyle(
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            child: Text(title),
           ),
         ),
       ),

@@ -87,7 +87,37 @@ class ChatService {
       'message': 'Something went wrong',
     };
   }
+  ResultFuture<Map<String, dynamic>> getViewers({
 
+    required String msgId,
+    required String type,
+
+  }) async
+  {
+    try {
+      final response = await _apiService.get(
+        url: "${ApiEndpoints.getViewers}$msgId?type=$type",
+        // queryParameters: {'page': page, 'limit': limit,"screenType":screen=='chat'?'chat':''},
+      );
+
+      if (response.statusCode == 200) {
+        // Pura paginated response object return karein (e.g., { "page": 1, "data": [...] })
+        return Right(response.data);
+      } else {
+        return Left(
+          Failure(response.data['message'] ?? 'Failed to get all chats'),
+        );
+      }
+    } catch (e) {
+      if (e is DioException) {
+        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+        return Left(
+          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
+        );
+      }
+      return Left(Failure('Failed to get all chats: $e'));
+    }
+  }
   ResultFuture<List<ChatMessageModel>> getAllChatMessages({
     required String roomId,
   }) async {

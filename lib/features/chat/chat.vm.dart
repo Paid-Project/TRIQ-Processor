@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:manager/api_endpoints.dart';
 import 'package:manager/configs.dart';
+import 'package:manager/core/models/viewers_model.dart';
 import 'package:manager/core/storage/storage.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
@@ -80,11 +81,13 @@ class ChatViewModel extends ReactiveViewModel {
   final TextEditingController _searchController = TextEditingController();
   int _currentSearchIndex = -1;
   bool get isRemoteUserTyping => _remoteTypingUserId != null;
+  int _selectedTab = 0;
+  int get selectedTab => _selectedTab;
   // Media preview variables (images and videos)
   List<String> _selectedMediaPaths = [];
   List<String> _selectedMediaNames = [];
   List<String> _selectedMediaTypes = []; // 'image' or 'video'
-
+  String get _viewerTypeForSelectedTab => _selectedTab == 0 ? 'unseen' : 'seen';
   // Pagination variables
   bool _isLoading = false;
   bool _isLoadingMore = false;
@@ -98,7 +101,11 @@ class ChatViewModel extends ReactiveViewModel {
   bool _showAttachment = false;
 
   static const double recordingCancelThreshold = 120;
+  List<ViewUser> _allViewers = [];
 
+  List<ViewUser> get allViewers => _allViewers;
+  String _viewerId = '';
+  String get viewerId => _viewerId;
   bool get isLoading => _isLoading;
 
   bool get isLoadingMore => _isLoadingMore;
@@ -109,7 +116,17 @@ class ChatViewModel extends ReactiveViewModel {
   ChatRoomScreenType _chatRoomScreenType = ChatRoomScreenType.mainChat;
   ChatRoomScreenType get chatRoomScreenType => _chatRoomScreenType;
   final TicketsListViewModel ticketDetailsViewModel = locator<TicketsListViewModel>();
-
+  Future<void> selectTabs(index) async {
+    if (_selectedTab == index) return;
+    _selectedTab = index;
+    // notifyListeners();
+    if (_viewerId.trim().isNotEmpty) {
+      await getViewers();
+    }
+  }
+  void selectId(id){
+    _viewerId = id?.toString() ?? '';
+  }
   // Messages list
   final List<ChatMessageModel> _messages = [];
 
@@ -228,7 +245,100 @@ class ChatViewModel extends ReactiveViewModel {
     notifyListeners();
   }
 
+  Future<void> getViewers({String? type}) async {
+    _isLoading = true;
+    _allViewers = [];
+    notifyListeners();
 
+    try {
+      final viewerType =
+      (type?.trim().isNotEmpty ?? false) ? type!.trim() : _viewerTypeForSelectedTab;
+
+      final result = await _chatService.getViewers(type: viewerType, msgId: _viewerId);
+      result.fold(
+            (failure) {
+          AppLogger.error('Failed to get all chats: ${failure.message}');
+          _allViewers = [];
+
+          Fluttertoast.showToast(
+            msg: "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
+          );
+        },
+            (response) {
+          final rawUsers = _extractViewersListFromResponse(response);
+          _allViewers = _mapViewers(rawUsers);
+
+          AppLogger.info(
+            'Successfully loaded ${_allViewers.length} viewers for type $viewerType (Message: $_viewerId)',
+          );
+        },
+      );
+    } catch (e) {
+      AppLogger.error('Error fetching all chats: $e');
+      _allViewers = [];
+      Fluttertoast.showToast(
+        msg: LanguageService.get("error_loading_chats"),
+        // ... (baki toast properties)
+      );
+    } finally {
+      if (_chatService.isRefreshing) {
+        _chatService.resetRefreshFlag();
+      }
+      // + Loading state false karein
+      _isLoading = false;
+    }
+
+    notifyListeners();
+  }
+  List<ViewUser> _mapViewers(List<dynamic> rawUsers) {
+    return rawUsers
+        .whereType<Map>()
+        .map((user) => ViewUser.fromJson(Map<String, dynamic>.from(user)))
+        .toList();
+  }
+  Future<List<ViewUser>> fetchViewersData({
+    required String type,
+    String? messageId,
+  })
+  async {
+    final targetMessageId = (messageId ?? _viewerId).trim();
+    if (targetMessageId.isEmpty) return const [];
+
+    final result = await _chatService.getViewers(
+      type: type.trim(),
+      msgId: targetMessageId,
+    );
+
+    return result.fold(
+          (failure) {
+        AppLogger.error('Failed to get viewers: ${failure.message}');
+        Fluttertoast.showToast(
+          msg: "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
+        );
+        return <ViewUser>[];
+      },
+          (response) {
+        final rawUsers = _extractViewersListFromResponse(response);
+        return _mapViewers(rawUsers);
+      },
+    );
+  }
+  List<dynamic> _extractViewersListFromResponse(Map<String, dynamic> response) {
+    if (response['users'] is List) return response['users'] as List<dynamic>;
+    if (response['viewers'] is List) return response['viewers'] as List<dynamic>;
+
+    final rootData = response['data'];
+    if (rootData is List) return rootData;
+
+    if (rootData is Map) {
+      final dataMap = Map<String, dynamic>.from(rootData);
+      if (dataMap['users'] is List) return dataMap['users'] as List<dynamic>;
+      if (dataMap['viewers'] is List) return dataMap['viewers'] as List<dynamic>;
+      if (dataMap['data'] is List) return dataMap['data'] as List<dynamic>;
+    }
+
+    return const [];
+  }
   Future<void> sendLocationMessage({
     Position? position,
     double? latitude,
