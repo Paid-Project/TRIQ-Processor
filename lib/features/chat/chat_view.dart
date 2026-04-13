@@ -2403,7 +2403,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  if(widget.isVisible == true )
+                  // if(widget.isVisible == true )
                     PendingStatusCard(
                       title: widget.updatedAt ?? "N/A",
                       ticketNumber: widget.contactNumber,
@@ -2772,7 +2772,7 @@ class _PendingStatusCardState extends State<PendingStatusCard>
       decoration: BoxDecoration(
         color:
         _isResolved
-            ? AppColors.success.withValues(alpha: 0.08)
+            ? AppColors.white
             : AppColors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [

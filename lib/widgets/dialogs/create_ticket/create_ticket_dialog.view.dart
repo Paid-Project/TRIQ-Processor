@@ -243,7 +243,7 @@ class CreateTicketDialog extends StatelessWidget {
                           CommonTextField(
                             controller: model.errorCodeController,
                             placeholder: LanguageService.get('error_code'),
-                            keyboardType: TextInputType.text,
+                            keyboardType: TextInputType.number,
                             validator: CommonValidators.required(
                               '${LanguageService.get('error_code')} ${LanguageService.get('required')}',
                             ),
@@ -645,7 +645,7 @@ class CreateTicketDialog extends StatelessWidget {
         for (final machine in selectedSupplier.customer!.machines!) {
           final machineId = machine.machine?.id;
           final machineName =
-              "${machine.machine?.machineName} (${machine.machine?.modelNumber})";
+              "${machine.machine?.machineName} (${machine.machine?.modelNumber?.toUpperCase()})";
 
           if (machineId != null &&
               machineId.isNotEmpty &&

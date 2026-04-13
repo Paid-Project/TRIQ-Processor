@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
@@ -93,7 +95,54 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
       AppLogger.error('Error picking media from camera: $e');
     }
   }
+  Future<File> _compressImage(File file) async {
+    try {
+      // Pehle check karo - agar already small hai toh skip
+      final fileSize = await file.length();
+      if (fileSize < 300 * 1024) return file; // 300KB se kam? skip
 
+      final tempDir = await getTemporaryDirectory();
+      final targetPath =
+          '${tempDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      final result = await FlutterImageCompress.compressAndGetFile(
+        file.path,
+        targetPath,
+        quality: 50,      // quality aur kam karo
+        minWidth: 800,    // ⚠️ ye MIN hai - isliye MAX use karo differently
+        minHeight: 800,
+      );
+
+      if (result == null) return file;
+
+      final compressed = File(result.path);
+      final newSize = await compressed.length();
+
+      AppLogger.info(
+          'Compressed: ${(fileSize / 1024).toStringAsFixed(1)}KB → '
+              '${(newSize / 1024).toStringAsFixed(1)}KB'
+      );
+
+      // Agar phir bhi 500KB se bada hai - ek aur pass
+      if (newSize > 500 * 1024) {
+        final targetPath2 =
+            '${tempDir.path}/compressed2_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final result2 = await FlutterImageCompress.compressAndGetFile(
+          compressed.path,
+          targetPath2,
+          quality: 30,
+          minWidth: 600,
+          minHeight: 600,
+        );
+        return result2 != null ? File(result2.path) : compressed;
+      }
+
+      return compressed;
+    } catch (e) {
+      AppLogger.error('Error compressing image: $e');
+      return file;
+    }
+  }
   void removeAttachment(int index) {
     if (index >= 0 && index < _attachments.value.length) {
       _attachments.value.removeAt(index);
@@ -119,6 +168,10 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
       notifyListeners();
 
       try {
+        // Compress all images before submitting
+        final compressedFiles = await Future.wait(
+          _attachments.value.map((file) => _compressImage(file)),
+        );
         // Close dialog first so submit action continues on next screen cleanly.
         if (context.mounted) {
           Navigator.of(context).pop(DialogResponse(confirmed: true));
@@ -128,7 +181,8 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
           problemController.text.trim(),
           errorCodeController.text.trim(),
           additionalNotesController.text.trim(),
-          _attachments.value,
+          compressedFiles, // compressed list bhejo
+          // _attachments.value,
           selectedMachineId ?? "",
           selectedOrganizationId ?? "",
         );

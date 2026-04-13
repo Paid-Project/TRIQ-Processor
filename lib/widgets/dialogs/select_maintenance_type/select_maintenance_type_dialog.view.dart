@@ -226,25 +226,16 @@ class SelectMaintenanceTypeDialog extends StatelessWidget {
                                                   )
                                                   .map(
                                                     (e) => {
-                                                      "value":
-                                                          e
-                                                              .machine!
-                                                              .id!, // Safe to use '!' after .where()
-                                                      "display":
-                                                          e
-                                                              .machine
-                                                              ?.machineName ??
-                                                          "Unnamed Machine",
-                                                    },
-                                                  )
+                                                  "value": e.machine!.id!,
+                                                  "display": "${e.machine?.machineName ?? 'Unnamed Machine'} (${e.machine?.modelNumber?.toUpperCase() ?? ''})",
+                                                },
+                                              )
                                                   .toList(),
                                           onChanged: (value) {
-                                            print(
-                                              "selected machine ===> $value",
-                                            );
-                                            model.formKey.currentState
-                                                ?.validate();
-                                            model.selectedMachineId = value;
+                                            print("selected machine ===> $value");
+                                            model.formKey.currentState?.validate();
+                                            model.selectedMachineId = value?.toUpperCase();  // uppercase here
+                                            model.notifyListeners();
                                           },
                                           validator:
                                               (value) =>
@@ -339,10 +330,8 @@ class SelectMaintenanceTypeDialog extends StatelessWidget {
 
                                                     await attributes?.onSubmit?.call(
                                                       maintenanceType,
-                                                      model.selectedOrganizationId ??
-                                                          "",
-                                                      model.selectedMachineId ??
-                                                          "",
+                                                      model.selectedOrganizationId ?? "",
+                                                      (model.selectedMachineId ?? "").toUpperCase(),  // double safety
                                                     );
                                                   },
                                                 );

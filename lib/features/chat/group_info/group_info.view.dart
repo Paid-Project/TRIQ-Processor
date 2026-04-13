@@ -484,7 +484,7 @@ PreferredSizeWidget _buildAppBar(BuildContext context, ) {
     titleSpacing: 0,
     actions: [
 
-      SizedBox(width: 25),
+      SizedBox(width: 50),
 
 
     ],
