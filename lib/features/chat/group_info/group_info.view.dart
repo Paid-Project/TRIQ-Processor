@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:manager/features/chat/group_info/add_members/add_members.view.dart';
 import 'package:manager/resources/app_resources/app_resources.dart';
 import 'package:manager/resources/multimedia_resources/resources.dart';
+import 'package:manager/routes/routes.dart';
 import 'package:manager/widgets/common/common_cached_image.dart';
 import 'package:manager/widgets/common_app_bar.dart';
 import 'package:manager/widgets/dialogs/image_preview/image_preview_dialog.dart';
@@ -132,20 +133,31 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                               ),
                             ],
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.softGray,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: AppColors.textGrey.withValues(alpha: 0.1),
+                          GestureDetector(
+                            onTap: () {
+                              if (widget.roomId != null) {
+                                Navigator.pushNamed(
+                                  context,
+                                  Routes.chatMediaScreen,
+                                  arguments: widget.roomId,
+                                );
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.softGray,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.textGrey.withValues(alpha: 0.1),
+                                ),
                               ),
-                            ),
-                            child:  Image.asset(
-                              AppImages.arrowRight,
-                              width: 16,
-                              height: 16,
-                              color: AppColors.darkGray,
+                              child:  Image.asset(
+                                AppImages.arrowRight,
+                                width: 16,
+                                height: 16,
+                                color: AppColors.darkGray,
+                              ),
                             ),
                           ),
 
@@ -299,33 +311,99 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                   child: Column(
                     children: [
                       const Divider(),
-                      const ListTile(
-                        title: Text("Group Members",style: TextStyle(color: AppColors.textPrimary,fontWeight: FontWeight.w600),),
-                        trailing: Icon(Icons.search,color: AppColors.textPrimary,),
+
+                      // ─── HEADER ROW ───
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                "Group Members",
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+
+                            // Search icon / Close icon toggle
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: model.isSearching
+                                  ? IconButton(
+                                key: const ValueKey('close'),
+                                icon: const Icon(Icons.close, color: AppColors.textPrimary),
+                                onPressed: model.toggleSearch,
+                              )
+                                  : IconButton(
+                                key: const ValueKey('search'),
+                                icon: const Icon(Icons.search, color: AppColors.textPrimary),
+                                onPressed: model.toggleSearch,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ─── ANIMATED SEARCH FIELD ───
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        child: model.isSearching
+                            ? Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                          child: TextField(
+                            autofocus: true,
+                            onChanged: model.onSearchChanged,
+                            decoration: InputDecoration(
+                              hintText: "Search members...",
+                              hintStyle: const TextStyle(
+                                color: AppColors.textGrey,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: const Icon(Icons.search, size: 20),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              filled: true,
+                              fillColor: AppColors.softGray,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        )
+                            : const SizedBox.shrink(),
                       ),
 
                       const Divider(),
 
+                      // ─── ADD MEMBERS TILE ───
                       ListTile(
                         leading: const CircleAvatar(child: Icon(Icons.add)),
-                        title: const Text("Add Members",style: TextStyle(color: AppColors.textPrimary,fontWeight: FontWeight.w600),),
-                        trailing: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.add,
-                            color: AppColors.primary,
-                            size: 18,
+                        title: const Text(
+                          "Add Members",
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                        // trailing: Container(
+                        //   width: 32,
+                        //   height: 32,
+                        //   decoration: BoxDecoration(
+                        //     color: AppColors.primary.withValues(alpha: 0.08),
+                        //     borderRadius: BorderRadius.circular(10),
+                        //   ),
+                        //   child: const Icon(Icons.add, color: AppColors.primary, size: 18),
+                        // ),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) =>  AddMembersScreen(roomId: widget.roomId,),
+                              builder: (_) => AddMembersScreen(roomId: widget.roomId),
                             ),
                           );
                         },
@@ -333,6 +411,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
 
                       const Divider(),
 
+                      // ─── MEMBERS LIST ───
                       if (model.isMembersLoading)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 24),
@@ -349,12 +428,14 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                             ),
                           ),
                         )
-                      else if (model.groupMembers.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.all(16),
+                      else if (model.filteredMembers.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(16),
                             child: Text(
-                              "No members found",
-                              style: TextStyle(
+                              model.isSearching
+                                  ? "No members match your search"
+                                  : "No members found",
+                              style: const TextStyle(
                                 color: AppColors.textGrey,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -364,14 +445,12 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                           ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: model.groupMembers.length,
+                            itemCount: model.filteredMembers.length,
                             itemBuilder: (context, index) {
-                              final member = model.groupMembers[index];
+                              final member = model.filteredMembers[index];
                               final subtitleParts = [
-                                if ((member.email).trim().isNotEmpty)
-                                  member.email.trim(),
-                                if ((member.countryCode).trim().isNotEmpty)
-                                  member.countryCode.trim(),
+                                if (member.email.trim().isNotEmpty) member.email.trim(),
+                                if (member.countryCode.trim().isNotEmpty) member.countryCode.trim(),
                               ];
 
                               return Column(
@@ -380,7 +459,9 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                     leading: CircleAvatar(
                                       backgroundColor: AppColors.softGray,
                                       child: Text(
-                                        (member.fullName.trim().isNotEmpty ? member.fullName.trim()[0] : 'U')
+                                        (member.fullName.trim().isNotEmpty
+                                            ? member.fullName.trim()[0]
+                                            : 'U')
                                             .toUpperCase(),
                                         style: const TextStyle(
                                           color: AppColors.textPrimary,
@@ -399,20 +480,15 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                         ? null
                                         : Text(
                                       subtitleParts.join(' | '),
-                                      style: const TextStyle(
-                                        color: AppColors.textGrey,
-                                      ),
+                                      style: const TextStyle(color: AppColors.textGrey),
                                     ),
                                   ),
-                                  if (index != model.groupMembers.length - 1)
+                                  if (index != model.filteredMembers.length - 1)
                                     const Divider(height: 5),
                                 ],
                               );
                             },
                           ),
-
-                      // _memberTile(false),
-                      // _memberTile(true),
                     ],
                   ),
                 ),

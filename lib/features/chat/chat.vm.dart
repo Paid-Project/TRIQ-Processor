@@ -1611,7 +1611,8 @@ class ChatViewModel extends ReactiveViewModel {
       List<String> mediaPaths,
       List<String> mediaTypes,
       String text,
-      ) async {
+      )
+  async {
     final clientMessageId = _createClientMessageId();
 
     try {
@@ -1644,22 +1645,32 @@ class ChatViewModel extends ReactiveViewModel {
           final attachments = <Map<String, dynamic>>[];
           for (var index = 0; index < files.length; index++) {
             final file = files[index];
-            final mediaType = index < mediaTypes.length ? mediaTypes[index] : 'image';
+
+            final mediaType =
+            index < mediaTypes.length ? mediaTypes[index] : 'image';
+
             final uploadedFileUrl = _resolveUploadedFileUrl(file);
-            if (uploadedFileUrl.isEmpty) {
-              continue;
+            if (uploadedFileUrl.isEmpty) continue;
+
+            // 👇 extension se detect karo (important for document)
+            final fileName = _resolveUploadedFileName(file, '');
+            final extension = fileName.split('.').last.toLowerCase();
+
+            String finalType = mediaType;
+
+            // ✅ DOCUMENT DETECTION
+            if ([
+              'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'
+            ].contains(extension)) {
+              finalType = 'document';
             }
 
             attachments.add({
               'url': uploadedFileUrl,
-              'name': _resolveUploadedFileName(
-                file,
-                mediaType == 'video' ? 'video.mp4' : 'image.jpg',
-              ),
-              'type': mediaType,
+              'name': fileName,
+              'type': finalType, // ✅ yaha document bhi aa sakta hai
             });
           }
-
           if (attachments.isEmpty) {
             throw Exception('Uploaded file URLs are missing');
           }

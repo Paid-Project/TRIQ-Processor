@@ -8,6 +8,7 @@ import 'package:manager/features/chat/chat_view.dart';
 import 'package:manager/features/auth/login/login.view.dart';
 import 'package:manager/features/auth/otp_verification/otp_verification.view.dart';
 import 'package:manager/features/auth/register/register.view.dart';
+import 'package:manager/features/chat/group_info/media/chat_media_screen.dart';
 import 'package:manager/features/employee/detail_employee/employee_details.dart';
 import 'package:manager/features/home/analytics/analytics_view.dart';
 import 'package:manager/features/home/feedback/feedback_view.dart';
@@ -610,6 +611,11 @@ class AppRouter extends RouterBase {
         builder: (BuildContext _) => MachineOverviewView(),
       );
     },
+    ChatMediaScreen: (data) {
+      return MaterialPageRoute(
+        builder: (BuildContext _) => ChatMediaScreen(roomId: data.arguments as String,),
+      );
+    },
     MachineOverviewDetailsView: (data) {
       return MaterialPageRoute(
         builder:
@@ -659,6 +665,7 @@ class AppRouter extends RouterBase {
     RouteDef(Routes.register, page: RegisterView),
     RouteDef(Routes.otpVerification, page: OtpVerificationView),
     RouteDef(Routes.organizationHome, page: OrganizationHomeView),
+    RouteDef(Routes.chatMediaScreen, page: ChatMediaScreen),
     RouteDef(Routes.tasks, page: TaskListView),
     RouteDef(Routes.teams, page: TeamListView),
     RouteDef(Routes.createTask, page: AssignTaskScreen),

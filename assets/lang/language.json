@@ -10137,6 +10137,28 @@
     "Malay/Indonesian": "Tidak ada tiket yang diselesaikan",
     "Ukrainian": "Вирішених квитків не знайдено"
   },
+  "no_feedback_yet": {
+    "English": "No feedback yet",
+    "Hindi": "अभी तक कोई प्रतिक्रिया नहीं",
+    "Chinese (Simplified)": "尚无反馈",
+    "Spanish": "Aún no hay comentarios",
+    "Japanese": "まだフィードバックはありません",
+    "German": "Noch kein Feedback vorhanden",
+    "French": "Aucun retour pour le moment",
+    "Arabic": "لا توجد ملاحظات حتى الآن",
+    "Portuguese": "Ainda não há feedback",
+    "Russian": "Пока нет отзывов",
+    "Bengali": "এখনও কোনো প্রতিক্রিয়া নেই",
+    "Turkish": "Henüz geri bildirim yok",
+    "Italian": "Nessun feedback ancora",
+    "Korean": "아직 피드백이 없습니다",
+    "Vietnamese": "Chưa có phản hồi",
+    "Thai": "ยังไม่มีข้อเสนอแนะ",
+    "Dutch": "Nog geen feedback",
+    "Polish": "Brak opinii",
+    "Malay/Indonesian": "Belum ada umpan balik",
+    "Ukrainian": "Поки що немає відгуків"
+  },
   "create_a_ticket_to_get_support": {
     "English": "Create a ticket to get support",
     "Hindi": "सहायता प्राप्त करने के लिए टिकट बनाएं",

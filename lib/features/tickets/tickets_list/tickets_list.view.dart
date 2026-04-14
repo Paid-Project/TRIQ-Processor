@@ -390,7 +390,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
   }
 
   Widget _buildEmptyState(BuildContext context, TicketsListViewModel model, {required bool isActive}) {
-    String mainText = isActive ? LanguageService.get('no_active_tickets_found') : LanguageService.get('no_resolved_tickets_found');
+    String mainText = isActive ? LanguageService.get('no_active_tickets_found') : LanguageService.get('no_feedback_yet');
     String subText = isActive ? LanguageService.get('create_a_ticket_to_get_support') : LanguageService.get('all_your_resolved_tickets_will_appear_here');
 
     return Center(

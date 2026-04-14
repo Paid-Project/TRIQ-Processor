@@ -23,6 +23,14 @@ class GroupInfoViewModel extends ReactiveViewModel {
   String? _attachmentsLoadError;
   String? get attachmentsLoadError => _attachmentsLoadError;
 
+  bool _isSearching = false;
+  bool get isSearching => _isSearching;
+
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+
+
+
   final List<ChatWith> _groupMembers = [];
   List<ChatWith> get groupMembers => _groupMembers;
 
@@ -41,7 +49,26 @@ class GroupInfoViewModel extends ReactiveViewModel {
         getAttachmentsData(roomId: rootID),
     ]);
   }
+  List<ChatWith> get filteredMembers {
+    if (_searchQuery.trim().isEmpty) return groupMembers;
+    final q = _searchQuery.toLowerCase();
+    return groupMembers.where((m) =>
+    m.fullName.toLowerCase().contains(q) ||
+        m.email.toLowerCase().contains(q) ||
+        m.countryCode.toLowerCase().contains(q)
+    ).toList();
+  }
 
+  void toggleSearch() {
+    _isSearching = !_isSearching;
+    if (!_isSearching) _searchQuery = '';
+    notifyListeners();
+  }
+
+  void onSearchChanged(String value) {
+    _searchQuery = value;
+    notifyListeners();
+  }
   Future<void> leaveGroup(String groupId) async {
     try {
       final response = await _chatService.leaveGroup(groupId: groupId);

@@ -34,6 +34,7 @@ abstract class Routes {
 
   /// Route for the Organization Home screen.
   static const String organizationHome = '/organizationHome';
+  static const String chatMediaScreen = '/chatMediaScreen';
 
   /// Route for the Employee Home screen.
   static const String employeeHome = '/employeeHome';

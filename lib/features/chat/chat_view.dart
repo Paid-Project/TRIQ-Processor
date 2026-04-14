@@ -1448,6 +1448,49 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                           ),
                                         );
                                       }
+                                      else if (attachment.type == 'document') {
+                                        return Container(
+                                          margin: EdgeInsets.only(bottom: AppSizes.h8),
+                                          padding: EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: message.isSentByMe
+                                                ? Colors.white.withOpacity(0.1)
+                                                : Colors.grey.shade200,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.insert_drive_file,
+                                                color: message.isSentByMe ? Colors.white : Colors.black,
+                                                size: 24,
+                                              ),
+                                              SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  attachment.name ?? 'Document',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    color: message.isSentByMe
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                              // SizedBox(width: 8),
+                                              // Icon(
+                                              //   Icons.download,
+                                              //   size: 18,
+                                              //   color: message.isSentByMe ? Colors.white : Colors.black,
+                                              // ),
+                                            ],
+                                          ),
+                                        );
+                                      }
                                       return SizedBox.shrink();
                                     }),
                                   ],
