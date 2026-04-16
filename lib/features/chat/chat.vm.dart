@@ -468,8 +468,17 @@ class ChatViewModel extends ReactiveViewModel {
       notifyListeners();
       _resolveReplyReferences();
       notifyListeners();
+      // BAAD MEIN — thoda aur delay do media ke liye:
       if (shouldAutoScroll) {
-        _scrollToBottom(animated: true);
+        // Extra delay when message has attachments (images/videos need time to layout)
+        final hasMedia = message.attachments.isNotEmpty;
+        if (hasMedia) {
+          Future.delayed(const Duration(milliseconds: 150), () {
+            _scrollToBottom(animated: true);
+          });
+        } else {
+          _scrollToBottom(animated: true);
+        }
       }
     } catch (e) {
       AppLogger.error('Error parsing incoming message: $e');
@@ -1024,22 +1033,27 @@ class ChatViewModel extends ReactiveViewModel {
       notifyListeners();
     }
   }
+  // BAAD MEIN — double frame trick lao:
   void _scrollToBottom({bool animated = true}) {
     if (!scrollController.hasClients) return;
+
+    // First frame: layout starts building
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!scrollController.hasClients) return;
-      final target = scrollController.position.maxScrollExtent;
-      if (animated) {
-        scrollController.animateTo(
-          target,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      } else {
-        scrollController.jumpTo(target);
-      }
-      // 👇 ADD THIS
-      _markAllIncomingMessagesAsSeen();
+      // Second frame: image/video widgets have rendered & list has final height
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!scrollController.hasClients) return;
+        final target = scrollController.position.maxScrollExtent;
+        if (animated) {
+          scrollController.animateTo(
+            target,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } else {
+          scrollController.jumpTo(target);
+        }
+        _markAllIncomingMessagesAsSeen();
+      });
     });
   }
   /// Pick multiple media (images and videos) from album
@@ -1994,7 +2008,13 @@ class ChatViewModel extends ReactiveViewModel {
   @override
   void dispose() {
     _socketService.off(chatEvents[chatRoomScreenType.name]['newMessage']);
+    _socketService.off('userTyping');                    // <-- add
+    _socketService.off('messageReactionUpdated');        // <-- add
+    _socketService.off('messageReacted');                // <-- add
+    _socketService.off('seenMessage');                   // <-- add
+    _socketService.off('error');                         // <-- add
     _socketService.dispose();
+
 
     _recordingTimer?.cancel();
     unawaited(_audioRecorder.dispose());

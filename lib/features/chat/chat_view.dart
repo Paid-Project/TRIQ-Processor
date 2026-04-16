@@ -2402,40 +2402,38 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return ViewModelBuilder<ChatViewModel>.reactive(
       viewModelBuilder: () => ChatViewModel(),
+      // chat.view.dart — onViewModelReady mein ye add karo:
       onViewModelReady: (model) {
-        print("1:- ${widget.screen}");
-        model.fetchInitialData(roomId1: widget.roomId,screen: widget.screen);
-
-        // Add some sample messages for demonstration
-        // model.addSampleMessage();
-
-        // Add listener to text controller for dynamic UI updates
+        model.ticketDetailsViewModel.currentOpenTicketStatus.value =
+            widget.ticketStatus ?? '';   // <-- yahan move karo, initCount hata do
+        model.fetchInitialData(roomId1: widget.roomId, screen: widget.screen);
         model.messageController.addListener(() {
-          setState(() {
-            // This will trigger a rebuild to update the send button appearance
-          });
+          setState(() {});
         });
       },
       builder:
           (context, model, child) {
 
-        if(initCount==0) {
-          model.ticketDetailsViewModel.currentOpenTicketStatus.value =
-              widget.ticketStatus ?? '';
-          initCount++;
-        }
+        // if(initCount==0) {
+        //   model.ticketDetailsViewModel.currentOpenTicketStatus.value =
+        //       widget.ticketStatus ?? '';
+        //   initCount++;
+        // }
 
+        // BAAD MEIN — double frame here too:
         if (!_didAutoScrollToLatestOnOpen &&
             !model.isLoading &&
             !model.isTicketDetailsExpanded) {
           _didAutoScrollToLatestOnOpen = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            if (model.scrollController.hasClients) {
-              model.scrollController.jumpTo(
-                model.scrollController.position.maxScrollExtent,
-              );
-            }
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              if (model.scrollController.hasClients) {
+                model.scrollController.jumpTo(
+                  model.scrollController.position.maxScrollExtent,
+                );
+              }
+            });
           });
         }
         return Scaffold(
