@@ -1386,6 +1386,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                             .toList();
 
                                         return Container(
+                                          constraints: BoxConstraints(
+                                            maxHeight: 250, // 🔥 ye jaruri hai
+                                          ),
                                           margin: EdgeInsets.only(
                                             bottom: AppSizes.h8,
                                           ),
@@ -1396,6 +1399,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                               imageUrl: attachment.url,
                                               width: 200,
                                               height: 200,
+
                                               borderRadius:
                                               BorderRadius.circular(
                                                 AppSizes.v8,
@@ -1405,6 +1409,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                                   .indexOf(
                                                 attachment.url,
                                               ),
+
                                               messageContent:
                                               message
                                                   .content
@@ -2425,16 +2430,20 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
             !model.isLoading &&
             !model.isTicketDetailsExpanded) {
           _didAutoScrollToLatestOnOpen = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
+
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
-              if (model.scrollController.hasClients) {
-                model.scrollController.jumpTo(
-                  model.scrollController.position.maxScrollExtent,
-                );
-              }
+              Future.delayed(Duration(milliseconds: 100), () {
+                if (model.scrollController.hasClients) {
+                  model.scrollController.animateTo(
+                    model.scrollController.position.maxScrollExtent,
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                }
+              });
             });
-          });
+
         }
         return Scaffold(
           appBar: _buildAppBar(context, model),
@@ -2512,6 +2521,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                         child: ListView.builder(
                           controller: model.scrollController,
                           reverse: false,
+                          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: EdgeInsets.only(
                             top: AppSizes.h10,
                             bottom: 20,
@@ -2943,7 +2953,7 @@ class AttachmentSheet extends StatelessWidget {
             // childAspectRatio: 0.65,
             // mainAxisSpacing: 12,
             // crossAxisSpacing: 12,
-            physics: const NeverScrollableScrollPhysics(),
+            physics:  const AlwaysScrollableScrollPhysics(),
             children: [
 
               _buildAttachmentMenuItem(
