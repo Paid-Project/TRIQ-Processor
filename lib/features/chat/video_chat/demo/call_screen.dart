@@ -175,41 +175,83 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   }
 
   Widget _buildCallLayout(CallViewModel viewModel) {
-    final mainParticipantState = viewModel.mainParticipant;
-    final otherParticipants = viewModel.otherParticipants;
+    final participants = viewModel.participants;
 
-    if (viewModel.participants.isEmpty) {
-      return Center(
-        child: Text(
-          viewModel.isConnecting
-              ? 'Connecting...'
-              : 'Waiting for participants...',
-        ),
+    if (participants.isEmpty) {
+      return const Center(child: Text("Waiting for participants..."));
+    }
+
+    final count = participants.length;
+
+    // 👇 1 USER
+    if (count == 1) {
+      return ParticipantTile(participantState: participants[0]);
+    }
+
+    // 👇 2 USERS (TOP-BOTTOM)
+    if (count == 2) {
+      return Column(
+        children: List.generate(count, (index) {
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: ParticipantTile(participantState: participants[index]),
+            ),
+          );
+        }),
       );
     }
 
-    return Column(
-      children: [
-        Expanded(
-          flex: 3,
-          child: mainParticipantState != null
-              ? ParticipantTile(participantState: mainParticipantState)
-              : Container(
-            decoration: BoxDecoration(
-              color: AppColors.primarySuperLight,
-              borderRadius: BorderRadius.circular(12),
+    // 👇 3 USERS (1 BIG + 2 SMALL)
+    if (count == 3) {
+      return Column(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: ParticipantTile(participantState: participants[0]),
             ),
-            child: const Center(child: Text('Main view')),
           ),
-        ),
-        const SizedBox(height: 12),
-        Expanded(
-          flex: 2,
-          child: ParticipantGrid(participants: otherParticipants),
-        ),
-      ],
+          Expanded(
+            flex: 1,
+            child: Row(
+              children: List.generate(2, (index) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: ParticipantTile(
+                      participantState: participants[index + 1],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 👇 4+ USERS (AUTO GRID 🔥)
+    int crossAxisCount = 2;
+
+    if (count > 4) crossAxisCount = 3;
+    if (count > 9) crossAxisCount = 4;
+
+    return GridView.builder(
+      itemCount: count,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 6,
+        mainAxisSpacing: 6,
+        childAspectRatio: 0.8,
+      ),
+      itemBuilder: (context, index) {
+        return ParticipantTile(participantState: participants[index]);
+      },
     );
   }
+
 
   // ============ VOICE CONTROL BAR (No Video Button) ============
   Widget _buildVoiceControlBar(CallViewModel viewModel) {
