@@ -242,6 +242,23 @@ class Employee {
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
+    String? normalizeString(dynamic value) {
+      if (value == null) return null;
+      if (value is String) {
+        final trimmed = value.trim();
+        return trimmed.isEmpty ? null : trimmed;
+      }
+      if (value is List) {
+        for (final item in value) {
+          final normalized = normalizeString(item);
+          if (normalized != null) return normalized;
+        }
+        return null;
+      }
+      final normalized = value.toString().trim();
+      return normalized.isEmpty ? null : normalized;
+    }
+
     return Employee(
       // IDs & Basic
       id: json['_id'],
@@ -268,12 +285,12 @@ class Employee {
           : null,
 
       // Location & Reporting
-      country: json['country'],
-      area: json['area'],                    // ADD
-      reportTo: json['reportTo'],            // ADD
-      reportingManager: json['reportingManager'],
-      workRegion: json['workRegion'],
-      workLocation: json['workLocation'],
+      country: normalizeString(json['country']),
+      area: normalizeString(json['area']),                    // ADD
+      reportTo: normalizeString(json['reportTo']),            // ADD
+      reportingManager: normalizeString(json['reportingManager']),
+      workRegion: normalizeString(json['workRegion']),
+      workLocation: normalizeString(json['workLocation']),
 
       // Personal
       dateOfBirth: json['dateOfBirth'],

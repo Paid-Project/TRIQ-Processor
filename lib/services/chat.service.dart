@@ -340,34 +340,32 @@ class ChatService {
     }
     return Left(Failure('Failed to verify email'));
   }
-  ResultFuture<bool> addMember({
-    required  groupId,
-    required  List<String> memberIds,
-
-  }) async
-  {
+  ResultFuture<String> addMember({
+    required String groupId,
+    required List<String> memberIds,
+  }) async {
     try {
       final response = await _apiService.put(
-          url: "${ApiEndpoints.addMembers}${groupId}",
-          data: {
-            "members":memberIds,
-          }
+        url: "${ApiEndpoints.addMembers}$groupId",
+        data: {
+          "members": memberIds,
+        },
       );
 
       if (response.data['success'] == true) {
-        return Right(true);
+        return Right(response.data['message'] ?? "Members added successfully");
+      } else {
+        return Left(Failure(response.data['message'] ?? "Something went wrong"));
       }
     } catch (e) {
       if (e is DioException) {
-        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
         return Left(
           Failure(e.response?.data?['message'] ?? 'Something went wrong'),
         );
       }
+      return Left(Failure('Something went wrong'));
     }
-    return Left(Failure('Failed to verify email'));
   }
-
 
   ResultFuture<AttachmentsModel> getAttachments(
       {

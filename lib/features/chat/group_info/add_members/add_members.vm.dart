@@ -28,6 +28,25 @@ class AddMembersViewModel extends BaseViewModel {
   bool _isSubmitting = false;
   bool get isSubmitting => _isSubmitting;
 
+  String getEmployeeLabel(Employee employee) {
+    final candidates = [
+      employee.fullName,
+      employee.name,
+      employee.email,
+      employee.phone,
+      employee.employeeId,
+    ];
+
+    for (final candidate in candidates) {
+      final value = candidate?.trim() ?? '';
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return 'Unknown member';
+  }
+
   Future<void> init() async {
     await fetchEmployees();
   }
@@ -38,15 +57,15 @@ class AddMembersViewModel extends BaseViewModel {
 
     try {
       final Either<Failure, List<Employee>> response =
-      await _employeeService.getAllEmployees();
+          await _employeeService.getAllEmployees();
 
       response.fold(
-            (failure) {
+        (failure) {
           _allEmployees.clear();
           _filteredEmployees = [];
           _loadError = failure.message;
         },
-            (employees) {
+        (employees) {
           _allEmployees
             ..clear()
             ..addAll(employees);
@@ -65,14 +84,9 @@ class AddMembersViewModel extends BaseViewModel {
   }
 
   String? getMemberId(Employee employee) {
-    final candidates = [employee.user, employee.linkedUser, employee.id];
-
-    for (final candidate in candidates) {
-      final normalized = candidate?.trim() ?? '';
-      if (normalized.isNotEmpty) {
-        return normalized;
-      }
-    }
+    if ((employee.id ?? '').isNotEmpty) return employee.id;
+    if ((employee.user ?? '').isNotEmpty) return employee.user;
+    if ((employee.linkedUser ?? '').isNotEmpty) return employee.linkedUser;
 
     return null;
   }
@@ -119,7 +133,7 @@ class AddMembersViewModel extends BaseViewModel {
             (_) async {
           _selectedMemberIds.clear();
           _navigationService.back();
-          Fluttertoast.showToast(msg: 'Members added successfully');
+          // Fluttertoast.showToast(msg: 'Members added successfully');
         },
       );
     } catch (e) {
@@ -137,21 +151,25 @@ class AddMembersViewModel extends BaseViewModel {
     if (normalized.isEmpty) {
       _filteredEmployees = List<Employee>.from(_allEmployees);
     } else {
-      _filteredEmployees =
-          _allEmployees.where((employee) {
-            final name = (employee.name ?? '').toLowerCase();
-            final email = (employee.email ?? '').toLowerCase();
-            final phone = (employee.phone ?? '').toLowerCase();
-            final designation =
-            (employee.designation?.name ?? '').toLowerCase();
-            final department = (employee.department?.name ?? '').toLowerCase();
+      _filteredEmployees = _allEmployees.where((employee) {
+        final name = getEmployeeLabel(employee).toLowerCase();
+        final fullName = (employee.fullName ?? '').toLowerCase();
+        final email = (employee.email ?? '').toLowerCase();
+        final phone = (employee.phone ?? '').toLowerCase();
+        final employeeId = (employee.employeeId ?? '').toLowerCase();
+        final memberId = (getMemberId(employee) ?? '').toLowerCase();
+        final designation = (employee.designation?.name ?? '').toLowerCase();
+        final department = (employee.department?.name ?? '').toLowerCase();
 
-            return name.contains(normalized) ||
-                email.contains(normalized) ||
-                phone.contains(normalized) ||
-                designation.contains(normalized) ||
-                department.contains(normalized);
-          }).toList();
+        return name.contains(normalized) ||
+            fullName.contains(normalized) ||
+            email.contains(normalized) ||
+            phone.contains(normalized) ||
+            employeeId.contains(normalized) ||
+            memberId.contains(normalized) ||
+            designation.contains(normalized) ||
+            department.contains(normalized);
+      }).toList();
     }
 
     notifyListeners();
