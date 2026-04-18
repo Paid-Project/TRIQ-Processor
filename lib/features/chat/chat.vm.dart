@@ -610,6 +610,28 @@ class ChatViewModel extends ReactiveViewModel {
       notifyListeners();
     }
   }
+  Future<void> leaveGroup(String groupId) async {
+    try {
+      final response = await _chatService.leaveGroup(groupId: groupId);
+
+      response.fold(
+            (failure) {
+          Fluttertoast.showToast(msg: failure.message);
+          _navigationService.back();
+          _navigationService.back();
+        },
+            (_) async {
+          Fluttertoast.showToast(msg: 'Successfully left group');
+          _navigationService.back();
+          _navigationService.back();
+        },
+      );
+    } catch (e) {
+      AppLogger.error('Error leaving group: $e');
+      _navigationService.back();
+      _navigationService.back();
+    }
+  }
   Future<void> fetchInitialData({
     required String? roomId1,
     ChatRoomScreenType? screen,

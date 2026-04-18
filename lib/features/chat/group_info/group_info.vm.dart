@@ -7,6 +7,8 @@ import 'package:manager/services/chat.service.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
+import '../../../routes/routes.dart';
+
 class GroupInfoViewModel extends ReactiveViewModel {
   final _navigationService = locator<NavigationService>();
   final _chatService = locator<ChatService>();
@@ -76,9 +78,11 @@ class GroupInfoViewModel extends ReactiveViewModel {
       response.fold(
             (failure) {
           Fluttertoast.showToast(msg: failure.message);
+          _navigationService.clearStackAndShow(Routes.chatsList);
         },
             (_) async {
           Fluttertoast.showToast(msg: 'Successfully left group');
+          _navigationService.clearStackAndShow(Routes.chatsList);
         },
       );
     } catch (e) {

@@ -316,19 +316,18 @@ class ChatService {
     }
   }
 
-
   ResultFuture<bool> leaveGroup({
     required String groupId,
-
-  }) async
-  {
+  }) async {
     try {
       final response = await _apiService.put(
-        url: "${ApiEndpoints.leaveGroup}${groupId}",
+        url: "${ApiEndpoints.leaveGroup}$groupId",
       );
 
       if (response.data['success'] == true) {
         return Right(true);
+      } else {
+        return Left(Failure(response.data['message'] ?? 'Failed to leave group'));
       }
     } catch (e) {
       if (e is DioException) {
@@ -338,7 +337,8 @@ class ChatService {
         );
       }
     }
-    return Left(Failure('Failed to verify email'));
+
+    return Left(Failure('Failed to leave group'));
   }
   ResultFuture<String> addMember({
     required String groupId,

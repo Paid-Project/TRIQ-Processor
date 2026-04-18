@@ -106,7 +106,7 @@ class TicketList {
     problem: json["problem"],
     errorCode: json["errorCode"],
     rescheduleTime: json["reschedule_time"],
-    rescheduleUpdateTime: json["reschedule_update_time"] == null ? null : DateTime.parse(json["reschedule_update_time"]),
+    rescheduleUpdateTime: safeParseDate(json["reschedule_update_time"]),
       resolvedAt: json["resolvedAt"] == null ? null : DateTime.parse(json["resolvedAt"]),
     notes: json["notes"],
     media:
@@ -164,7 +164,7 @@ class TicketList {
     "paymentStatus": paymentStatus,
     "createdAt": createdAt?.toIso8601String(),
     "updatedAt": updatedAt?.toIso8601String(),
-    "reschedule_update_time": rescheduleUpdateTime,
+    "reschedule_update_time": resolutionDurationMinutes?.toIso8601String(),
     "resolvedAt": resolvedAt?.toIso8601String(),
     "resolutionDurationMinutes": resolutionDurationMinutes?.toIso8601String(),
     "__v": v,
@@ -429,4 +429,15 @@ class ChatUser {
     "fullName": fullName,
     "email": email,
   };
+}
+DateTime? safeParseDate(dynamic value) {
+  try {
+    if (value == null) return null;
+    if (value is String && value.isNotEmpty) {
+      return DateTime.parse(value);
+    }
+  } catch (e) {
+    print("❌ Invalid date format: $value");
+  }
+  return null;
 }

@@ -154,7 +154,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
               errorCode: "#$errorCode",
               additionalNotes: additionalNotes,
               attachments: attachments,
-              machineId: machineId,
+              machineId: machineId.toLowerCase(),
               organizationId: organizationId,
               isFromSiteVisit: false,
 
@@ -190,7 +190,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
               maintenanceType: maintenanceType,
               isFromSiteVisit: true,
               organizationId: organizationId,
-              machineId: machineId,
+              machineId: machineId.toLowerCase(),
 
             );
           },
@@ -883,6 +883,7 @@ class _TicketsListViewState extends State<TicketsListView> with TickerProviderSt
   }
 
   Widget _buildCountdownTimer(TicketList ticket, TicketsListViewModel model) {
+    print("residyul:- ${ticket.rescheduleUpdateTime}");
     if (ticket.rescheduleUpdateTime == null) {
       return Text('-', style: TextStyle(color: _getStatusColorFromString(ticket.status), fontSize: AppSizes.v12));
     }

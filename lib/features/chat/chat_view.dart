@@ -725,7 +725,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               _handleResolveAction(model);
             }
             if (value == 'Exit Group') {
-              showExitGroupDialog(context);
+              showExitGroupDialog(context,widget.roomId, model);
             }
 
             if (value == 'Group info') {
@@ -3418,7 +3418,7 @@ class _LocationActionTile extends StatelessWidget {
     );
   }
 }
-void showExitGroupDialog(BuildContext context) {
+void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -3485,6 +3485,7 @@ void showExitGroupDialog(BuildContext context) {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
+
                         Navigator.pop(context);
                       },
                       style: OutlinedButton.styleFrom(
@@ -3510,6 +3511,7 @@ void showExitGroupDialog(BuildContext context) {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        model.leaveGroup(roomId!);
                         Navigator.pop(context);
                         // exit group logic
                       },
