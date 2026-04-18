@@ -11,6 +11,7 @@ import 'package:manager/resources/multimedia_resources/resources.dart';
 import 'package:stacked/stacked.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../services/language.service.dart';
+import '../../profile/general/applang.view.dart';
 import 'login.vm.dart';
 
 class LoginView extends StatelessWidget {
@@ -37,12 +38,7 @@ class LoginView extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        if (model.showOtpLogin ||
-                            model.showForgotPassword ||
-                            model.showOtpField)
-                          _buildBackButton(context, model)
-                        else
-                          SizedBox(height: AppSizes.h45),
+                        _buildTopActionRow(context, model),
                         _buildHeaderSection(context, model),
                         SizedBox(height: AppSizes.h5),
                         _buildMainContent(context, model),
@@ -1405,4 +1401,86 @@ class LoginView extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildTopActionRow(BuildContext context, LoginViewModel model) {
+  final bool showBackButton =
+      model.showOtpLogin || model.showForgotPassword || model.showOtpField;
+
+  return Padding(
+    padding: EdgeInsets.only(top: 12),
+    child: Row(
+      children: [
+        if (showBackButton)
+          _buildBackButton(context, model)
+        else
+          SizedBox(width: 44, height: 44),
+        Spacer(),
+        _buildLanguageButton(context),
+      ],
+    ),
+  );
+}
+Widget _buildBackButton(BuildContext context, LoginViewModel model) {
+  return InkWell(
+    onTap: () {
+      if (model.showForgotPassword) {
+        model.toggleForgotPassword();
+      } else if (model.showOtpLogin) {
+        model.toggleOtpLogin();
+      } else if (model.showOtpField) {
+        model.setLoginMode(LoginMode.email);
+      }
+    },
+    child: Container(
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: Image.asset(
+        AppImages.back,
+        height: 20,
+        width: 20,
+        color: AppColors.textPrimary,
+      ),
+    ),
+  );
+}
+Widget _buildLanguageButton(BuildContext context) {
+  return InkWell(
+    onTap: () async {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const AppLanguageView()),
+      );
+      if (context.mounted) {
+        (context as Element).markNeedsBuild();
+      }
+    },
+    borderRadius: BorderRadius.circular(AppSizes.v45),
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppSizes.v45),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.language, size: 18, color: AppColors.primary),
+          SizedBox(width: 6),
+          Text(
+            LanguageService.get('app_language'),
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
