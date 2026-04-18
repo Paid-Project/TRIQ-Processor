@@ -299,7 +299,7 @@ class LoginView extends StatelessWidget {
                           ),
                         ),
                       ),
-                      initialCountryCode: 'IN',
+                      initialCountryCode: model.defaultCountryIso,
                       onChanged: (phone) {
                         model.updatePhoneNumber(phone);
                       },
@@ -677,7 +677,7 @@ class LoginView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    initialCountryCode: 'IN',
+                    initialCountryCode: model.defaultCountryIso,
                     onChanged: (phone) {
                       model.updateForgotPhoneNumber(phone);
                     },
@@ -952,7 +952,7 @@ class LoginView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    initialCountryCode: 'IN',
+                    initialCountryCode: model.defaultCountryIso,
                     onCountryChanged: (country) {
                       model.countryCode = country.dialCode.toString();
                     },

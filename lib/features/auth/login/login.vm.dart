@@ -156,6 +156,7 @@ class LoginViewModel extends ReactiveViewModel {
   Timer? _timer;
 
   void init() async {
+    _applyLanguageBasedPhoneDefaults();
     emailController.addListener(_updateFormValidity);
     passwordController.addListener(_updateFormValidity);
     otpController.addListener(_updateFormValidity);
@@ -239,7 +240,122 @@ class LoginViewModel extends ReactiveViewModel {
     //   }
     // }
   }
+  String _defaultCountryIso = 'IN';
 
+  String get defaultCountryIso => _defaultCountryIso;
+
+  void _applyLanguageBasedPhoneDefaults() {
+    final String selectedLanguage = getSelectedLanguage();
+
+    switch (selectedLanguage) {
+      case 'English (UK)':
+        _defaultCountryIso = 'GB';
+        _countryCode = '44';
+        _forgotCountryCode = '44';
+        break;
+      case 'Hindi':
+        _defaultCountryIso = 'IN';
+        _countryCode = '91';
+        _forgotCountryCode = '91';
+        break;
+      case 'Chinese (Simplified)':
+        _defaultCountryIso = 'CN';
+        _countryCode = '86';
+        _forgotCountryCode = '86';
+        break;
+      case 'Japanese':
+        _defaultCountryIso = 'JP';
+        _countryCode = '81';
+        _forgotCountryCode = '81';
+        break;
+      case 'German':
+        _defaultCountryIso = 'DE';
+        _countryCode = '49';
+        _forgotCountryCode = '49';
+        break;
+      case 'French':
+        _defaultCountryIso = 'FR';
+        _countryCode = '33';
+        _forgotCountryCode = '33';
+        break;
+      case 'Spanish':
+        _defaultCountryIso = 'ES';
+        _countryCode = '34';
+        _forgotCountryCode = '34';
+        break;
+      case 'Portuguese':
+        _defaultCountryIso = 'BR';
+        _countryCode = '55';
+        _forgotCountryCode = '55';
+        break;
+      case 'Russian':
+        _defaultCountryIso = 'RU';
+        _countryCode = '7';
+        _forgotCountryCode = '7';
+        break;
+      case 'Arabic':
+        _defaultCountryIso = 'SA';
+        _countryCode = '966';
+        _forgotCountryCode = '966';
+        break;
+      case 'Bengali':
+        _defaultCountryIso = 'BD';
+        _countryCode = '880';
+        _forgotCountryCode = '880';
+        break;
+      case 'Turkish':
+        _defaultCountryIso = 'TR';
+        _countryCode = '90';
+        _forgotCountryCode = '90';
+        break;
+      case 'Italian':
+        _defaultCountryIso = 'IT';
+        _countryCode = '39';
+        _forgotCountryCode = '39';
+        break;
+      case 'Korean':
+        _defaultCountryIso = 'KR';
+        _countryCode = '82';
+        _forgotCountryCode = '82';
+        break;
+      case 'Vietnamese':
+        _defaultCountryIso = 'VN';
+        _countryCode = '84';
+        _forgotCountryCode = '84';
+        break;
+      case 'Thai':
+        _defaultCountryIso = 'TH';
+        _countryCode = '66';
+        _forgotCountryCode = '66';
+        break;
+      case 'Dutch':
+        _defaultCountryIso = 'NL';
+        _countryCode = '31';
+        _forgotCountryCode = '31';
+        break;
+      case 'Polish':
+        _defaultCountryIso = 'PL';
+        _countryCode = '48';
+        _forgotCountryCode = '48';
+        break;
+      case 'Malay/Indonesian':
+        _defaultCountryIso = 'ID';
+        _countryCode = '62';
+        _forgotCountryCode = '62';
+        break;
+      case 'Ukrainian':
+        _defaultCountryIso = 'UA';
+        _countryCode = '380';
+        _forgotCountryCode = '380';
+        break;
+      case 'English':
+      default:
+        _defaultCountryIso = 'US';
+        _countryCode = '1';
+        _forgotCountryCode = '1';
+        break;
+    }
+  }
   void onForgotOtpDigitChanged(int index, String value) {
     if (value.isNotEmpty && index < 5) {
       forgotOtpFocusNodes[index + 1].requestFocus();
