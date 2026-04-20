@@ -101,6 +101,7 @@ class OrganizationHomeViewModel extends ReactiveViewModel {
     notifyListeners();
   }
 
+
   Future<void> loadProfileData() async {
     try {
       // Get profile data from ProfileService (no API call)
@@ -133,6 +134,19 @@ print("profile:-$profile");
     } catch (e) {
       // Silent error handling for background refresh
       print('Error accessing profile: $e');
+    }
+  }
+  Future<void> markFeatureSeen(String feature) async {
+    try {
+      print("📡 Calling markSeen for: $feature");
+
+      await _dashboardService.sendMarkSeen(feature);
+
+      // 🔥 OPTIONAL: dashboard refresh karna
+      await fetchDashboardData();
+
+    } catch (e) {
+      print("❌ markSeen error: $e");
     }
   }
 

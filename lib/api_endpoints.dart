@@ -102,6 +102,8 @@ abstract class ApiEndpoints {
   static const String createServicePricing = 'servicePricing/create';
   static const String getAllServicePricing = 'servicePricing/getAll';
   static const String getViewers = 'groupChatMessage/viewers/';
+  static const String getIndicator = 'dashboard/indicator';
+  static const String mark_seen = 'dashboard/mark-seen';
   // Report endpoints
   static const String reportProblem = 'report/report-problem';
   static const String sendFeedback = 'report/send-feedback';

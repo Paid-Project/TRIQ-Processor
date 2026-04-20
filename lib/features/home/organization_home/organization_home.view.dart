@@ -477,22 +477,25 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
   Widget _buildDashboardCard(BuildContext context, DashboardCardData card, int index, OrganizationHomeViewModel model) {
     final bool showRedDot =
         (card.route == Routes.tasks &&
-            (model.dashboard?.task.isNewLatestRecord ?? false)) ||
+            (model.dashboard?.task.hasNew ?? false)) ||
             (card.route == Routes.ticketsList &&
-                (model.dashboard?.ticket.isNewLatestRecord ?? false)) ||
+                (model.dashboard?.ticket.hasNew ?? false)) ||
             (card.route == Routes.myCustomers &&
-                (model.dashboard?.customer.isNewLatestRecord ?? false));
+                (model.dashboard?.customer.hasNew ?? false));
     return GestureDetector(
-      onTap: () {
+      onTap: ()async  {
         // Navigate based on the card route
         switch (card.route) {
           case Routes.ticketsList:
+            await model.markFeatureSeen("ticket"); // 🔥 API CALL
             model.navigateToTickets();
             break;
           case Routes.teams:
+            await model.markFeatureSeen("task"); // 🔥 API CALL
             Navigator.of(context).pushNamed(Routes.teams);
             break;
           case Routes.tasks:
+            await model.markFeatureSeen("customer"); // 🔥 API CALL
             Navigator.of(context).pushNamed(Routes.tasks);
             break;
           case Routes.invoice:
