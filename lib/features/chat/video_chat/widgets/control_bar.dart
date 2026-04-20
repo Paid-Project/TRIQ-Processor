@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:manager/resources/app_resources/app_resources.dart';
+import 'package:manager/resources/multimedia_resources/resources.dart';
 
 class ControlBar extends StatelessWidget {
   final bool isMicOn;
@@ -25,13 +27,15 @@ class ControlBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildControlButton(
-            icon: isMicOn ? Icons.mic_none : Icons.mic_off,
+            svgIcon: isMicOn ?AppImages.vc_microphone :null,
+            icon: isMicOn ?null: Icons.mic_off,
             onPressed: onMicPressed,
             backgroundColor:  AppColors.primarySuperLight.withOpacity(0.1),
             iconColor: Colors.black,
           ),
           _buildControlButton(
-            icon: isVideoOn ? Icons.videocam_outlined : Icons.videocam_off_outlined,
+            svgIcon: isVideoOn ? AppImages.vc_video:null,
+            icon: isVideoOn ?null: Icons.videocam_off_outlined,
             onPressed: onVideoPressed,
             backgroundColor:  AppColors.primarySuperLight.withOpacity(0.1),
             iconColor: Colors.black,
@@ -66,19 +70,32 @@ class ControlBar extends StatelessWidget {
   }
 
   Widget _buildControlButton({
-    required IconData icon,
+    String? svgIcon,
+    IconData? icon,
     required VoidCallback onPressed,
     required Color backgroundColor,
     required Color iconColor,
   }) {
-    return CircleAvatar(
-      radius: 28,
-      backgroundColor: backgroundColor,
-      child: IconButton(
-        icon: Icon(icon),
-        onPressed: onPressed,
-        color: iconColor,
-        iconSize: 28,
+    return GestureDetector(
+      onTap: onPressed,
+      child: CircleAvatar(
+        radius: 28,
+        backgroundColor: backgroundColor,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: svgIcon != null
+              ? SvgPicture.asset(
+            svgIcon,
+            color: iconColor,
+            height: 28,
+            width: 28,
+          )
+              : Icon(
+            icon,
+            color: iconColor,
+            size: 28,
+          ),
+        ),
       ),
     );
   }

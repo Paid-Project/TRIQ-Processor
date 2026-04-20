@@ -149,6 +149,11 @@ abstract class AppImages {
   static const String team_sale = "assets/svg/sale.svg";
   static const String team_default = "assets/icons/default_team.png";
   static const String team_account = "assets/svg/admin_account.svg";
+  static const String vc_import = "assets/svg/vc_import.svg";
+  static const String vc_microphone = "assets/svg/vc_microphone-2.svg";
+  static const String vc_profile_2user = "assets/svg/vc_profile-2user.svg";
+  static const String vc_video = "assets/svg/vc_video.svg";
+  static const String vc_messages = "assets/svg/vc_messages.svg";
 
   // Flag URL construction
   static String getFlagUrl(String flagPath) {

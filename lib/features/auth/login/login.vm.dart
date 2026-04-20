@@ -71,7 +71,7 @@ class LoginViewModel extends ReactiveViewModel {
   );
 
   // Login mode state
-  LoginMode _loginMode = LoginMode.email;
+  LoginMode _loginMode = LoginMode.phone;
 
   LoginMode get loginMode => _loginMode;
 

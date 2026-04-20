@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:get/get.dart';
+
 import 'package:manager/resources/app_resources/app_resources.dart';
 import 'package:manager/resources/multimedia_resources/resources.dart';
 import 'package:manager/services/language.service.dart';
@@ -348,7 +348,7 @@ class _MachineSupplierViewState extends State<MachineSupplierView> with TickerPr
     final customer = datum.customer;
     final organization = model.getOrganizationForMachine(datum);
     final firstMachine = customer?.machines?.isNotEmpty == true ? customer!.machines!.first : null;
-
+print("flag:- ${customer?.flag?.prefixWithBaseUrl}");
     return InkWell(
       onTap: () => model.onMachineTap(context, datum),
       child: Container(

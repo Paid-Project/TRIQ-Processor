@@ -1,6 +1,7 @@
 // lib/features/chat/video_chat/video_call_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:manager/features/chat/video_chat/demo/call_view_model.dart';
 import 'package:manager/features/chat/video_chat/widgets/control_bar.dart';
@@ -8,6 +9,7 @@ import 'package:manager/features/chat/video_chat/widgets/participant_grid.dart';
 import 'package:manager/features/chat/video_chat/widgets/participant_tile.dart';
 import 'package:manager/resources/app_resources/app_resources.dart';
 import 'package:manager/features/chat/video_chat/widgets/floating_call_service.dart';
+import 'package:manager/resources/multimedia_resources/resources.dart';
 import 'package:provider/provider.dart';
 
 class VideoCallScreen extends StatefulWidget {
@@ -141,9 +143,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               color: AppColors.primarySuperLight.withOpacity(0.1),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.group_outlined),
-              onPressed: () {},
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SvgPicture.asset(AppImages.vc_profile_2user,),
             ),
           ),
           Column(
@@ -164,10 +166,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               color: AppColors.primarySuperLight.withOpacity(0.1),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.picture_in_picture_alt),
-              onPressed: _minimizeToFloating,
-            ),
+            child:
+            GestureDetector(
+                onTap: _minimizeToFloating,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SvgPicture.asset(AppImages.vc_import,),
+                )),
           ),
         ],
       ),
