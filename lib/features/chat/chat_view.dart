@@ -3546,7 +3546,7 @@ class RecipientListWidget extends StatefulWidget {
   final ChatMessageModel message;
   final ChatViewModel model;
 
-  const RecipientListWidget({super.key, required this.message,required this.model});
+  const RecipientListWidget({super.key, required this.message, required this.model});
 
   @override
   State<RecipientListWidget> createState() => _RecipientListWidgetState();
@@ -3554,44 +3554,71 @@ class RecipientListWidget extends StatefulWidget {
 
 class _RecipientListWidgetState extends State<RecipientListWidget> {
   int _selectedTab = 0;
-  bool _isLoading = false;
-  List<ViewUser> _viewers = const [];
-  int _unreadCount = 0;
-  int _readCount = 0;
+  bool _isLoading = true;
+
+  // Dono lists ek saath store hongi
+  List<SeenBy> _seenList = [];
+  List<SeenBy> _unseenList = [];
+  int _apiReadCount = 0;
+  int _apiUnreadCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _selectedTab = widget.model.selectedTab;
+    // Sirf ek baar call — open hote hi sab data aa jaye
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadRecipients();
+      _loadAllRecipients();
     });
   }
 
-  String get _viewerType => _selectedTab == 0 ? 'unseen' : 'seen';
-
-  Future<void> _loadRecipients() async {
+  /// Ek hi API call — `seenBy` / `unseenBy` (nested `data`) supported.
+  Future<void> _loadAllRecipients() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    final viewers = await widget.model.fetchViewersData(
-      type: _viewerType,
-      messageId: widget.message.id,
-    );
+    try {
+      final result = await locator<ChatService>().getViewers(
+        msgId: widget.message.id,
+      );
 
-    if (!mounted) return;
-    setState(() {
-      _viewers = viewers;
-      if (_selectedTab == 0) {
-        _unreadCount = viewers.length;
-      } else {
-        _readCount = viewers.length;
-      }
-      _isLoading = false;
-    });
+      if (!mounted) return;
+
+      result.fold(
+        (_) {
+          setState(() {
+            _seenList = [];
+            _unseenList = [];
+            _apiReadCount = 0;
+            _apiUnreadCount = 0;
+            _isLoading = false;
+          });
+        },
+        (response) {
+          final split = ViewersListsSplit.fromApi(response);
+          setState(() {
+            _seenList = split.seen;
+            _unseenList = split.unseen;
+            _apiReadCount = split.readCount;
+            _apiUnreadCount = split.unreadCount;
+            _isLoading = false;
+          });
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
   }
+
+  // Active tab ke hisaab se list
+  List<SeenBy> get _currentList =>
+      _selectedTab == 0 ? _unseenList : _seenList;
+
+  int get _unreadTabDisplayCount =>
+      _unseenList.isNotEmpty ? _unseenList.length : _apiUnreadCount;
+
+  int get _readTabDisplayCount =>
+      _seenList.isNotEmpty ? _seenList.length : _apiReadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -3651,83 +3678,75 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
               child: _buildSegmentedControl(),
             ),
             const SizedBox(height: 14),
-            Expanded(child: _buildRecipientsBody()),
+            Expanded(child: _buildBody()),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRecipientsBody() {
+  Widget _buildBody() {
+    // Loading state — sirf pehli baar
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_viewers.isEmpty) {
+    final list = _currentList;
+
+    if (list.isEmpty) {
       final label = _selectedTab == 0 ? 'unread' : 'read';
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            'No $label recipients found.',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
+        child: Text(
+          'No $label recipients found.',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
           ),
+          textAlign: TextAlign.center,
         ),
       );
     }
 
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      itemCount: _viewers.length,
-      separatorBuilder: (_, __) => Divider(
-        height: 0,
-        thickness: 1,
-        color: Colors.grey.shade200,
-      ),
+      itemCount: list.length,
+      separatorBuilder: (_, __) =>
+          Divider(height: 0, thickness: 1, color: Colors.grey.shade200),
       itemBuilder: (context, index) {
-        final user = _viewers[index];
+        final user = list[index];
         final displayName =
         user.fullName.trim().isNotEmpty ? user.fullName : 'Unknown User';
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 0),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 4,
-              vertical: 0,
+        return ListTile(
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          leading: CircleAvatar(
+            radius: 22,
+            backgroundColor: AppColors.appBarBackground,
+            child: const Icon(
+              Icons.person_outline_rounded,
+              color: AppColors.primaryDark,
+              size: 22,
             ),
-            leading: CircleAvatar(
-              radius: 22,
-              backgroundColor: AppColors.appBarBackground,
-              child: const Icon(
-                Icons.person_outline_rounded,
-                color: AppColors.primaryDark,
-                size: 22,
-              ),
-            ),
-            title: Text(
-              displayName,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            subtitle: user.seenAt != null
-                ? Text(
-              user.seenAt!.formatReadableDate(),
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            )
-                : null,
           ),
+          title: Text(
+            displayName,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          subtitle: user.seenAt != null
+              ? Text(
+            user.seenAt!.toLocal().toString().substring(0, 16),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          )
+              : null,
         );
       },
     );
@@ -3742,16 +3761,10 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
           decoration: BoxDecoration(
             color: const Color(0xFFF1F4F8),
             borderRadius: BorderRadius.circular(999),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0F0F172A),
-                blurRadius: 16,
-                offset: Offset(0, 6),
-              ),
-            ],
           ),
           child: Stack(
             children: [
+              // Sliding indicator
               AnimatedAlign(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
@@ -3762,9 +3775,10 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
                   width: (constraints.maxWidth - 8) / 2,
                   decoration: BoxDecoration(
                     color: AppColors.primaryDark,
-                    // borderRadius: BorderRadius.circular(999),
-                    borderRadius: BorderRadius.horizontal(left: Radius.circular(_selectedTab == 0?999:0),right:Radius.circular(_selectedTab != 0?999:0) ),
-
+                    borderRadius: BorderRadius.horizontal(
+                      left: Radius.circular(_selectedTab == 0 ? 999 : 0),
+                      right: Radius.circular(_selectedTab != 0 ? 999 : 0),
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x29003382),
@@ -3775,14 +3789,16 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
                   ),
                 ),
               ),
+              // Tab buttons — counts live update honge
               Row(
                 children: [
                   _tabButton(
-                    title: 'Unread ($_unreadCount)',
+                    title:
+                        'Unread (${_isLoading ? "…" : _unreadTabDisplayCount})',
                     index: 0,
                   ),
                   _tabButton(
-                    title: 'Read ($_readCount)',
+                    title: 'Read (${_isLoading ? "…" : _readTabDisplayCount})',
                     index: 1,
                   ),
                 ],
@@ -3796,18 +3812,13 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
 
   Widget _tabButton({required String title, required int index}) {
     final isSelected = _selectedTab == index;
-
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
+        // Tab switch pe sirf setState — no API call
         onTap: index == _selectedTab
             ? null
-            : () {
-          setState(() {
-            _selectedTab = index;
-          });
-          _loadRecipients();
-        },
+            : () => setState(() => _selectedTab = index),
         child: Center(
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 220),
@@ -3824,8 +3835,6 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
     );
   }
 }
-
-
 
 
 

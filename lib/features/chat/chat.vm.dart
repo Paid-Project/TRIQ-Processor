@@ -101,9 +101,9 @@ class ChatViewModel extends ReactiveViewModel {
   bool _showAttachment = false;
 
   static const double recordingCancelThreshold = 120;
-  List<ViewUser> _allViewers = [];
+  List<SeenBy> _allViewers = [];
 
-  List<ViewUser> get allViewers => _allViewers;
+  List<SeenBy> get allViewers => _allViewers;
   String _viewerId = '';
   String get viewerId => _viewerId;
   bool get isLoading => _isLoading;
@@ -254,7 +254,7 @@ class ChatViewModel extends ReactiveViewModel {
       final viewerType =
       (type?.trim().isNotEmpty ?? false) ? type!.trim() : _viewerTypeForSelectedTab;
 
-      final result = await _chatService.getViewers(type: viewerType, msgId: _viewerId);
+      final result = await _chatService.getViewers( msgId: _viewerId);
       result.fold(
             (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
@@ -265,8 +265,8 @@ class ChatViewModel extends ReactiveViewModel {
           );
         },
             (response) {
-          final rawUsers = _extractViewersListFromResponse(response);
-          _allViewers = _mapViewers(rawUsers);
+          final split = ViewersListsSplit.fromApi(response);
+          _allViewers = _viewersListForViewerType(split, viewerType);
 
           AppLogger.info(
             'Successfully loaded ${_allViewers.length} viewers for type $viewerType (Message: $_viewerId)',
@@ -290,13 +290,17 @@ class ChatViewModel extends ReactiveViewModel {
 
     notifyListeners();
   }
-  List<ViewUser> _mapViewers(List<dynamic> rawUsers) {
-    return rawUsers
-        .whereType<Map>()
-        .map((user) => ViewUser.fromJson(Map<String, dynamic>.from(user)))
-        .toList();
+
+  List<SeenBy> _viewersListForViewerType(
+    ViewersListsSplit split,
+    String viewerType,
+  ) {
+    final t = viewerType.trim().toLowerCase();
+    if (t == 'unseen' || t == 'unread') return split.unseen;
+    return split.seen;
   }
-  Future<List<ViewUser>> fetchViewersData({
+
+  Future<List<SeenBy>> fetchViewersData({
     required String type,
     String? messageId,
   })
@@ -305,7 +309,7 @@ class ChatViewModel extends ReactiveViewModel {
     if (targetMessageId.isEmpty) return const [];
 
     final result = await _chatService.getViewers(
-      type: type.trim(),
+
       msgId: targetMessageId,
     );
 
@@ -315,29 +319,13 @@ class ChatViewModel extends ReactiveViewModel {
         Fluttertoast.showToast(
           msg: "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
         );
-        return <ViewUser>[];
+        return <SeenBy>[];
       },
           (response) {
-        final rawUsers = _extractViewersListFromResponse(response);
-        return _mapViewers(rawUsers);
+        final split = ViewersListsSplit.fromApi(response);
+        return _viewersListForViewerType(split, type);
       },
     );
-  }
-  List<dynamic> _extractViewersListFromResponse(Map<String, dynamic> response) {
-    if (response['users'] is List) return response['users'] as List<dynamic>;
-    if (response['viewers'] is List) return response['viewers'] as List<dynamic>;
-
-    final rootData = response['data'];
-    if (rootData is List) return rootData;
-
-    if (rootData is Map) {
-      final dataMap = Map<String, dynamic>.from(rootData);
-      if (dataMap['users'] is List) return dataMap['users'] as List<dynamic>;
-      if (dataMap['viewers'] is List) return dataMap['viewers'] as List<dynamic>;
-      if (dataMap['data'] is List) return dataMap['data'] as List<dynamic>;
-    }
-
-    return const [];
   }
   Future<void> sendLocationMessage({
     Position? position,

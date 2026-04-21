@@ -18,10 +18,6 @@ import '../../../routes/routes.dart';
 import '../../../services/stage.service.dart';
 import '../../stage/stage.view.dart';
 
-
-
-
-
 class ReviewTicketViewModel extends ReactiveViewModel {
   final TextEditingController couponController = TextEditingController();
   String? appliedCoupon;
@@ -56,7 +52,8 @@ class ReviewTicketViewModel extends ReactiveViewModel {
     }
 
     if (_pendingTicketData?.isFromSiteVisit == true) {
-      final pendingMaintenanceType = _pendingTicketData?.maintenanceType?.trim();
+      final pendingMaintenanceType =
+          _pendingTicketData?.maintenanceType?.trim();
       if (pendingMaintenanceType != null && pendingMaintenanceType.isNotEmpty) {
         return pendingMaintenanceType;
       }
@@ -235,8 +232,8 @@ class ReviewTicketViewModel extends ReactiveViewModel {
         url: ApiEndpoints.sendCreateNotification,
         data: data,
       );
-print("Ticket response.statusCod:- ${response.statusCode}");
-      if (response.statusCode == 201 ||response.statusCode == 200 ) {
+      print("Ticket response.statusCod:- ${response.statusCode}");
+      if (response.statusCode == 201 || response.statusCode == 200) {
         AppLogger.info('Ticket notification sent successfully');
 
         // Refresh the tickets list before going back
@@ -250,7 +247,6 @@ print("Ticket response.statusCod:- ${response.statusCode}");
         // );
         // _stageService.updateSelectedBottomNavIndex(1);
 
-
         Fluttertoast.showToast(
           msg: response.data["message"] ?? "Notification sent",
           backgroundColor: Colors.green,
@@ -262,9 +258,6 @@ print("Ticket response.statusCod:- ${response.statusCode}");
           Routes.stage,
           arguments: StageViewAttributes(selectedBottomNavIndex: 1),
         );
-
-
-
       } else {
         AppLogger.error('Failed to send notification: ${response.statusCode}');
         // _navigationService.clearStackAndShow(
@@ -547,4 +540,3 @@ print("Ticket response.statusCod:- ${response.statusCode}");
     super.dispose();
   }
 }
-

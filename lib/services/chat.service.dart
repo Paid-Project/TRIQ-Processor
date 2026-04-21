@@ -90,13 +90,13 @@ class ChatService {
   ResultFuture<Map<String, dynamic>> getViewers({
 
     required String msgId,
-    required String type,
+
 
   }) async
   {
     try {
       final response = await _apiService.get(
-        url: "${ApiEndpoints.getViewers}$msgId?type=$type",
+        url: "${ApiEndpoints.getViewers}$msgId",
         // queryParameters: {'page': page, 'limit': limit,"screenType":screen=='chat'?'chat':''},
       );
 
