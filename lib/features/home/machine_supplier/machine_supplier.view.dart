@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-
 import 'package:manager/resources/app_resources/app_resources.dart';
 import 'package:manager/resources/multimedia_resources/resources.dart';
 import 'package:manager/services/language.service.dart';
@@ -370,7 +369,8 @@ print("flag:- ${customer?.flag?.prefixWithBaseUrl}");
                 Positioned(
                   bottom: -4,
                   right: -4,
-                  child: ClipRRect(borderRadius: BorderRadius.circular(2), child: SvgPicture.network(customer?.flag?.prefixWithBaseUrl??'', height: 16, width: 16)),
+                  // child: ClipRRect(borderRadius: BorderRadius.circular(2), child: AppImages.getSvgFlag(customer?.flag?.prefixWithBaseUrl??"", width: 14, height: 14)),
+                  child: ClipRRect(borderRadius: BorderRadius.circular(2), child: SvgPicture.network('https://live.triqinnovations.com/flags/in.svg', height: 16, width: 16)),
                 ),
               ],
             ),
