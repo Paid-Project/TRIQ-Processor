@@ -191,34 +191,37 @@ class CreateTicketDialog extends StatelessWidget {
                                 const SizedBox(height: 16),
                               ],
                             ),
-                          if (model.selectedOrganizationId != null)
-                            Column(
-                              children: [
-                                const SizedBox(height: 5),
-                                _buildDropdownFormField(
-                                  context1,
-                                  value: model.selectedMachineId,
-                                  label: LanguageService.get('select_machine'),
-                                  items: _getUniqueMachineItems(
-                                    machineSupplierData,
-                                    model.selectedOrganizationId!,
+                            if (model.selectedOrganizationId != null)
+                              Column(
+                                children: [
+                                  const SizedBox(height: 5),
+                                  _buildDropdownFormField(
+                                    context1,
+                                    value: model.selectedMachineId,
+                                    label: LanguageService.get('select_machine'),
+                                    items: _getUniqueMachineItems(
+                                      machineSupplierData,
+                                      model.selectedOrganizationId!,
+                                    ),
+                                    onChanged: (value) {
+                                      AppLogger.info('Selected machine changed');
+                                      model.formKey.currentState?.validate();
+                                      model.selectedMachineId = value?.toUpperCase();
+
+                                      model.notifyListeners();
+                                      // model.selectedMachineId = value;
+                                    },
+                                    validator:
+                                        (value) =>
+                                            value == null
+                                                ? LanguageService.get(
+                                                  'please_select_machine',
+                                                )
+                                                : null,
                                   ),
-                                  onChanged: (value) {
-                                    AppLogger.info('Selected machine changed');
-                                    model.formKey.currentState?.validate();
-                                    model.selectedMachineId = value;
-                                  },
-                                  validator:
-                                      (value) =>
-                                          value == null
-                                              ? LanguageService.get(
-                                                'please_select_machine',
-                                              )
-                                              : null,
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
+                                  const SizedBox(height: 16),
+                                ],
+                              ),
 
                           // Problem Description
                           CommonTextField(
@@ -631,35 +634,43 @@ class CreateTicketDialog extends StatelessWidget {
   }
 
   List<Map<String, String>> _getUniqueMachineItems(
-    List<MachineSupplier> machineSupplierData,
-    String organizationId,
-  ) {
+      List<MachineSupplier> machineSupplierData,
+      String organizationId,
+      ) {
     final Map<String, String> uniqueItems = {};
 
     try {
       final selectedSupplier = machineSupplierData.firstWhere(
-        (m) => m.customer?.organization?.id == organizationId,
+            (m) => m.customer?.organization?.id == organizationId,
       );
 
       if (selectedSupplier.customer?.machines != null) {
         for (final machine in selectedSupplier.customer!.machines!) {
           final machineId = machine.machine?.id;
+
+          // 🔥 CHANGE HERE (uppercase full display)
           final machineName =
-              "${machine.machine?.machineName} (${machine.machine?.modelNumber?.toUpperCase()})";
+              "${(machine.machine?.machineName ?? 'Unnamed Machine').toUpperCase()} "
+              "(${(machine.machine?.modelNumber ?? '').toUpperCase()})";
 
           if (machineId != null &&
               machineId.isNotEmpty &&
               machineName.isNotEmpty) {
-            uniqueItems[machineId] = machineName;
+
+            // 🔥 OPTIONAL: value bhi uppercase
+            uniqueItems[machineId.toUpperCase()] = machineName;
           }
         }
       }
     } catch (e) {
-      AppLogger.error('Error finding machines for organization: ');
+      AppLogger.error('Error finding machines for organization: $e');
     }
 
     return uniqueItems.entries
-        .map((entry) => {"value": entry.key, "display": entry.value})
+        .map((entry) => {
+      "value": entry.key,
+      "display": entry.value,
+    })
         .toList();
   }
   Widget _buildAttachmentMenuItem({

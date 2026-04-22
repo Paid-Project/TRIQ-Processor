@@ -1118,6 +1118,7 @@ class LoginViewModel extends ReactiveViewModel {
   ResultFuture<User> login() async {
     AppLogger.warning("login");
     return await authService.login(
+      countryCode: countryCode,
       value:
           _loginMode == LoginMode.phone
               ? phoneController.text

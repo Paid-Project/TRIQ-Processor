@@ -491,11 +491,10 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
             model.navigateToTickets();
             break;
           case Routes.teams:
-            await model.markFeatureSeen("task"); // 🔥 API CALL
             Navigator.of(context).pushNamed(Routes.teams);
             break;
           case Routes.tasks:
-            await model.markFeatureSeen("customer"); // 🔥 API CALL
+            await model.markFeatureSeen("task"); // 🔥 API CALL
             Navigator.of(context).pushNamed(Routes.tasks);
             break;
           case Routes.invoice:
@@ -508,6 +507,7 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
             Fluttertoast.showToast(msg: 'Coming Soon');
             break;
           case Routes.myCustomers:
+            await model.markFeatureSeen("customer"); // 🔥 API CALL
             Navigator.of(context).pushNamed(Routes.myCustomers);
             break;
           default:

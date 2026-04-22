@@ -314,6 +314,7 @@ class AuthService {
   }
   ResultFuture<User> login({
     required String value,
+    required String countryCode,
     required String password,
     required String role,
     required bool isMobile,
@@ -332,6 +333,7 @@ class AuthService {
       final response = await apiService.post(
         url: ApiEndpoints.login,
         data: {
+          "countryCode":countryCode??"",
           isMobile?"phone":'email': value,
           'password': password,
           'role': role,

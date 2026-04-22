@@ -3839,8 +3839,35 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
 
 
 
-
-
+//
+// String _resolvedUpdatedAt(ChatViewModel model) {
+//   final updatedAt = model.currentUpdatedAt?.trim() ?? '';
+//   final fallback = widget.updatedAt?.trim() ?? '';
+//
+//   final rawDate = updatedAt.isNotEmpty ? updatedAt : fallback;
+//
+//   if (rawDate.isEmpty) return 'N/A';
+//
+//   try {
+//     DateTime dateTime;
+//
+//     // ✅ ISO format (2026-04-20T...)
+//     if (rawDate.contains('T')) {
+//       dateTime = DateTime.parse(rawDate).toLocal();
+//     }
+//     // ✅ Custom format (Apr 21,2026 20:04)
+//     else {
+//       dateTime = DateFormat("MMM dd,yyyy HH:mm").parse(rawDate);
+//     }
+//
+//     // 🔥 FINAL FORMAT (date + time + AM/PM)
+//     return DateFormat('dd MMM yyyy, hh:mm a').format(dateTime);
+//
+//   } catch (e) {
+//     print("❌ Date parse error: $e");
+//     return rawDate;
+//   }
+// }
 
 
 

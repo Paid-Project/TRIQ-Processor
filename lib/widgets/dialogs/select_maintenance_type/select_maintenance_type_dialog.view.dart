@@ -216,21 +216,20 @@ class SelectMaintenanceTypeDialog extends StatelessWidget {
                                           label: LanguageService.get(
                                             'select_machine',
                                           ),
-                                          items:
-                                              machineList
-                                                  .where(
-                                                    (e) =>
-                                                        e.machine?.id != null &&
-                                                        (e.machine!.id ?? '')
-                                                            .isNotEmpty,
-                                                  )
-                                                  .map(
-                                                    (e) => {
-                                                  "value": e.machine!.id!,
-                                                  "display": "${e.machine?.machineName ?? 'Unnamed Machine'} (${e.machine?.modelNumber?.toUpperCase() ?? ''})",
-                                                },
-                                              )
-                                                  .toList(),
+                                      items: machineList
+                                          .where(
+                                            (e) =>
+                                        e.machine?.id != null &&
+                                            (e.machine!.id ?? '').isNotEmpty,
+                                      )
+                                          .map(
+                                            (e) => {
+                                          "value": e.machine!.id!,
+                                          "display":
+                                          "${(e.machine?.machineName ?? 'Unnamed Machine').toUpperCase()} (${(e.machine?.modelNumber ?? '').toUpperCase()})",
+                                        },
+                                      )
+                                          .toList(),
                                           onChanged: (value) {
                                             print("selected machine ===> $value");
                                             model.formKey.currentState?.validate();

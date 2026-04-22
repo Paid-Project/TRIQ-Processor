@@ -49,26 +49,24 @@ class CreateTicketDialogViewModel extends ReactiveViewModel {
 
   Future<void> pickMedia() async {
     try {
-      // Show options for image or video
-      final result = await _filePickerService.pickMediaFromGallery(
+      final result = await _filePickerService.pickImageFromGallery(
         maxWidth: 1920,
         maxHeight: 1920,
         imageQuality: 90,
       );
 
       result.fold(
-        (failure) {
-          AppLogger.error('Failed to pick media: ${failure.message}');
-          // You could show a toast here if needed
+            (failure) {
+          AppLogger.error('Failed to pick image: ${failure.message}');
         },
-        (file) {
+            (file) {
           _attachments.value.add(file);
-          _attachmentsError.value = null; // Clear error when file is added
+          _attachmentsError.value = null;
           notifyListeners();
         },
       );
     } catch (e) {
-      AppLogger.error('Error picking media: $e');
+      AppLogger.error('Error picking image: $e');
     }
   }
 
