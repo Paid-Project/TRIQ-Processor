@@ -12,7 +12,7 @@ import '../core/utils/failures.dart';
 class MachineSupplierDetailsService {
   final apiService = locator<ApiService>();
 
-  ResultFuture<MachineSupplierDetailsModel> getCustomerById(
+  ResultFuture<Customer> getCustomerById(
     String customerId,
   ) async {
     try {
@@ -22,7 +22,7 @@ class MachineSupplierDetailsService {
 
       // Based on the curl response, the data is directly returned
       if (response.data != null) {
-        return Right(MachineSupplierDetailsModel.fromJson(response.data));
+        return Right(Customer.fromJson(response.data));
       } else {
         return Left(
           Failure(response.data?['message'] ?? 'Invalid response format'),
