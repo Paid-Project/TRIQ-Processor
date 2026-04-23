@@ -1,89 +1,151 @@
 // To parse this JSON data, do
 //
-//     final machineSupplierDetailsModel = machineSupplierDetailsModelFromJson(jsonString);
+//     final customerModel = customerModelFromJson(jsonString);
 
 import 'dart:convert';
 
-MachineSupplierDetailsModel machineSupplierDetailsModelFromJson(String str) => MachineSupplierDetailsModel.fromJson(json.decode(str));
+CustomerModel customerModelFromJson(String str) => CustomerModel.fromJson(json.decode(str));
 
-String machineSupplierDetailsModelToJson(MachineSupplierDetailsModel data) => json.encode(data.toJson());
+String customerModelToJson(CustomerModel data) => json.encode(data.toJson());
 
-class MachineSupplierDetailsModel {
+class CustomerModel {
+  int? count;
+  List<Customer>? data;
+
+  CustomerModel({this.count, this.data});
+
+  factory CustomerModel.fromJson(Map<String, dynamic> json) =>
+      CustomerModel(count: json["count"], data: json["data"] == null ? [] : List<Customer>.from(json["data"]!.map((x) => Customer.fromJson(x))));
+
+  Map<String, dynamic> toJson() => {"count": count, "data": data == null ? [] : List<dynamic>.from(data!.map((x) => x.toJson()))};
+}
+
+class Customer {
   String? id;
+  Users? organization;
   String? phoneNumber;
   String? customerName;
   String? email;
   String? contactPerson;
+  String? assignmentStatus;
   String? designation;
   String? countryOrigin;
-  Users? organization;
+  Users? users;
   List<MachineElement>? machines;
   bool? isActive;
   DateTime? createdAt;
   DateTime? updatedAt;
   int? v;
-  Users? users;
   String? flag;
   String? userImage;
+  String? qrCode;
+  UserProfile? userProfile;
 
-  MachineSupplierDetailsModel({
+
+  Customer({
     this.id,
+    this.organization,
     this.phoneNumber,
     this.customerName,
     this.email,
     this.contactPerson,
+    this.assignmentStatus,
     this.designation,
     this.countryOrigin,
-    this.organization,
+    this.users,
     this.machines,
     this.isActive,
     this.createdAt,
     this.updatedAt,
     this.v,
-    this.users,
     this.flag,
     this.userImage,
+    this.qrCode,
+    this.userProfile,
   });
 
-  factory MachineSupplierDetailsModel.fromJson(Map<String, dynamic> json) => MachineSupplierDetailsModel(
+  factory Customer.fromJson(Map<String, dynamic> json) => Customer(
     id: json["_id"],
+    organization:
+    json["organization"] == null
+        ? null
+        : json["organization"] is String
+        ? Users(id: json["organization"]) // Handle case where users is a string ID
+        : Users.fromJson(json["organization"]),
     phoneNumber: json["phoneNumber"],
     customerName: json["customerName"],
     email: json["email"],
     contactPerson: json["contactPerson"],
+    assignmentStatus: json["assignmentStatus"],
     designation: json["designation"],
     countryOrigin: json["countryOrigin"],
-    organization: json["organization"] == null ? null : Users.fromJson(json["organization"]),
+    users:
+    json["users"] == null
+        ? null
+        : json["users"] is String
+        ? Users(id: json["users"]) // Handle case where users is a string ID
+        : Users.fromJson(json["users"]),userProfile: json["userProfile"] == null
+      ? null
+      : UserProfile.fromJson(json["userProfile"]),
+
+    // Handle case where users is an object
     machines: json["machines"] == null ? [] : List<MachineElement>.from(json["machines"]!.map((x) => MachineElement.fromJson(x))),
     isActive: json["isActive"],
     createdAt: json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
     updatedAt: json["updatedAt"] == null ? null : DateTime.parse(json["updatedAt"]),
     v: json["__v"],
-    users: json["users"] == null ? null : Users.fromJson(json["users"]),
     flag: json["flag"],
     userImage: json["userImage"],
+    qrCode: json["qrCode"],
   );
 
   Map<String, dynamic> toJson() => {
     "_id": id,
+    "organization": organization?.toJson(),
     "phoneNumber": phoneNumber,
     "customerName": customerName,
     "email": email,
     "contactPerson": contactPerson,
+    "assignmentStatus": assignmentStatus,
     "designation": designation,
     "countryOrigin": countryOrigin,
-    "organization": organization?.toJson(),
+    "users": users?.toJson(),
     "machines": machines == null ? [] : List<dynamic>.from(machines!.map((x) => x.toJson())),
     "isActive": isActive,
     "createdAt": createdAt?.toIso8601String(),
     "updatedAt": updatedAt?.toIso8601String(),
     "__v": v,
-    "users": users?.toJson(),
     "flag": flag,
     "userImage": userImage,
+    "userProfile": userProfile?.toJson(),
+    "qrCode": qrCode,
   };
 }
+class UserProfile {
+  String? designation;
+  String? yourName;
+  String? unitName;
 
+  UserProfile({
+    this.designation,
+    this.yourName,
+    this.unitName,
+  });
+
+  /// From JSON
+  factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
+    designation: json["designation"],
+    yourName: json["yourName"],
+    unitName: json["unitName"],
+  );
+
+  /// To JSON
+  Map<String, dynamic> toJson() => {
+    "designation": designation,
+    "yourName": yourName,
+    "unitName": unitName,
+  };
+}
 class MachineElement {
   MachineMachine? machine;
   DateTime? purchaseDate;
@@ -106,7 +168,13 @@ class MachineElement {
   });
 
   factory MachineElement.fromJson(Map<String, dynamic> json) => MachineElement(
-    machine: json["machine"] == null ? null : MachineMachine.fromJson(json["machine"]),
+    machine:
+    json["machine"] == null
+        ? null
+        : json["machine"] is String
+        ? MachineMachine(id: json["machine"]) // Handle case where machine is a string ID
+        : MachineMachine.fromJson(json["machine"]),
+    // Handle case where machine is an object
     purchaseDate: json["purchaseDate"] == null ? null : DateTime.parse(json["purchaseDate"]),
     installationDate: json["installationDate"] == null ? null : DateTime.parse(json["installationDate"]),
     warrantyStart: json["warrantyStart"] == null ? null : DateTime.parse(json["warrantyStart"]),
@@ -135,7 +203,6 @@ class MachineMachine {
   String? modelNumber;
   String? serialNumber;
   String? machineType;
-  String? user;
   int? totalPower;
   String? manualsLink;
   String? notes;
@@ -153,7 +220,6 @@ class MachineMachine {
     this.modelNumber,
     this.serialNumber,
     this.machineType,
-    this.user,
     this.totalPower,
     this.manualsLink,
     this.notes,
@@ -172,7 +238,6 @@ class MachineMachine {
     modelNumber: json["modelNumber"],
     serialNumber: json["serialNumber"],
     machineType: json["machine_type"],
-    user: json["user"],
     totalPower: json["totalPower"],
     manualsLink: json["manualsLink"],
     notes: json["notes"],
@@ -191,7 +256,6 @@ class MachineMachine {
     "modelNumber": modelNumber,
     "serialNumber": serialNumber,
     "machine_type": machineType,
-    "user": user,
     "totalPower": totalPower,
     "manualsLink": manualsLink,
     "notes": notes,
@@ -239,12 +303,15 @@ class Users {
   String? email;
   String? phone;
   String? contactPerson;
+  String? countryCode;
+  String? assignmentStatus;
   String? designation;
 
-  Users({this.id, this.fullName, this.email, this.phone, this.contactPerson, this.designation});
+  Users({this.id, this.fullName, this.email, this.phone, this.contactPerson,this.assignmentStatus, this.designation, this.countryCode});
 
   factory Users.fromJson(Map<String, dynamic> json) => Users(id: json["_id"], fullName: json["fullName"], email: json["email"], phone:
-  json["phone"], contactPerson: json["contactPerson"], designation: json["designation"]);
+  json["phone"], contactPerson: json["contactPerson"], assignmentStatus: json["assignmentStatus"], designation: json["designation"],countryCode: json["countryCode"]);
 
-  Map<String, dynamic> toJson() => {"_id": id, "fullName": fullName, "email": email, "phone": phone, "contactPerson": contactPerson, "designation": designation};
+  Map<String, dynamic> toJson() => {"_id": id, "fullName": fullName, "email": email, "phone": phone, "contactPerson": contactPerson,"assignmentStatus": assignmentStatus, "designation": designation,"countryCode":countryCode};
 }
+

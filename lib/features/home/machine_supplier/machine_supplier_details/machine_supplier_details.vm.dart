@@ -8,13 +8,13 @@ import 'supplier_machine_details/supplier_machine_details.view.dart';
 class MachineSupplierDetailsViewModel extends BaseViewModel {
   final MachineSupplierDetailsService _machineSupplierDetailsService = locator<MachineSupplierDetailsService>();
 
-  MachineSupplierDetailsModel? _customerDetails;
+  Customer? _customerDetails;
   String? _customerId;
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
 
-  MachineSupplierDetailsModel? get customerDetails => _customerDetails;
+  Customer? get customerDetails => _customerDetails;
 
   String? get customerId => _customerId;
 

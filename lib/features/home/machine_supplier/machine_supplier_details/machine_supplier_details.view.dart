@@ -105,7 +105,7 @@ class _MachineSupplierDetailsViewState extends State<MachineSupplierDetailsView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildContactInfoRow('contact_person'.lang, customer.contactPerson ?? 'N/A'),
+                _buildContactInfoRow('contact_person'.lang, customer.userProfile?.yourName ?? 'N/A'),
                 const SizedBox(height: 12),
                 _buildContactInfoRow('email'.lang, organization?.email ?? 'N/A'),
               ],
@@ -116,7 +116,7 @@ class _MachineSupplierDetailsViewState extends State<MachineSupplierDetailsView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildContactInfoRow('designation'.lang, customer.designation ?? 'N/A'),
+                _buildContactInfoRow('designation'.lang, customer.userProfile?.designation ?? 'N/A'),
                 const SizedBox(height: 12),
                 _buildContactInfoRow('phone'.lang, organization?.phone ?? customer.phoneNumber ?? 'N/A'),
               ],
