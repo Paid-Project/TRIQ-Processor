@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:manager/core/locator.dart';
 import 'package:manager/core/utils/app_logger.dart';
@@ -92,7 +94,7 @@ class SystemSoundsViewModel extends BaseViewModel {
   // Is method mein koi change nahi (yeh ab 5 items bhejega)
   void saveSettings() async {
     List<Map<String, String>> notificationSoundPayload = [];
-
+    log("1111111@: $notificationSoundPayload");
     // `_selectedSounds` map se list banayein (ab isme 5 items honge)
     AppLogger.info('API Sounds: $_selectedSounds');
     _selectedSounds.forEach((type, sound) {
@@ -101,11 +103,12 @@ class SystemSoundsViewModel extends BaseViewModel {
 
       notificationSoundPayload.add({'type': type, 'sound': name,'id':id});
     });
-
+    log("1111111#: $notificationSoundPayload");
     final result = await runBusyFuture(
       _soundSettingsService.updateSoundSettings(notificationSoundPayload),
       busyObject: kSaveBusyKey,
     );
+
 
     if (result.isNotEmpty && result.containsKey('success') && result['success']) {
 

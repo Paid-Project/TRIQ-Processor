@@ -49,28 +49,33 @@ class UpdateOrganizationView extends StatelessWidget {
             appBar: _buildAppBar(context, model),
             backgroundColor: AppColors.cultured,
             body:
-                model.isBusy
-                    ? Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
-                    : Form(
-                      key: model.formKey,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          children: [
-                            // Personal Information Section
-                            _buildPersonalInformationSection(context, model),
-                            const SizedBox(height: 15),
+            Stack(
+               children: [
+                 Form(
+                          key: model.formKey,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              children: [
+                                // Personal Information Section
+                                _buildPersonalInformationSection(context, model),
+                                const SizedBox(height: 15),
 
-                            // Address Section (Corporate + Factory)
-                            _buildCorporateAddressSection(context, model),
-                          ],
+                                // Address Section (Corporate + Factory)
+                                _buildCorporateAddressSection(context, model),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                 if (model.isBusy)
+                   Container(
+                     color: Colors.black.withOpacity(0.3),
+                     child: Center(
+                       child: CircularProgressIndicator(color: AppColors.primary),
+                     ),
+                   ),
+               ],
+             ),
           ),
         );
       },

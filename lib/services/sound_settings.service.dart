@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:manager/api_endpoints.dart';
 import 'package:manager/core/locator.dart';
 import 'package:manager/core/models/api_response.dart';
@@ -20,7 +22,7 @@ class SoundSettingsService {
         // Response list ko Map<String, String> mein convert karein
         Map<String, String> settingsMap = {};
         List<dynamic> settingsList = response.data['data'];
-
+log("===========### ${settingsList}");
         for (var item in settingsList) {
           if (item['type'] != null && item['soundName'] != null) {
             settingsMap[item['type']] = item['soundName'];

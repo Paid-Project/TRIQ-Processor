@@ -36,14 +36,24 @@ class HelpAndSupportViewModel extends BaseViewModel {
   }
 
   Future<void> launchEmail() async {
-    final Uri emailUri = Uri(scheme: 'mailto', path: 'info.triqinnovations@gmail.com', query: 'subject=${Uri.encodeComponent('Support Request')}');
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'info.triqinnovations@gmail.com',
+      query: 'subject=${Uri.encodeComponent('Support Request')}',
+    );
 
     try {
       if (await canLaunchUrl(emailUri)) {
-        await launchUrl(emailUri);
+        await launchUrl(
+          emailUri,
+          mode: LaunchMode.externalApplication, // 🔥 IMPORTANT
+        );
       } else {
-        // Fallback: Copy email to clipboard
-        await Clipboard.setData(ClipboardData(text: 'info.triqinnovations@gmail.com'));
+        // ✅ Fallback when no email app
+        await Clipboard.setData(
+          ClipboardData(text: 'info.triqinnovations@gmail.com'),
+        );
+
         Get.snackbar(
           LanguageService.get("email_copied"),
           LanguageService.get("email_address_copied_to_clipboard"),

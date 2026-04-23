@@ -30,7 +30,7 @@ class ProfileViewModel extends ReactiveViewModel {
   bool get isLoading => _isLoading.value;
 
   String get inviteLink =>
-      _profileService.inviteData?.data?.manufacturerUrl ?? '';
+      _profileService.inviteData?.data?.processorUrl ?? '';
   void init() {
      _profileService.refreshProfile();
      refreshInvite();
@@ -77,7 +77,7 @@ class ProfileViewModel extends ReactiveViewModel {
     await loadProfileData();
   }
   Future<void> openWhatsApp() async {
-    final link = _profileService.inviteData?.data?.manufacturerUrl ?? '';
+    final link = _profileService.inviteData?.data?.processorUrl ?? '';
     if (link.isEmpty) {
       Fluttertoast.showToast(
         msg: 'Invite link not available',
