@@ -29,8 +29,7 @@ class StageViewModel extends ReactiveViewModel {
   final _navigationService = locator<NavigationService>();
   final _stageService = locator<StageService>();
   final _chatService = locator<ChatService>();
-  final _dialogService =
-  locator<DialogService>();
+  final _dialogService = locator<DialogService>();
   final _ticketService = locator<TicketService>();
   final profileService = locator<ProfileService>();
   final SocketService _socketService = SocketService();
@@ -40,7 +39,6 @@ class StageViewModel extends ReactiveViewModel {
   String get requestedTicketId => _stageService.requestedTicketId.value ?? '';
 
   int get selectedBottomNavIndex => _stageService.selectedBottomNavIndex.value;
-
 
   List<Widget> get bottomNavItems => [
     OrganizationHomeView(),
@@ -140,12 +138,18 @@ class StageViewModel extends ReactiveViewModel {
   _onChatRequest(Map data) {
     String roomid = data['roomName'];
     String profile = '';
-    String sender_name = _readFirstNonEmpty(data, ['sender_name', 'senderName']);
+    String sender_name = _readFirstNonEmpty(data, [
+      'sender_name',
+      'senderName',
+    ]);
     final bool isGroupCall = _isTrueish(data['isGroupCall']);
-    final String groupName = _readFirstNonEmpty(
-      data,
-      ['groupTitle', 'groupName', 'group_name', 'title', 'name'],
-    );
+    final String groupName = _readFirstNonEmpty(data, [
+      'groupTitle',
+      'groupName',
+      'group_name',
+      'title',
+      'name',
+    ]);
     final String displayName =
         isGroupCall && groupName.isNotEmpty ? groupName : sender_name;
     String receiver_name = data['receiver_name'];
@@ -154,7 +158,9 @@ class StageViewModel extends ReactiveViewModel {
     String token = data['token'];
     String status = data['eventType'];
     String userId = data['user_id'] ?? '';
-    print("stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm ");
+    print(
+      "stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm stage vm ",
+    );
 
     bool isVoice = call_type == 'audio';
 
@@ -208,15 +214,22 @@ class StageViewModel extends ReactiveViewModel {
         roomName: roomId,
         status: status,
         callType: isVoice ? 'audio' : 'video',
-        name: receiver_name,
+        name: userData.name ?? 'User',
         users: effectiveUserId,
         isGroup: isGroup,
-        identity: 'identity',
+        identity: userData.id.toString(),
       );
 
       if (tokenResponce['success']) {
         Get.back();
-        Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponce['token'], isVoice: isVoice));
+        Get.to(
+          () => VideoCallScreen(
+            roomName: roomId,
+            token: tokenResponce['token'],
+            isVoice: isVoice,
+            name: receiver_name,
+          ),
+        );
       }
     } else if (status == 'call-decline') {
       await _chatService.sendVChatStatus(

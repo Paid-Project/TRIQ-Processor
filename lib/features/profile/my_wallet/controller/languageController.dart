@@ -156,6 +156,14 @@ class LanguageController extends GetxController {
   }
 
   Future<void> _initData() async {
+    final token = getUser().token;
+    if (token == null || token.isEmpty || token == 'null') {
+      AppLogger.info(
+        'LanguageController: No valid token, skipping profile refresh',
+      );
+      return;
+    }
+
     await _profileService.refreshProfile();
     print(
       "_profileService.globalProfileModel?.profile:- ${_profileService.globalProfileModel?.profile?.id}",
@@ -224,16 +232,13 @@ class LanguageController extends GetxController {
         'Language saved successfully: ${selectedLanguageCode.value}',
       );
 
-      // // Show success message
-      // Fluttertoast.showToast(msg: 'Language changed to ${selectedLanguageCode.value}. App will restart...');
-      //
+      // Reset loading before restart so controller state is clean
+      // if Dart VM persists across the restart
+      isLoading.value = false;
       Restart.restartApp();
     } catch (e) {
       AppLogger.error('Error saving language: $e');
-
-      // Show error message
       Fluttertoast.showToast(msg: 'Failed to save language. Please try again.');
-    } finally {
       isLoading.value = false;
     }
   }

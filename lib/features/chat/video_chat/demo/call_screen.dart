@@ -16,6 +16,7 @@ class VideoCallScreen extends StatefulWidget {
   final String roomName;
   final String token;
   final bool isVoice;
+  final String name;
 
   final String? contactName;
   final String? contactNumber;
@@ -32,6 +33,7 @@ class VideoCallScreen extends StatefulWidget {
     this.isVoice = false,
     this.contactName,
     this.contactNumber,
+    required this.name,
     this.contactInitials,
     this.roomId,
     this.ticketId,
@@ -48,20 +50,41 @@ class VideoCallScreen extends StatefulWidget {
 class _VideoCallScreenState extends State<VideoCallScreen> {
   late final CallViewModel _viewModel;
   final FloatingCallService _floatingService = FloatingCallService();
+  bool _hasOtherJoined = false;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = CallViewModel()
-      ..initCall(
-        roomName: widget.roomName,
-        token: widget.token,
-        isVoice: widget.isVoice,
-      );
+    _viewModel =
+        CallViewModel()..initCall(
+          roomName: widget.roomName,
+          token: widget.token,
+          isVoice: widget.isVoice,
+        );
+    _viewModel.addListener(_onParticipantsChanged);
+  }
+
+  void _onParticipantsChanged() {
+    if (_viewModel.isConnecting) return;
+
+    // Track if at least one remote participant joined
+    if (_viewModel.participants.length > 1) {
+      _hasOtherJoined = true;
+    }
+
+    // If other person left and only you remain → auto exit
+    if (_hasOtherJoined && _viewModel.participants.length <= 1) {
+      _floatingService.removeFloatingCall();
+      _viewModel.disconnect();
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
   }
 
   @override
   void dispose() {
+    _viewModel.removeListener(_onParticipantsChanged);
     if (!_floatingService.isFloating) {
       _viewModel.disconnect();
       _viewModel.dispose();
@@ -91,7 +114,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           child: Consumer<CallViewModel>(
             builder: (context, viewModel, child) {
               if (viewModel.isConnecting) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
               }
 
               // Voice aur Video dono same UI - sirf control bar different
@@ -118,16 +143,16 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         widget.isVoice
             ? _buildVoiceControlBar(viewModel)
             : ControlBar(
-          isMicOn: viewModel.isMicOn,
-          isVideoOn: viewModel.isVideoOn,
-          onMicPressed: viewModel.toggleMic,
-          onVideoPressed: viewModel.toggleVideo,
-          onEndCallPressed: () {
-            _floatingService.removeFloatingCall();
-            viewModel.disconnect();
-            if (Navigator.canPop(context)) Navigator.pop(context);
-          },
-        ),
+              isMicOn: viewModel.isMicOn,
+              isVideoOn: viewModel.isVideoOn,
+              onMicPressed: viewModel.toggleMic,
+              onVideoPressed: viewModel.toggleVideo,
+              onEndCallPressed: () {
+                _floatingService.removeFloatingCall();
+                viewModel.disconnect();
+                if (Navigator.canPop(context)) Navigator.pop(context);
+              },
+            ),
       ],
     );
   }
@@ -145,14 +170,17 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: SvgPicture.asset(AppImages.vc_profile_2user,),
+              child: SvgPicture.asset(AppImages.vc_profile_2user),
             ),
           ),
           Column(
             children: [
               Text(
-                widget.isVoice ? 'Voice Call' : 'Video Call',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                widget.name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -166,17 +194,25 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               color: AppColors.primarySuperLight.withOpacity(0.1),
               borderRadius: BorderRadius.circular(13),
             ),
-            child:
-            GestureDetector(
-                onTap: _minimizeToFloating,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SvgPicture.asset(AppImages.vc_import,),
-                )),
+            child: GestureDetector(
+              onTap: _minimizeToFloating,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SvgPicture.asset(AppImages.vc_import),
+              ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  String? _displayNameFor(CallParticipant cp, CallViewModel viewModel) {
+    final p = cp.participant;
+    final isLocal =
+        p is LocalParticipant || p == viewModel.room?.localParticipant;
+    if (isLocal) return null; // ParticipantTile will show 'You'
+    return widget.name; // Contact name for remote participants
   }
 
   Widget _buildCallLayout(CallViewModel viewModel) {
@@ -190,7 +226,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
     // 👇 1 USER
     if (count == 1) {
-      return ParticipantTile(participantState: participants[0]);
+      return ParticipantTile(
+        participantState: participants[0],
+        displayName: _displayNameFor(participants[0], viewModel),
+      );
     }
 
     // 👇 2 USERS (TOP-BOTTOM)
@@ -200,7 +239,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           return Expanded(
             child: Padding(
               padding: const EdgeInsets.all(4),
-              child: ParticipantTile(participantState: participants[index]),
+              child: ParticipantTile(
+                participantState: participants[index],
+                displayName: _displayNameFor(participants[index], viewModel),
+              ),
             ),
           );
         }),
@@ -215,7 +257,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             flex: 2,
             child: Padding(
               padding: const EdgeInsets.all(4),
-              child: ParticipantTile(participantState: participants[0]),
+              child: ParticipantTile(
+                participantState: participants[0],
+                displayName: _displayNameFor(participants[0], viewModel),
+              ),
             ),
           ),
           Expanded(
@@ -227,6 +272,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                     padding: const EdgeInsets.all(4),
                     child: ParticipantTile(
                       participantState: participants[index + 1],
+                      displayName: _displayNameFor(
+                        participants[index + 1],
+                        viewModel,
+                      ),
                     ),
                   ),
                 );
@@ -252,11 +301,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         childAspectRatio: 0.8,
       ),
       itemBuilder: (context, index) {
-        return ParticipantTile(participantState: participants[index]);
+        return ParticipantTile(
+          participantState: participants[index],
+          displayName: _displayNameFor(participants[index], viewModel),
+        );
       },
     );
   }
-
 
   // ============ VOICE CONTROL BAR (No Video Button) ============
   Widget _buildVoiceControlBar(CallViewModel viewModel) {

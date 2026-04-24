@@ -8,8 +8,9 @@ import '../../../../resources/multimedia_resources/resources.dart';
 
 class ParticipantTile extends StatelessWidget {
   final CallParticipant participantState;
+  final String? displayName;
 
-  const ParticipantTile({super.key, required this.participantState});
+  const ParticipantTile({super.key, required this.participantState, this.displayName});
 
   String _participantName(BuildContext context) {
     final p = participantState.participant;
@@ -19,6 +20,10 @@ class ParticipantTile extends StatelessWidget {
       return 'You';
     }
 
+    // Use explicitly passed displayName first
+    if (displayName != null && displayName!.isNotEmpty) {
+      return displayName!;
+    }
     if (p.name.isNotEmpty) {
       return p.name;
     }

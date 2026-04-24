@@ -31,6 +31,29 @@ class OrganizationHomeView extends StatefulWidget {
 class _OrganizationHomeViewState extends State<OrganizationHomeView> {
   String selectedUnit = 'Unit 1';
   int currentCarouselIndex = 0;
+  bool _isProcessingTap = false;
+
+  void _safeNavigate(Future<void> Function() navigate) async {
+    if (_isProcessingTap) return;
+
+    setState(() {
+      _isProcessingTap = true;
+    });
+
+    try {
+      await navigate();
+    } finally {
+      // Re-enable clicks after a short delay or when coming back
+      // Using a delay to ensure the transition has started/finished
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          setState(() {
+            _isProcessingTap = false;
+          });
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,51 +61,65 @@ class _OrganizationHomeViewState extends State<OrganizationHomeView> {
       viewModelBuilder: () => OrganizationHomeViewModel(),
       onViewModelReady: (OrganizationHomeViewModel model) => model.init(),
       disposeViewModel: false,
-      builder: (BuildContext context, OrganizationHomeViewModel model, Widget? child) {
-        return
-          RefreshIndicator(
-              onRefresh: model.refreshProfile,
-              child: Scaffold(
-          backgroundColor: AppColors.transparent,
-          appBar: _buildHeader(context, model),
-          body: Container(
-            color: AppColors.white,
-            child: SafeArea(
-              child: Stack(
-                children: [
-                  SizedBox(
-                    height: Get.height,
-                    width: Get.width,
-                    child: Column(
-                      children: [
-                        Container(
-                          height: Get.height * 0.09,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [AppColors.primaryLight, AppColors.primaryDark],
-                              begin: Alignment.centerRight,
-                              end: Alignment.centerLeft,
-                              stops: [0.08, 1],
+      builder: (
+        BuildContext context,
+        OrganizationHomeViewModel model,
+        Widget? child,
+      ) {
+        return RefreshIndicator(
+          onRefresh: model.refreshProfile,
+          child: Scaffold(
+            backgroundColor: AppColors.transparent,
+            appBar: _buildHeader(context, model),
+            body: Container(
+              color: AppColors.white,
+              child: SafeArea(
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      height: Get.height,
+                      width: Get.width,
+                      child: Column(
+                        children: [
+                          Container(
+                            height: Get.height * 0.09,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primaryLight,
+                                  AppColors.primaryDark,
+                                ],
+                                begin: Alignment.centerRight,
+                                end: Alignment.centerLeft,
+                                stops: [0.08, 1],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+
+                    Column(
+                      children: [
+                        Expanded(child: _buildContent(context, model)),
                       ],
                     ),
-                  ),
-
-                  Column(children: [Expanded(child: _buildContent(context, model))]),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ));
+        );
       },
     );
   }
 
-  PreferredSizeWidget _buildHeader(BuildContext context, OrganizationHomeViewModel model) {
+  PreferredSizeWidget _buildHeader(
+    BuildContext context,
+    OrganizationHomeViewModel model,
+  ) {
     String greeting = _getGreetingBasedOnTime();
-print("imge show:- ${model.profile?.profile?.profileImage}");
+    print("imge show:- ${model.profile?.profile?.profileImage}");
     return PreferredSize(
       preferredSize: Size.fromHeight(125 + MediaQuery.of(context).padding.top),
       child: Container(
@@ -133,7 +170,11 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                       children: [
                         Text(
                           greeting.toUpperCase(),
-                          style: TextStyle(color: AppColors.white.withValues(alpha: 0.9), fontSize: 12, fontWeight: FontWeight.w400),
+                          style: TextStyle(
+                            color: AppColors.white.withValues(alpha: 0.9),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
 
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -143,8 +184,26 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                           children: [
                             Expanded(
                               child: Text(
-                                (locator<ProfileService>().globalProfileModel?.profile?.user?.fullName?.toString().capitalizeWords  ?? model.user.name?.toString().capitalizeWords  ?? model.user.fullName?.toString().capitalizeWords  ?? 'User').toUpperCase(),
-                                style: TextStyle(color: AppColors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                                (locator<ProfileService>()
+                                            .globalProfileModel
+                                            ?.profile
+                                            ?.user
+                                            ?.fullName
+                                            ?.toString()
+                                            .capitalizeWords ??
+                                        model.user.name
+                                            ?.toString()
+                                            .capitalizeWords ??
+                                        model.user.fullName
+                                            ?.toString()
+                                            .capitalizeWords ??
+                                        'User')
+                                    .toUpperCase(),
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -165,7 +224,10 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                       {"value": "Unit 1", "display": "Unit 1"},
                       {"value": "Unit 2", "display": "Unit 2"},
                       {"value": "Unit 3", "display": "Unit 3"},
-                      {"value": "+ Add New", "display": LanguageService.get('add_new')},
+                      {
+                        "value": "+ Add New",
+                        "display": LanguageService.get('add_new'),
+                      },
                     ],
                     onChanged: (String? newValue) {
                       if (newValue != null) {
@@ -188,13 +250,21 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                         Container(
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.primarySuperLight.withValues(alpha: 0.04),
+                            color: AppColors.primarySuperLight.withValues(
+                              alpha: 0.04,
+                            ),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.white.withValues(alpha: 0.10)),
+                            border: Border.all(
+                              color: AppColors.white.withValues(alpha: 0.10),
+                            ),
                           ),
-                          child: Icon(Icons.notifications_outlined, color: AppColors.white, size: 20),
+                          child: Icon(
+                            Icons.notifications_outlined,
+                            color: AppColors.white,
+                            size: 20,
+                          ),
                         ),
-                       if (model.unreadNotificationCount > 0)
+                        if (model.unreadNotificationCount > 0)
                           Positioned(
                             right: -5,
                             top: -5,
@@ -203,7 +273,10 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                               decoration: BoxDecoration(
                                 color: AppColors.warningRed,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.white, width: 0.5),
+                                border: Border.all(
+                                  color: AppColors.white,
+                                  width: 0.5,
+                                ),
                               ),
                               constraints: BoxConstraints(
                                 minWidth: 18,
@@ -211,7 +284,9 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                               ),
                               child: Center(
                                 child: Text(
-                                  model.unreadNotificationCount > 99 ? '99+' : '${model.unreadNotificationCount}',
+                                  model.unreadNotificationCount > 99
+                                      ? '99+'
+                                      : '${model.unreadNotificationCount}',
                                   style: TextStyle(
                                     color: AppColors.white,
                                     fontSize: 9,
@@ -228,7 +303,11 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
               ),
             ),
 
-            SizedBox(width: 95, height: 56, child: Image.asset(AppImages.triqLogo3, fit: BoxFit.contain)),
+            SizedBox(
+              width: 95,
+              height: 56,
+              child: Image.asset(AppImages.triqLogo3, fit: BoxFit.contain),
+            ),
             // SizedBox(height: 12),
           ],
         ),
@@ -238,7 +317,10 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
 
   Widget _buildDefaultAvatar() {
     return Container(
-      decoration: BoxDecoration(color: AppColors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.2),
+        shape: BoxShape.circle,
+      ),
       child: Icon(Icons.person, color: AppColors.white, size: 24),
     );
   }
@@ -248,12 +330,19 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
       padding: EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [_buildDashboardCards(context, model), SizedBox(height: 30), _buildPromotionalBanner(context)],
+        children: [
+          _buildDashboardCards(context, model),
+          SizedBox(height: 30),
+          _buildPromotionalBanner(context),
+        ],
       ),
     );
   }
 
-  Widget _buildDashboardCards(BuildContext context, OrganizationHomeViewModel model) {
+  Widget _buildDashboardCards(
+    BuildContext context,
+    OrganizationHomeViewModel model,
+  ) {
     // if (model.isLoading) {
     //   return Center(child: LottieBuilder.asset("assets/lotties/globe.json"));
     // }
@@ -303,14 +392,24 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
         color: AppColors.mediumPeriwinkle,
         route: Routes.ticketsList,
       ),
-      DashboardCardData(title: LanguageService.get('tasks'), icon: AppImages.tasks, color: AppColors.redbackground, route: Routes.tasks),
+      DashboardCardData(
+        title: LanguageService.get('tasks'),
+        icon: AppImages.tasks,
+        color: AppColors.redbackground,
+        route: Routes.tasks,
+      ),
       DashboardCardData(
         title: LanguageService.get('machine_suppliers'),
         icon: AppImages.machineSuppliers,
         color: AppColors.skyBlue,
         route: Routes.machineSupplier,
       ),
-      DashboardCardData(title: LanguageService.get('my_teams'), icon: AppImages.myTeam, color: AppColors.greenbackground, route: Routes.teams),
+      DashboardCardData(
+        title: LanguageService.get('my_teams'),
+        icon: AppImages.myTeam,
+        color: AppColors.greenbackground,
+        route: Routes.teams,
+      ),
       DashboardCardData(
         title: LanguageService.get('pi_invoice'),
         icon: AppImages.piInvoice,
@@ -328,7 +427,10 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
     ];
   }
 
-  Widget _buildMainActionCard(BuildContext context, OrganizationHomeViewModel model) {
+  Widget _buildMainActionCard(
+    BuildContext context,
+    OrganizationHomeViewModel model,
+  ) {
     final List<DashboardCardData> mainActions = _getMainActionsForProcessor();
 
     return Container(
@@ -336,7 +438,13 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.black.withValues(alpha: 0.05), blurRadius: 10, offset: Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,20 +499,35 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
     ];
   }
 
-  Widget _buildSecondaryFeaturesCard(BuildContext context, OrganizationHomeViewModel model) {
-    final List<DashboardCardData> secondaryFeatures = _getSecondaryFeaturesForProcessor();
+  Widget _buildSecondaryFeaturesCard(
+    BuildContext context,
+    OrganizationHomeViewModel model,
+  ) {
+    final List<DashboardCardData> secondaryFeatures =
+        _getSecondaryFeaturesForProcessor();
 
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.black.withValues(alpha: 0.05), blurRadius: 10, offset: Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: GridView.builder(
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.78),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.78,
+        ),
         itemCount: secondaryFeatures.length,
         itemBuilder: (context, index) {
           final card = secondaryFeatures[index];
@@ -414,36 +537,48 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
     );
   }
 
-  Widget _buildSecondaryFeatureCard(BuildContext context, DashboardCardData card, int index, OrganizationHomeViewModel model) {
+  Widget _buildSecondaryFeatureCard(
+    BuildContext context,
+    DashboardCardData card,
+    int index,
+    OrganizationHomeViewModel model,
+  ) {
     return GestureDetector(
           onTap: () {
-            // Navigate based on the card route
-            switch (card.route) {
-              case Routes.analytics:
-                Fluttertoast.showToast(msg: 'Coming Soon');
-                break;
-              case Routes.machinesList:
-                model.navigateToMachineRecords();
-                break;
-              case Routes.machineOverview:
-                model.navigateToMachineOverview();
-                break;
-              case Routes.feedback:
-                Fluttertoast.showToast(msg: 'Coming Soon');
-                break;
-              case Routes.installation:
-                Fluttertoast.showToast(msg: 'Coming Soon');
-                break;
-              case Routes.feedbackSurvey:
-                Fluttertoast.showToast(msg: 'Coming Soon');
-                break;
-              default:
-                // Handle unknown routes
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('${card.title} - Feature not implemented yet'), duration: Duration(seconds: 2)));
-                break;
-            }
+            _safeNavigate(() async {
+              // Navigate based on the card route
+              switch (card.route) {
+                case Routes.analytics:
+                  Fluttertoast.showToast(msg: 'Coming Soon');
+                  break;
+                case Routes.machinesList:
+                  model.navigateToMachineRecords();
+                  break;
+                case Routes.machineOverview:
+                  model.navigateToMachineOverview();
+                  break;
+                case Routes.feedback:
+                  Fluttertoast.showToast(msg: 'Coming Soon');
+                  break;
+                case Routes.installation:
+                  Fluttertoast.showToast(msg: 'Coming Soon');
+                  break;
+                case Routes.feedbackSurvey:
+                  Fluttertoast.showToast(msg: 'Coming Soon');
+                  break;
+                default:
+                  // Handle unknown routes
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${card.title} - Feature not implemented yet',
+                      ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  break;
+              }
+            });
           },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -453,15 +588,30 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
               Container(
                 width: 50,
                 height: 50,
-                decoration: BoxDecoration(color: card.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(
+                  color: card.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 padding: EdgeInsets.all(10),
-                child: Center(child: Image.asset(card.icon, width: 25, height: 25, color: card.color)),
+                child: Center(
+                  child: Image.asset(
+                    card.icon,
+                    width: 25,
+                    height: 25,
+                    color: card.color,
+                  ),
+                ),
               ),
               SizedBox(height: 8),
               // Title
               Text(
                 card.title,
-                style: TextStyle(color: AppColors.black, fontSize: 9, fontWeight: FontWeight.w700, height: 1.1),
+                style: TextStyle(
+                  color: AppColors.black,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -471,56 +621,76 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
         )
         .animate(delay: (index * 100).ms)
         .fadeIn(duration: 400.ms)
-        .slideY(begin: 0.3, end: 0, curve: Curves.easeOutQuad, duration: Duration(milliseconds: 200 + (index * 50)));
+        .slideY(
+          begin: 0.3,
+          end: 0,
+          curve: Curves.easeOutQuad,
+          duration: Duration(milliseconds: 200 + (index * 50)),
+        );
   }
 
-  Widget _buildDashboardCard(BuildContext context, DashboardCardData card, int index, OrganizationHomeViewModel model) {
+  Widget _buildDashboardCard(
+    BuildContext context,
+    DashboardCardData card,
+    int index,
+    OrganizationHomeViewModel model,
+  ) {
     final bool showRedDot =
         (card.route == Routes.tasks &&
             (model.dashboard?.task.hasNew ?? false)) ||
-            (card.route == Routes.ticketsList &&
-                (model.dashboard?.ticket.hasNew ?? false)) ||
-            (card.route == Routes.myCustomers &&
-                (model.dashboard?.customer.hasNew ?? false));
+        (card.route == Routes.ticketsList &&
+            (model.dashboard?.ticket.hasNew ?? false)) ||
+        (card.route == Routes.myCustomers &&
+            (model.dashboard?.customer.hasNew ?? false));
     return GestureDetector(
-      onTap: ()async  {
-        // Navigate based on the card route
-        switch (card.route) {
-          case Routes.ticketsList:
-            await model.markFeatureSeen("ticket"); // 🔥 API CALL
-            model.navigateToTickets();
-            break;
-          case Routes.teams:
-            Navigator.of(context).pushNamed(Routes.teams);
-            break;
-          case Routes.tasks:
-            await model.markFeatureSeen("task"); // 🔥 API CALL
-            Navigator.of(context).pushNamed(Routes.tasks);
-            break;
-          case Routes.invoice:
-            Fluttertoast.showToast(msg: 'Coming Soon');
-            break;
-          case Routes.machineSupplier:
-            Navigator.of(context).pushNamed(Routes.machineSupplier);
-            break;
-          case Routes.glassFlowSystem:
-            Fluttertoast.showToast(msg: 'Coming Soon');
-            break;
-          case Routes.myCustomers:
-            await model.markFeatureSeen("customer"); // 🔥 API CALL
-            Navigator.of(context).pushNamed(Routes.myCustomers);
-            break;
-          default:
-            // Handle unknown routes or show coming soon message
-            if (card.isComingSoon) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${card.title} - Coming Soon!'), duration: Duration(seconds: 2)));
-            }
-            break;
-        }
+      onTap: () async {
+        _safeNavigate(() async {
+          // Navigate based on the card route
+          switch (card.route) {
+            case Routes.ticketsList:
+              await model.markFeatureSeen("ticket"); // 🔥 API CALL
+              model.navigateToTickets();
+              break;
+            case Routes.teams:
+              Navigator.of(context).pushNamed(Routes.teams);
+              break;
+            case Routes.tasks:
+              await model.markFeatureSeen("task"); // 🔥 API CALL
+              Navigator.of(context).pushNamed(Routes.tasks);
+              break;
+            case Routes.invoice:
+              Fluttertoast.showToast(msg: 'Coming Soon');
+              break;
+            case Routes.machineSupplier:
+              Navigator.of(context).pushNamed(Routes.machineSupplier);
+              break;
+            case Routes.glassFlowSystem:
+              Fluttertoast.showToast(msg: 'Coming Soon');
+              break;
+            case Routes.myCustomers:
+              await model.markFeatureSeen("customer"); // 🔥 API CALL
+              Navigator.of(context).pushNamed(Routes.myCustomers);
+              break;
+            default:
+              // Handle unknown routes or show coming soon message
+              if (card.isComingSoon) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${card.title} - Coming Soon!'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+              break;
+          }
+        });
       },
       child: Container(
             padding: EdgeInsets.all(10),
-            decoration: BoxDecoration(color: card.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(13)),
+            decoration: BoxDecoration(
+              color: card.color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(13),
+            ),
             child: Stack(
               fit: StackFit.expand,
               clipBehavior: Clip.none,
@@ -531,9 +701,19 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                   children: [
                     // Icon container
                     Container(
-                      decoration: BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                      ),
                       padding: EdgeInsets.all(10),
-                      child: Center(child: Image.asset(card.icon, width: 25, height: 25, color: card.color)),
+                      child: Center(
+                        child: Image.asset(
+                          card.icon,
+                          width: 25,
+                          height: 25,
+                          color: card.color,
+                        ),
+                      ),
                     ),
 
                     SizedBox(height: 8),
@@ -542,7 +722,12 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                     Flexible(
                       child: Text(
                         card.title,
-                        style: TextStyle(color: AppColors.black, fontSize: 9, fontWeight: FontWeight.w700, height: 1.1),
+                        style: TextStyle(
+                          color: AppColors.black,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
+                        ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -553,22 +738,25 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                 if (showRedDot)
                   Positioned(
                     top: -13,
-                    right:-13,
+                    right: -13,
                     child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: AppColors.warningRed,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.white, width: 1.5),
-                      ),
-                    )
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: AppColors.warningRed,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.white,
+                              width: 1.5,
+                            ),
+                          ),
+                        )
                         .animate(onPlay: (controller) => controller.repeat())
                         .scale(
-                      duration: 900.ms,
-                      begin: Offset(1, 1),
-                      end: Offset(1.25, 1.25),
-                    )
+                          duration: 900.ms,
+                          begin: Offset(1, 1),
+                          end: Offset(1.25, 1.25),
+                        )
                         .fade(begin: 1, end: 0.6),
                   ),
                 // Coming Soon badge
@@ -578,10 +766,17 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                     right: -16,
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: AppColors.primaryDark.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryDark.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                       child: Text(
                         LanguageService.get('coming_soon'),
-                        style: TextStyle(color: AppColors.primaryDark, fontSize: 8, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          color: AppColors.primaryDark,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -590,7 +785,12 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
           )
           .animate(delay: (index * 100).ms)
           .fadeIn(duration: 400.ms)
-          .slideY(begin: 0.3, end: 0, curve: Curves.easeOutQuad, duration: Duration(milliseconds: 200 + (index * 50))),
+          .slideY(
+            begin: 0.3,
+            end: 0,
+            curve: Curves.easeOutQuad,
+            duration: Duration(milliseconds: 200 + (index * 50)),
+          ),
     );
   }
 
@@ -601,21 +801,32 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
         'subtitle': LanguageService.get('limited_time_only'),
         'description': LanguageService.get('up_to_80_off'),
         'colors': [AppColors.yellow, AppColors.yellow, AppColors.yellow],
-        'imageUrl': 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=200&fit=crop',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=200&fit=crop',
       },
       {
         'title': LanguageService.get('new_features'),
         'subtitle': LanguageService.get('coming_soon_feature'),
         'description': LanguageService.get('enhanced_experience'),
-        'colors': [AppColors.bluebackground, AppColors.greenbackground, AppColors.darkGreenBack],
-        'imageUrl': 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=200&fit=crop',
+        'colors': [
+          AppColors.bluebackground,
+          AppColors.greenbackground,
+          AppColors.darkGreenBack,
+        ],
+        'imageUrl':
+            'https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=200&fit=crop',
       },
       {
         'title': LanguageService.get('premium_support'),
         'subtitle': LanguageService.get('available_now'),
         'description': LanguageService.get('24_7_assistance'),
-        'colors': [AppColors.bluebackground, AppColors.redbackground, AppColors.greenbackground],
-        'imageUrl': 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=200&fit=crop',
+        'colors': [
+          AppColors.bluebackground,
+          AppColors.redbackground,
+          AppColors.greenbackground,
+        ],
+        'imageUrl':
+            'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=200&fit=crop',
       },
     ];
 
@@ -649,7 +860,11 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: item['colors']),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: item['colors'],
+                              ),
                             ),
                           );
                         },
@@ -671,7 +886,10 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
                   margin: EdgeInsets.symmetric(horizontal: 4.0),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
-                    color: currentCarouselIndex == entry.key ? AppColors.primary : AppColors.gray.withValues(alpha: 0.4),
+                    color:
+                        currentCarouselIndex == entry.key
+                            ? AppColors.primary
+                            : AppColors.gray.withValues(alpha: 0.4),
                   ),
                 );
               }).toList(),
@@ -693,15 +911,14 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
     }
   }
 
-
   Widget _buildDropdownFormField(
-      BuildContext context, {
-        required String? value,
-        required String label,
-        required List<Map<String, String>> items,
-        required Function(String?) onChanged,
-        String? Function(String?)? validator,
-      }) {
+    BuildContext context, {
+    required String? value,
+    required String label,
+    required List<Map<String, String>> items,
+    required Function(String?) onChanged,
+    String? Function(String?)? validator,
+  }) {
     return Container(
       padding: EdgeInsets.all(5),
       decoration: BoxDecoration(
@@ -738,58 +955,58 @@ print("imge show:- ${model.profile?.profile?.profileImage}");
           elevation: 0,
           borderRadius: BorderRadius.circular(8),
           items:
-          items.map<DropdownMenuItem<String>>((item) {
-            bool isAddNew = item['value'] == '+ Add New';
-            bool isSelected = item['value'] == value;
+              items.map<DropdownMenuItem<String>>((item) {
+                bool isAddNew = item['value'] == '+ Add New';
+                bool isSelected = item['value'] == value;
 
-            return DropdownMenuItem<String>(
-              value: item['value'],
-              child:
-              isAddNew
-                  ? Row(
-                children: [
-                  Icon(
-                    Icons.add,
-                    color: AppColors.primary,
-                    size: 16,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    item['display']!,
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              )
-                  : Text(
-                item['display']!,
-                style: TextStyle(
-                  color:
-                  isSelected ? AppColors.black : AppColors.gray,
-                  fontWeight:
-                  isSelected
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  fontSize: 10,
-                ),
-              ),
-            );
-          }).toList(),
+                return DropdownMenuItem<String>(
+                  value: item['value'],
+                  child:
+                      isAddNew
+                          ? Row(
+                            children: [
+                              Icon(
+                                Icons.add,
+                                color: AppColors.primary,
+                                size: 16,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                item['display']!,
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          )
+                          : Text(
+                            item['display']!,
+                            style: TextStyle(
+                              color:
+                                  isSelected ? AppColors.black : AppColors.gray,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                              fontSize: 10,
+                            ),
+                          ),
+                );
+              }).toList(),
         ),
       ),
     );
   }
 
   Widget _buildProfileImage(OrganizationHomeViewModel model) {
-
     String? imageUrl;
-    if (model.profile?.profile?.profileImage != null && (model.profile!.profile?.profileImage??'').isNotEmpty) {
+    if (model.profile?.profile?.profileImage != null &&
+        (model.profile!.profile?.profileImage ?? '').isNotEmpty) {
       String baseUrl = Configurations().url;
-      if (model.profile!.profile?.profileImage?.startsWith('/')??false) {
-        imageUrl = baseUrl + ((model.profile?.profile?.profileImage)??'');
+      if (model.profile!.profile?.profileImage?.startsWith('/') ?? false) {
+        imageUrl = baseUrl + ((model.profile?.profile?.profileImage) ?? '');
       } else {
         imageUrl = '$baseUrl/${model.profile?.profile?.profileImage}';
       }
@@ -810,7 +1027,13 @@ class DashboardCardData {
   final String route;
   final bool isComingSoon;
 
-  DashboardCardData({required this.title, required this.icon, required this.color, required this.route, this.isComingSoon = false});
+  DashboardCardData({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.route,
+    this.isComingSoon = false,
+  });
 }
 
 class HomeCardShimmer extends StatelessWidget {
@@ -829,7 +1052,14 @@ class HomeCardShimmer extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: AppColors.gray.withValues(alpha: 0.2), blurRadius: 3, offset: const Offset(2, 2), spreadRadius: 0)],
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.gray.withValues(alpha: 0.2),
+                blurRadius: 3,
+                offset: const Offset(2, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -838,8 +1068,22 @@ class HomeCardShimmer extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(width: 100, height: 16, decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(4))),
-                  Container(width: 24, height: 24, decoration: BoxDecoration(color: AppColors.white, shape: BoxShape.circle)),
+                  Container(
+                    width: 100,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ],
               ),
               SizedBox(height: 12),
@@ -848,12 +1092,29 @@ class HomeCardShimmer extends StatelessWidget {
               Container(
                 width: double.infinity,
                 height: 10,
-                decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
               SizedBox(height: 8),
-              Container(width: 150, height: 10, decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(4))),
+              Container(
+                width: 150,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
               SizedBox(height: 8),
-              Container(width: 120, height: 10, decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(4))),
+              Container(
+                width: 120,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
 
               const Spacer(),
 
@@ -864,7 +1125,10 @@ class HomeCardShimmer extends StatelessWidget {
                   margin: EdgeInsets.only(top: 12),
                   width: 80,
                   height: 24,
-                  decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
             ],
@@ -900,7 +1164,10 @@ class CustomSvgIcon extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: isFilled ? backgroundColor : Colors.transparent,
-        borderRadius: backgroundType == "circle" ? BorderRadius.circular(size / 2) : BorderRadius.circular(size / 4),
+        borderRadius:
+            backgroundType == "circle"
+                ? BorderRadius.circular(size / 2)
+                : BorderRadius.circular(size / 4),
         border: !isFilled ? Border.all(color: backgroundColor, width: 2) : null,
       ),
       child: Center(
@@ -908,7 +1175,10 @@ class CustomSvgIcon extends StatelessWidget {
           'assets/svg/$svgName',
           width: size * 0.5,
           height: size * 0.5,
-          colorFilter: iconColor != null ? ColorFilter.mode(iconColor!, BlendMode.srcIn) : null,
+          colorFilter:
+              iconColor != null
+                  ? ColorFilter.mode(iconColor!, BlendMode.srcIn)
+                  : null,
         ),
       ),
     );

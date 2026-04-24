@@ -38,12 +38,10 @@ class AddEmployeeViewAttributes {
 }
 
 class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
-   AddEmployeeView({Key? key, required this.attributes}) : super(key: key);
+  AddEmployeeView({Key? key, required this.attributes}) : super(key: key);
 
   final AddEmployeeViewAttributes attributes;
   final _formKey = GlobalKey<FormState>();
-
-
 
   @override
   Widget builder(
@@ -51,12 +49,13 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
     AddEmployeeViewModel viewModel,
     Widget? child,
   ) {
-
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
         title: Text(
-          viewModel.isPartialEdit?LanguageService.get('add_employee'): viewModel.isViewMode
+          viewModel.isPartialEdit
+              ? LanguageService.get('add_employee')
+              : viewModel.isViewMode
               ? LanguageService.get('employee_details')
               : viewModel.isEditMode
               ? LanguageService.get('edit_employee_detail')
@@ -73,7 +72,8 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
           ),
         ),
       ),
-      body: viewModel.isBusy
+      body:
+          viewModel.isBusy
               ? Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
               )
@@ -121,32 +121,33 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                           ],
                                         ),
 
-                                          child: ClipOval(
-                                            child:
-                                            viewModel.profilePhotoUrl != null
-                                                ?Image.network(
-                                              '${viewModel.profilePhotoUrl}'
-                                                  .prefixWithBaseUrl,
-                                              width: 50,
-                                              height: 50,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (
-                                                  context,
-                                                  error,
-                                                  stackTrace,
-                                                  ) {
-                                                return Image.asset(
-                                                  AppImages.team_default,
-                                                  width: 50,
-                                                  height: 50,
-                                                );
-                                              },
-                                            ): Image.asset(
-                                              AppImages.team_default,
-                                              width: 50,
-                                              height: 50,
-                                            ),
-                                          )
+                                        child: ClipOval(
+                                          child:
+                                              viewModel.profilePhotoUrl != null
+                                                  ? Image.network(
+                                                    '${viewModel.profilePhotoUrl}'
+                                                        .prefixWithBaseUrl,
+                                                    width: 50,
+                                                    height: 50,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Image.asset(
+                                                        AppImages.team_default,
+                                                        width: 50,
+                                                        height: 50,
+                                                      );
+                                                    },
+                                                  )
+                                                  : Image.asset(
+                                                    AppImages.team_default,
+                                                    width: 50,
+                                                    height: 50,
+                                                  ),
+                                        ),
                                       ),
                                       SizedBox(width: 20),
                                       Expanded(
@@ -287,7 +288,6 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   return null;
                                 },
                               ),
-
                             ),
                             // _FormSection(
                             //   label: LanguageService.get('phone_number'),
@@ -363,7 +363,6 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                 keyboardType: TextInputType.emailAddress,
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
                                 validator: (value) {
-
                                   if (value == null || value.isEmpty) {
                                     return 'Please Enter Mail';
                                   }
@@ -458,7 +457,9 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                               label: LanguageService.get('department'),
                               child: CustomDepartmentDropdown(
                                 viewModel: viewModel,
-                                isReadOnly: viewModel.isViewMode && viewModel.isPartialEdit==false,
+                                isReadOnly:
+                                    viewModel.isViewMode &&
+                                    viewModel.isPartialEdit == false,
                               ),
                             ),
                             // _FormSection(
@@ -535,16 +536,15 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                               label: 'Designation',
                               child: CustomDesignationDropdown(
                                 viewModel: viewModel,
-                                isReadOnly: viewModel.isViewMode && viewModel.isPartialEdit==false,
+                                isReadOnly:
+                                    viewModel.isViewMode &&
+                                    viewModel.isPartialEdit == false,
                               ),
                             ),
                             AppGaps.h16,
 
-
-                           //  if(viewModel.selectedDesignation?.name.toLowerCase()=='machine operator')
-                           // ...[
-
-
+                            //  if(viewModel.selectedDesignation?.name.toLowerCase()=='machine operator')
+                            // ...[
                             _FormSection(
                               label: 'assign_machine'.lang,
                               child: MachineDropdownFormField(
@@ -555,7 +555,10 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                 // ✨ NEW: Conditional validator based on designation
                                 validator: (value) {
                                   // Check if designation contains 'hr' (case insensitive)
-                                  final designationName = viewModel.selectedDepartment?.name.toLowerCase() ?? '';
+                                  final designationName =
+                                      viewModel.selectedDepartment?.name
+                                          .toLowerCase() ??
+                                      '';
                                   final isHR = designationName.contains('hr');
 
                                   // If NOT HR and machine is not selected, show error
@@ -569,7 +572,7 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                             ),
 
                             AppGaps.h16,
-                           //],
+                            //],
                             _FormSection(
                               label: 'Country',
                               child: CommonCountryPicker(
@@ -600,11 +603,14 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
                               ),
                             ),
-                            if (viewModel.selectedDesignation?.name.toLowerCase() != 'ceo') ...[
+                            if (viewModel.selectedDesignation?.name
+                                    .toLowerCase() !=
+                                'ceo') ...[
                               AppGaps.h16,
                               _FormSection(
                                 label: LanguageService.get('report_to'),
-                                child: viewModel.isLoadingReportTo
+                                child:
+                                    viewModel.isLoadingReportTo
                                         ? Container(
                                           height: 56,
                                           alignment: Alignment.center,
@@ -612,73 +618,107 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                             strokeWidth: 2,
                                           ),
                                         )
-                                        :
-                                CustomDropdownFormField<String>(
-                                  key: ValueKey('report_to_${viewModel.reportToList.length}'),
-                                  isExpanded: true,
-                                  hintText: viewModel.selectedReportToIds.isEmpty
-                                      ? LanguageService.get('report_to')
-                                      : "${viewModel.selectedReportToIds.length} selected",
+                                        : CustomDropdownFormField<String>(
+                                          key: ValueKey(
+                                            'report_to_${viewModel.reportToList.length}',
+                                          ),
+                                          isExpanded: true,
+                                          hintText:
+                                              viewModel
+                                                      .selectedReportToIds
+                                                      .isEmpty
+                                                  ? LanguageService.get(
+                                                    'report_to',
+                                                  )
+                                                  : "${viewModel.selectedReportToIds.length} selected",
 
-                                  value: null,
+                                          value: null,
 
-                                  items: viewModel.reportToList.map((Employee emp) {
-                                    return DropdownMenuItem<String>(
-                                      value: emp.id,
-                                      enabled: false,
+                                          items:
+                                              viewModel.reportToList.map((
+                                                Employee emp,
+                                              ) {
+                                                return DropdownMenuItem<String>(
+                                                  value: emp.id,
+                                                  enabled: false,
 
-                                      child: StatefulBuilder(
-                                        builder: (context, menuSetState) {
+                                                  child: StatefulBuilder(
+                                                    builder: (
+                                                      context,
+                                                      menuSetState,
+                                                    ) {
+                                                      final isSelected = viewModel
+                                                          .selectedReportToIds
+                                                          .contains(emp.id);
 
-                                          final isSelected =
-                                          viewModel.selectedReportToIds.contains(emp.id);
+                                                      return InkWell(
+                                                        onTap: () {
+                                                          viewModel
+                                                              .toggleReportTo(
+                                                                emp.id!,
+                                                              );
+                                                          menuSetState(() {});
+                                                        },
+                                                        child: Row(
+                                                          children: [
+                                                            Checkbox(
+                                                              value: isSelected,
+                                                              onChanged: (val) {
+                                                                viewModel
+                                                                    .toggleReportTo(
+                                                                      emp.id!,
+                                                                    );
+                                                                menuSetState(
+                                                                  () {},
+                                                                );
+                                                              },
+                                                            ),
 
-                                          return InkWell(
-                                            onTap: () {
-                                              viewModel.toggleReportTo(emp.id!);
-                                              menuSetState(() {});
-                                            },
-                                            child: Row(
-                                              children: [
-                                                Checkbox(
-                                                  value: isSelected,
-                                                  onChanged: (val) {
-                                                    viewModel.toggleReportTo(emp.id!);
-                                                    menuSetState(() {});
-                                                  },
-                                                ),
-
-                                                Expanded(
-                                                  child: Text(
-                                                    "${capitalize(emp.name ?? 'Unknown')} (${emp.designation?.name ?? 'N/A'})",
-                                                    style: TextStyle(fontSize: 14),
+                                                            Expanded(
+                                                              child: Text(
+                                                                "${capitalize(emp.name ?? 'Unknown')} (${emp.designation?.name ?? 'N/A'})",
+                                                                style:
+                                                                    TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                    ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  }).toList(),
+                                                );
+                                              }).toList(),
 
-                                  onChanged: viewModel.isViewMode || viewModel.reportToList.isEmpty
-                                      ? null
-                                      : (_) {},
+                                          onChanged:
+                                              viewModel.isViewMode ||
+                                                      viewModel
+                                                          .reportToList
+                                                          .isEmpty
+                                                  ? null
+                                                  : (_) {},
 
-                                  label: '',
-                                  validator: (value) {
-                                    if (viewModel.selectedDesignation?.name != 'CEO' &&
-                                        !viewModel.isViewMode &&
-                                        viewModel.reportToList.isNotEmpty) {
-
-                                      if (viewModel.selectedReportToIds.isEmpty) {
-                                        return 'Please select report to';
-                                      }
-                                    }
-                                    return null;
-                                  },
-                                )
+                                          label: '',
+                                          validator: (value) {
+                                            if (viewModel
+                                                        .selectedDesignation
+                                                        ?.name !=
+                                                    'CEO' &&
+                                                !viewModel.isViewMode &&
+                                                viewModel
+                                                    .reportToList
+                                                    .isNotEmpty) {
+                                              if (viewModel
+                                                  .selectedReportToIds
+                                                  .isEmpty) {
+                                                return 'Please select report to';
+                                              }
+                                            }
+                                            return null;
+                                          },
+                                        ),
                                 // CustomDropdownFormField<String>(
                                 //           key: ValueKey('report_to_${viewModel.reportToList.length}'),
                                 //           hintText: viewModel.reportToList.isEmpty
@@ -770,23 +810,28 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                               child: CustomDropdownFormField<String>(
                                 hintText: LanguageService.get('full_time'),
                                 value: viewModel.selectedEmploymentType,
-                                items: viewModel.employmentTypes.map((String type) {
-                                  return DropdownMenuItem<String>(
-                                    value: type,
-                                    child: Text(type),
-                                  );
-                                }).toList(),
-                                onChanged: viewModel.isViewMode
-                                    ? null
-                                    : viewModel.updateSelectedEmploymentType,
+                                items:
+                                    viewModel.employmentTypes.map((
+                                      String type,
+                                    ) {
+                                      return DropdownMenuItem<String>(
+                                        value: type,
+                                        child: Text(type),
+                                      );
+                                    }).toList(),
+                                onChanged:
+                                    viewModel.isViewMode
+                                        ? null
+                                        : viewModel
+                                            .updateSelectedEmploymentType,
                                 label: '',
                                 validator:
                                     (value) =>
-                                value == null
-                                    ? LanguageService.get(
-                                  'please_select_employment_type',
-                                )
-                                    : null,
+                                        value == null
+                                            ? LanguageService.get(
+                                              'please_select_employment_type',
+                                            )
+                                            : null,
                               ),
                             ),
                             AppGaps.h16,
@@ -798,34 +843,35 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                     child: SizedBox(
                                       height: 60,
                                       child: CustomDropdownFormField<String>(
-
                                         hintText: LanguageService.get(
                                           'shift_timing',
                                         ),
-                                        style: TextStyle(fontSize: 14,color: AppColors.black),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AppColors.black,
+                                        ),
                                         value: viewModel.shiftTiming,
                                         items:
-                                        viewModel.shiftOptions.map((
-                                            String type,
+                                            viewModel.shiftOptions.map((
+                                              String type,
                                             ) {
-                                          return DropdownMenuItem<String>(
-
-                                            value: type,
-                                            child: Text(type),
-                                          );
-                                        }).toList(),
+                                              return DropdownMenuItem<String>(
+                                                value: type,
+                                                child: Text(type),
+                                              );
+                                            }).toList(),
                                         onChanged:
-                                        viewModel.isViewMode
-                                            ? null // ✅ DISABLED
-                                            : viewModel.updateSelectedShift,
+                                            viewModel.isViewMode
+                                                ? null // ✅ DISABLED
+                                                : viewModel.updateSelectedShift,
                                         label: '',
                                         validator:
                                             (value) =>
-                                        value == null
-                                            ? LanguageService.get(
-                                          'please_select_employment_type',
-                                        )
-                                            : null,
+                                                value == null
+                                                    ? LanguageService.get(
+                                                      'please_select_employment_type',
+                                                    )
+                                                    : null,
                                       ),
                                     ),
                                   ),
@@ -837,13 +883,19 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                     child: SizedBox(
                                       height: 55,
                                       child: CommonTextField(
-
-                                        controller: viewModel.startDateTimeController,
-                                        placeholder: LanguageService.get('select_date'),
+                                        controller:
+                                            viewModel.startDateTimeController,
+                                        placeholder: LanguageService.get(
+                                          'select_date',
+                                        ),
                                         readOnly: true,
-                                        onTap: viewModel.isViewMode
-                                            ? null
-                                            : () => viewModel.selectStartDateTime(context),
+                                        onTap:
+                                            viewModel.isViewMode
+                                                ? null
+                                                : () => viewModel
+                                                    .selectStartDateTime(
+                                                      context,
+                                                    ),
                                         suffixIcon: Icon(
                                           Icons.calendar_today_outlined,
                                           size: 20,
@@ -851,11 +903,11 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                         ),
                                         validator:
                                             (value) =>
-                                        value?.isEmpty == true
-                                            ? LanguageService.get(
-                                          'please_select_joining_date',
-                                        )
-                                            : null,
+                                                value?.isEmpty == true
+                                                    ? LanguageService.get(
+                                                      'please_select_joining_date',
+                                                    )
+                                                    : null,
                                       ),
                                     ),
                                   ),
@@ -911,28 +963,30 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                     viewModel,
 
                                     viewModel.country,
-                                        (value) {
-                                          viewModel.updateCountry(value);
-                                          viewModel.onCountryChanged(value ?? 'India');
+                                    (value) {
+                                      viewModel.updateCountry(value);
+                                      viewModel.onCountryChanged(
+                                        value ?? 'India',
+                                      );
                                     },
-                                     false,
+                                    false,
                                   ),
                                 ),
                                 const SizedBox(width: 15),
                                 Expanded(
                                   child: AbsorbPointer(
-                                    absorbing:false,
+                                    absorbing: false,
                                     child: buildStateDropdown(
                                       context,
                                       viewModel,
                                       viewModel.selectedState,
-                                          (value) => viewModel.updateState(value),
+                                      (value) => viewModel.updateState(value),
                                       false,
-                                      viewModel.availableStates, // Pass corporate states list
+                                      viewModel
+                                          .availableStates, // Pass corporate states list
                                     ),
                                   ),
                                 ),
-
                               ],
                             ),
                             const SizedBox(height: 15),
@@ -942,19 +996,24 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                               children: [
                                 Expanded(
                                   child: CommonTextField(
-                                    enabled:true,
+                                    enabled: true,
                                     controller: viewModel.cityController,
                                     label: LanguageService.get("current_city"),
-                                    placeholder: LanguageService.get("current_city"),
-                                    readOnly:  false,
+                                    placeholder: LanguageService.get(
+                                      "current_city",
+                                    ),
+                                    readOnly: false,
                                     contentPadding: EdgeInsets.all(12),
                                     textStyle: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                     ),
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) {
-                                        return LanguageService.get("please_enter_city");
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return LanguageService.get(
+                                          "please_enter_city",
+                                        );
                                       }
                                       return null;
                                     },
@@ -967,16 +1026,21 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                     enabled: true,
                                     controller: viewModel.pinCodeController,
                                     label: LanguageService.get("pin_code"),
-                                    placeholder: LanguageService.get("pin_code"),
-                                    readOnly:  false,
+                                    placeholder: LanguageService.get(
+                                      "pin_code",
+                                    ),
+                                    readOnly: false,
                                     contentPadding: EdgeInsets.all(12),
                                     textStyle: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                     ),
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) {
-                                        return LanguageService.get("please_enter_pin_code");
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return LanguageService.get(
+                                          "please_enter_pin_code",
+                                        );
                                       }
                                       return null;
                                     },
@@ -1107,7 +1171,8 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                             _FormSection(
                               label: LanguageService.get('phone_number'),
                               child: IntlPhoneField(
-                                controller:   viewModel.emergency_mobileController,
+                                controller:
+                                    viewModel.emergency_mobileController,
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
                                 enabled: !viewModel.isViewMode,
                                 pickerDialogStyle: PickerDialogStyle(
@@ -1169,7 +1234,6 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                   return null;
                                 },
                               ),
-
                             ),
                             // _FormSection(
                             //   label: LanguageService.get('phone_number'),
@@ -1246,7 +1310,6 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                                 keyboardType: TextInputType.emailAddress,
                                 readOnly: viewModel.isViewMode, // ✅ FIXED
                                 validator: (value) {
-
                                   if (value == null || value.isEmpty) {
                                     return 'Please Enter Mail';
                                   }
@@ -1277,7 +1340,9 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                         // ✅ PERMISSIONS SECTION
                         _buildSectionCard(
                           context: context,
-                          title: LanguageService.get('System Access & Permissions',),
+                          title: LanguageService.get(
+                            'System Access & Permissions',
+                          ),
                           traling: CommonElevatedButton(
                             onPressed: () async {
                               final result = await Navigator.push(
@@ -1324,7 +1389,8 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
               ),
 
       bottomNavigationBar:
-          (viewModel.isPartialEdit==false && viewModel.isViewMode) || viewModel.isBusy
+          (viewModel.isPartialEdit == false && viewModel.isViewMode) ||
+                  viewModel.isBusy
               ? null
               : Container(
                 height: 80,
@@ -1341,14 +1407,19 @@ class AddEmployeeView extends StackedView<AddEmployeeViewModel> {
                 ),
                 padding: EdgeInsets.all(AppSizes.h16),
                 child: CommonElevatedButton(
-                  label: viewModel.isEditMode
+                  label:
+                      viewModel.isEditMode
                           ? LanguageService.get('save_changes')
-                          : viewModel.isPartialEdit?LanguageService.get('add_employee'):LanguageService.get('create_employee'),
+                          : viewModel.isPartialEdit
+                          ? LanguageService.get('add_employee')
+                          : LanguageService.get('create_employee'),
                   isLoading: viewModel.isBusy,
                   borderRadius: AppSizes.h45,
                   backgroundColor: AppColors.primary,
                   textColor: AppColors.white,
-                  onPressed: (){viewModel.onSave(_formKey);},
+                  onPressed: () {
+                    viewModel.onSave(_formKey);
+                  },
                 ),
               ),
     );
@@ -1506,18 +1577,19 @@ class _FormSection extends StatelessWidget {
     );
   }
 }
+
 String capitalize(String text) {
   if (text.isEmpty) return text;
   return text[0].toUpperCase() + text.substring(1);
 }
 
 Widget buildCountryDropdown(
-    BuildContext context,
-    AddEmployeeViewModel model,
-    String selectedValue,
-    Function(String?) onChanged,
-    bool isReadOnly,
-    ) {
+  BuildContext context,
+  AddEmployeeViewModel model,
+  String selectedValue,
+  Function(String?) onChanged,
+  bool isReadOnly,
+) {
   // Ensure the selected value is in the countries list, otherwise use default
   String validSelectedValue = selectedValue;
   if (!model.countries.contains(selectedValue)) {
@@ -1541,12 +1613,13 @@ Widget buildCountryDropdown(
         label: LanguageService.get("country"),
         hintText: LanguageService.get('select_country'),
         value: validSelectedValue,
-        items: model.countries.map((String country) {
-          return DropdownMenuItem<String>(
-            value: country,
-            child: Text(country),
-          );
-        }).toList(),
+        items:
+            model.countries.map((String country) {
+              return DropdownMenuItem<String>(
+                value: country,
+                child: Text(country),
+              );
+            }).toList(),
         onChanged: isReadOnly ? null : onChanged,
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -1554,19 +1627,19 @@ Widget buildCountryDropdown(
           }
           return null;
         },
-      )
+      ),
     ],
   );
 }
 
 Widget buildStateDropdown(
-    BuildContext context,
-    AddEmployeeViewModel model,
-    String? selectedValue,
-    Function(String?) onChanged,
-    bool isReadOnly,
-    List<String> statesList, // Direct states list parameter
-    ) {
+  BuildContext context,
+  AddEmployeeViewModel model,
+  String? selectedValue,
+  Function(String?) onChanged,
+  bool isReadOnly,
+  List<String> statesList, // Direct states list parameter
+) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -1584,12 +1657,10 @@ Widget buildStateDropdown(
         label: LanguageService.get("state_province"),
         hintText: LanguageService.get('select_state'),
         value: selectedValue,
-        items: statesList.map((String state) {
-          return DropdownMenuItem<String>(
-            value: state,
-            child: Text(state),
-          );
-        }).toList(),
+        items:
+            statesList.map((String state) {
+              return DropdownMenuItem<String>(value: state, child: Text(state));
+            }).toList(),
         onChanged: isReadOnly ? null : onChanged,
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -1597,7 +1668,7 @@ Widget buildStateDropdown(
           }
           return null;
         },
-      )
+      ),
     ],
   );
 }

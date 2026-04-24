@@ -10,10 +10,15 @@ import '../add_employee/add_employee.vm.dart';
 class CustomDepartmentDropdown extends StatefulWidget {
   final AddEmployeeViewModel viewModel;
   final bool isReadOnly;
-  const CustomDepartmentDropdown({Key? key, required this.viewModel,  this.isReadOnly=true}) : super(key: key);
+  const CustomDepartmentDropdown({
+    Key? key,
+    required this.viewModel,
+    this.isReadOnly = true,
+  }) : super(key: key);
 
   @override
-  State<CustomDepartmentDropdown> createState() => _CustomDepartmentDropdownState();
+  State<CustomDepartmentDropdown> createState() =>
+      _CustomDepartmentDropdownState();
 }
 
 class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
@@ -59,9 +64,10 @@ class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
 
     // Optional: Calculate a dynamic max height based on screen space
     final screenHeight = MediaQuery.of(context).size.height;
-    final spaceBelow = screenHeight - offset.dy - size.height - 20; // 20 for some padding
-    final maxDropdownHeight = spaceBelow > 150 ? spaceBelow : 300.0; // Use available space or max 300
-
+    final spaceBelow =
+        screenHeight - offset.dy - size.height - 20; // 20 for some padding
+    final maxDropdownHeight =
+        spaceBelow > 150 ? spaceBelow : 300.0; // Use available space or max 300
 
     return OverlayEntry(
       builder: (context) {
@@ -73,7 +79,7 @@ class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
               onDismiss: _closeDropdown,
               dismissible: true,
             ),
-            if(!widget.isReadOnly)
+            if (!widget.isReadOnly)
               Positioned(
                 top: offset.dy + size.height,
                 left: offset.dx,
@@ -95,7 +101,9 @@ class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
                     // ✨ CHANGE 2: Wrap the Column in a SingleChildScrollView to enable scrolling.
                     child: SingleChildScrollView(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min, // Keep this! It's important for SingleChildScrollView
+                        mainAxisSize:
+                            MainAxisSize
+                                .min, // Keep this! It's important for SingleChildScrollView
                         children: [
                           ...widget.viewModel.myDepartment.map((role) {
                             return Column(
@@ -103,16 +111,28 @@ class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
                               children: [
                                 InkWell(
                                   onTap: () {
-                                    widget.viewModel.updateSelectedDepartment(role);
+                                    widget.viewModel.updateSelectedDepartment(
+                                      role,
+                                    );
                                     _closeDropdown();
                                   },
                                   child: Container(
                                     alignment: Alignment.centerLeft,
-                                    padding: EdgeInsets.symmetric(horizontal: AppSizes.h16, vertical: AppSizes.h12),
-                                    child: Text(role.name.toUpperCase(), style: context.textTheme.titleMedium),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: AppSizes.h16,
+                                      vertical: AppSizes.h12,
+                                    ),
+                                    child: Text(
+                                      role.name.toUpperCase(),
+                                      style: context.textTheme.titleMedium,
+                                    ),
                                   ),
                                 ),
-                                Divider(height: 1, indent: AppSizes.h16, endIndent: AppSizes.h16),
+                                Divider(
+                                  height: 1,
+                                  indent: AppSizes.h16,
+                                  endIndent: AppSizes.h16,
+                                ),
                               ],
                             );
                           }).toList(),
@@ -152,7 +172,7 @@ class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
   Widget build(BuildContext context) {
     return GestureDetector(
       key: _fieldKey,
-      onTap: widget.isReadOnly?null:_toggleDropdown,
+      onTap: widget.isReadOnly ? null : _toggleDropdown,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
         decoration: BoxDecoration(
@@ -167,15 +187,20 @@ class _CustomDepartmentDropdownState extends State<CustomDepartmentDropdown> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-        (widget.viewModel.selectedDepartment?.name ?? 'Department')
-            .toUpperCase(),
+              (widget.viewModel.selectedDepartment?.name ?? 'Department')
+                  .toUpperCase(),
               style: TextStyle(
-                  color: widget.viewModel.selectedDepartment?.name == null ? AppColors.textGrey : AppColors.textPrimary,
-                  fontSize: 13
+                color:
+                    widget.viewModel.selectedDepartment?.name == null
+                        ? AppColors.textGrey
+                        : AppColors.textPrimary,
+                fontSize: 13,
               ),
             ),
             Icon(
-              _isDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              _isDropdownOpen
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
               color: AppColors.textGrey,
             ),
           ],

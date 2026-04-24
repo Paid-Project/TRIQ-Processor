@@ -78,16 +78,16 @@ class CreateTaskViewModel extends ReactiveViewModel {
       // _employees = (employeeData as List<dynamic>)
       //     .map((json) => Employee.fromJson(json))
       //     .toList();
-      Either<Failure, List<Employee>> response = await _employeeService.getAllEmployees();
+      Either<Failure, List<Employee>> response =
+          await _employeeService.getAllEmployees();
       response.fold(
-            (exception) {
-              AppLogger.warning(exception.message);
-              _employees = [];
+        (exception) {
+          AppLogger.warning(exception.message);
+          _employees = [];
         },
-            (allEmployees) {
-              _employees.clear();
-              _employees.addAll(allEmployees);
-
+        (allEmployees) {
+          _employees.clear();
+          _employees.addAll(allEmployees);
         },
       );
     } catch (e) {
@@ -107,16 +107,27 @@ class CreateTaskViewModel extends ReactiveViewModel {
   }
 
   Future<void> selectStartDate(BuildContext context) async {
+    final DateTime now = DateTime.now();
+    // Use the start of today to allow selecting today's date
+    final DateTime today = DateTime(now.year, now.month, now.day);
+
     final DateTime? date = await CustomDatePicker.show(
       context: context,
-      initialDate: _startDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
+      initialDate: _startDate ?? today,
+      firstDate: today, // Past dates disabled
       lastDate: DateTime(2100),
     );
 
     if (date == null) return;
     _startDate = date;
     startDateController.text = DateFormat('yyyy/MM/dd').format(date);
+
+    // If end date is now before the new start date, reset it
+    if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+      _endDate = _startDate;
+      endDateController.text = DateFormat('yyyy/MM/dd').format(_endDate!);
+    }
+
     notifyListeners();
   }
 
@@ -133,10 +144,13 @@ class CreateTaskViewModel extends ReactiveViewModel {
   }
 
   Future<void> selectEndDate(BuildContext context) async {
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+
     final DateTime? date = await CustomDatePicker.show(
       context: context,
-      initialDate: _endDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
+      initialDate: _endDate ?? _startDate ?? today,
+      firstDate: _startDate ?? today, // Cannot be before start date
       lastDate: DateTime(2100),
     );
 
@@ -161,12 +175,9 @@ class CreateTaskViewModel extends ReactiveViewModel {
   Future<void> pickMedia() async {
     final result = await _filePickerService.pickImageFromGallery();
     List<File> files = [];
-    result.fold(
-          (failure) {},
-          (response) {
-        files = [response];
-      },
-    );
+    result.fold((failure) {}, (response) {
+      files = [response];
+    });
     if (files.isNotEmpty) {
       _pickedFiles.addAll(files);
       notifyListeners();
@@ -207,7 +218,10 @@ class CreateTaskViewModel extends ReactiveViewModel {
     );
 
     if (endDateTime.isBefore(startDateTime)) {
-      _showToast('End date cannot be before start date', isError: true); // UPDATED
+      _showToast(
+        'End date cannot be before start date',
+        isError: true,
+      ); // UPDATED
       return;
     }
 

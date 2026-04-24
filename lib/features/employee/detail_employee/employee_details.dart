@@ -12,20 +12,14 @@ import 'employee_details.vm.dart';
 class EmployeeDetailsViewAttributes {
   final String employeeId;
 
-  EmployeeDetailsViewAttributes({
-    required this.employeeId,
-  });
+  EmployeeDetailsViewAttributes({required this.employeeId});
 
   factory EmployeeDetailsViewAttributes.fromJson(Map<String, String> json) {
-    return EmployeeDetailsViewAttributes(
-      employeeId: json['employeeId'] ?? '',
-    );
+    return EmployeeDetailsViewAttributes(employeeId: json['employeeId'] ?? '');
   }
 
   Map<String, String> toJson() {
-    return {
-      'employeeId': employeeId,
-    };
+    return {'employeeId': employeeId};
   }
 }
 
@@ -40,40 +34,47 @@ class EmployeeDetailsView extends StatelessWidget {
       viewModelBuilder: () => EmployeeDetailsViewModel(),
       onViewModelReady: (model) => model.init(attributes),
       builder: (
-          BuildContext context,
-          EmployeeDetailsViewModel model,
-          Widget? child,
-          ) {
+        BuildContext context,
+        EmployeeDetailsViewModel model,
+        Widget? child,
+      ) {
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: _buildCustomAppBar(context, model),
           body: SafeArea(
-            child: model.isBusy
-                ? const Center(child: CircularProgressIndicator())
-                : model.employee == null
-                ? Center(child: Text(LanguageService.get('employee_not_found')))
-                : _buildEmployeeDetailsContent(context, model),
+            child:
+                model.isBusy
+                    ? const Center(child: CircularProgressIndicator())
+                    : model.employee == null
+                    ? Center(
+                      child: Text(LanguageService.get('employee_not_found')),
+                    )
+                    : _buildEmployeeDetailsContent(context, model),
           ),
-          floatingActionButton: model.employee != null
-              ? FloatingActionButton(
-            onPressed: () => model.onEditEmployee(context),
-            backgroundColor: AppColors.primary,
-            child: Icon(Icons.edit, color: AppColors.white),
-          )
-              : null,
+          floatingActionButton:
+              model.employee != null
+                  ? FloatingActionButton(
+                    onPressed: () => model.onEditEmployee(context),
+                    backgroundColor: AppColors.primary,
+                    child: Icon(Icons.edit, color: AppColors.white),
+                  )
+                  : null,
         );
       },
     );
   }
 
-  PreferredSizeWidget _buildCustomAppBar(BuildContext context, EmployeeDetailsViewModel model) {
+  PreferredSizeWidget _buildCustomAppBar(
+    BuildContext context,
+    EmployeeDetailsViewModel model,
+  ) {
     // Is widget me koi badlaav nahi hai
     return AppBar(
       backgroundColor: AppColors.primary,
       surfaceTintColor: AppColors.primary,
       iconTheme: IconThemeData(color: AppColors.white),
       title: Text(
-        LanguageService.get('employee_details'),
+        "",
         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           color: AppColors.white,
           fontWeight: FontWeight.bold,
@@ -83,23 +84,25 @@ class EmployeeDetailsView extends StatelessWidget {
         if (model.employee != null)
           PopupMenuButton<String>(
             onSelected: (value) => model.handleMenuAction(value, context),
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(
-                value: LanguageService.get('delete'),
-                child: ListTile(
-                  leading: Icon(Icons.delete, color: Colors.red),
-                  title: Text(
-                    LanguageService.get('delete'),
+            itemBuilder:
+                (BuildContext context) => <PopupMenuEntry<String>>[
+                  PopupMenuItem<String>(
+                    value: LanguageService.get('delete'),
+                    child: ListTile(
+                      leading: Icon(Icons.delete, color: Colors.red),
+                      title: Text(LanguageService.get('delete')),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
           ),
       ],
     );
   }
 
-  Widget _buildEmployeeDetailsContent(BuildContext context, EmployeeDetailsViewModel model) {
+  Widget _buildEmployeeDetailsContent(
+    BuildContext context,
+    EmployeeDetailsViewModel model,
+  ) {
     final employee = model.employee!;
 
     return SingleChildScrollView(
@@ -112,18 +115,38 @@ class EmployeeDetailsView extends StatelessWidget {
           _buildSectionHeader(context, LanguageService.get('personal_details')),
           SizedBox(height: AppSizes.h10),
           _buildInfoCard(context, [
-            _buildInfoItem(context, LanguageService.get('name'), employee.name ?? 'N/A'),
-            _buildInfoItem(context, LanguageService.get('email'), employee.email ?? 'N/A'),
-            _buildInfoItem(context, LanguageService.get('phone'), employee.phone ?? 'N/A'),
+            _buildInfoItem(
+              context,
+              LanguageService.get('name'),
+              employee.name ?? 'N/A',
+            ),
+            _buildInfoItem(
+              context,
+              LanguageService.get('email'),
+              employee.email ?? 'N/A',
+            ),
+            _buildInfoItem(
+              context,
+              LanguageService.get('phone'),
+              employee.phone ?? 'N/A',
+            ),
 
             // UPDATE: Naye model se 'bloodGroup' add kiya gaya hai
-            _buildInfoItem(context, LanguageService.get('blood_group'), employee.bloodGroup ?? 'N/A'),
+            _buildInfoItem(
+              context,
+              LanguageService.get('blood_group'),
+              employee.bloodGroup ?? 'N/A',
+            ),
 
             // COMMENTED: Purana 'account_status' wala item. Iski jagah 'bloodGroup' use kiya. Status ab header me hai.
             // _buildInfoItem(context, LanguageService.get('account_status'), ((employee.isActive??false)?"ACTIVE":"INACTIVE")??'N/A'),
 
             // UPDATE: 'preferred_language' ki jagah 'country' use kiya ja raha hai
-            _buildInfoItem(context, LanguageService.get('country'), employee.country ?? 'N/A'),
+            _buildInfoItem(
+              context,
+              LanguageService.get('country'),
+              employee.country ?? 'N/A',
+            ),
             // COMMENTED: Purana 'preferred_language' wala item
             // _buildInfoItem(context, LanguageService.get('preferred_language'), employee.country ?? 'N/A'),
           ]),
@@ -133,21 +156,41 @@ class EmployeeDetailsView extends StatelessWidget {
           SizedBox(height: AppSizes.h10),
           _buildInfoCard(context, [
             // UPDATE: 'role' ab 'designation' object se aa raha hai
-            _buildInfoItem(context, LanguageService.get('role'), employee.designation?.name ?? 'N/A'),
+            _buildInfoItem(
+              context,
+              LanguageService.get('role'),
+              employee.designation?.name ?? 'N/A',
+            ),
             // COMMENTED: Purana 'role' wala item
             // _buildInfoItem(context, LanguageService.get('role'), employee.role ?? 'N/A'),
 
             // UPDATE: Naye model se 'department' add kiya gaya hai
-            _buildInfoItem(context, LanguageService.get('department'), employee.department?.name ?? 'N/A'),
+            _buildInfoItem(
+              context,
+              LanguageService.get('department'),
+              employee.department?.name ?? 'N/A',
+            ),
 
-            _buildInfoItem(context, LanguageService.get('type'), employee.employeeType ?? 'N/A'),
+            _buildInfoItem(
+              context,
+              LanguageService.get('type'),
+              employee.employeeType ?? 'N/A',
+            ),
 
             // UPDATE: 'status' ab 'isActive' (boolean) se aa raha hai
-            _buildInfoItem(context, LanguageService.get('status'), (employee.isActive ?? false) ? "ACTIVE" : "INACTIVE"),
+            _buildInfoItem(
+              context,
+              LanguageService.get('status'),
+              (employee.isActive ?? false) ? "ACTIVE" : "INACTIVE",
+            ),
+
             // COMMENTED: Purana 'status' wala item
             // _buildInfoItem(context, LanguageService.get('status'), ((employee.isActive??false)?"ACTIVE":"INACTIVE")??'N/A'),
-
-            _buildInfoItem(context, LanguageService.get('shift_timing'), employee.shiftTiming ?? 'N/A'),
+            _buildInfoItem(
+              context,
+              LanguageService.get('shift_timing'),
+              employee.shiftTiming ?? 'N/A',
+            ),
 
             // COMMENTED: 'team' naye model me nahi hai, isliye ise comment kiya gaya hai
             // if (employee.team != null && employee?.team!.isNotEmpty)
@@ -155,7 +198,11 @@ class EmployeeDetailsView extends StatelessWidget {
 
             // UPDATE: 'joiningDate' ab dedicated field se aa raha hai
             if (employee.joiningDate != null)
-              _buildInfoItem(context, "Joined", model.formatDate(employee.joiningDate!)),
+              _buildInfoItem(
+                context,
+                "Joined",
+                model.formatDate(employee.joiningDate!),
+              ),
             // COMMENTED: Purana 'createdAt' se date format karne wala item
             // _buildInfoItem(context, "Joined", model.formatDate(employee.createdAt)),
           ]),
@@ -185,34 +232,38 @@ class EmployeeDetailsView extends StatelessWidget {
             backgroundColor: AppColors.primary,
             // UPDATE: Agar 'profilePhoto' hai to NetworkImage dikhao, nahi to initials.
             // TODO: "YOUR_BASE_URL" ko apne server ke base URL se replace karein.
-            backgroundImage: employee.profilePhoto != null && employee.profilePhoto!.isNotEmpty
-                ? NetworkImage("YOUR_BASE_URL" + employee.profilePhoto!)
-                : null,
-            child: (employee.profilePhoto == null || employee.profilePhoto!.isEmpty)
-                ? Text(
-              _getInitials(employee.name ?? ''),
-              style: TextStyle(
-                fontSize: 30,
-                color: AppColors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            )
-                : null,
+            backgroundImage:
+                employee.profilePhoto != null &&
+                        employee.profilePhoto!.isNotEmpty
+                    ? NetworkImage("YOUR_BASE_URL" + employee.profilePhoto!)
+                    : null,
+            child:
+                (employee.profilePhoto == null ||
+                        employee.profilePhoto!.isEmpty)
+                    ? Text(
+                      _getInitials(employee.name ?? ''),
+                      style: TextStyle(
+                        fontSize: 30,
+                        color: AppColors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                    : null,
           ),
           SizedBox(height: AppSizes.h10),
           Text(
             employee.name ?? 'N/A',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           SizedBox(height: AppSizes.h5),
           // UPDATE: 'role' ki jagah 'designation.name' use kiya gaya hai
           Text(
             employee.designation?.name ?? 'N/A',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
           ),
           // COMMENTED: Purana 'role' wala Text widget
           // Text(
@@ -229,9 +280,10 @@ class EmployeeDetailsView extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               // UPDATE: Color ab 'isActive' par depend karega
-              color: (employee.isActive ?? false)
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.red.withOpacity(0.1),
+              color:
+                  (employee.isActive ?? false)
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.red.withOpacity(0.1),
               // COMMENTED: Purana 'accountStatus' par based color logic
               // color: employee.isActive??false
               //     ? Colors.green.withOpacity(0.1)
@@ -243,9 +295,7 @@ class EmployeeDetailsView extends StatelessWidget {
               (employee.isActive ?? false) ? 'ACTIVE' : 'INACTIVE',
               style: TextStyle(
                 // UPDATE: Text color bhi 'isActive' par depend karega
-                color: (employee.isActive ?? false)
-                    ? Colors.green
-                    : Colors.red,
+                color: (employee.isActive ?? false) ? Colors.green : Colors.red,
                 // COMMENTED: Purana 'accountStatus' par based color logic
                 // color: employee.accountStatus == 'active'
                 //     ? Colors.green
@@ -333,8 +383,8 @@ class EmployeeDetailsView extends StatelessWidget {
     }
   }
 
-// COMMENTED: Niche ke sabhi permissions se related functions ko comment kar diya gaya hai kyunki 'permissions' ab model me nahi hai.
-/*
+  // COMMENTED: Niche ke sabhi permissions se related functions ko comment kar diya gaya hai kyunki 'permissions' ab model me nahi hai.
+  /*
   Widget _buildPermissionsCard(BuildContext context, Employee employee) {
     // Helper function to extract permissions
     List<Widget> buildPermissionItems(Map<String, dynamic> section, String sectionName) {

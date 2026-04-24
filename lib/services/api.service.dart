@@ -9,10 +9,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:manager/api_endpoints.dart';
 import 'package:manager/configs.dart';
 import 'package:manager/core/storage/storage.dart';
 import 'package:manager/services/user.service.dart';
 import 'package:mime/mime.dart';
+import 'package:stacked_services/stacked_services.dart';
 
 import '../core/locator.dart';
 import '../core/utils/app_logger.dart';
@@ -47,6 +49,23 @@ class ApiService {
     return "";
   }
 
+  // Public endpoints that don't require an authentication token
+  static const List<String> _publicEndpoints = [
+    ApiEndpoints.login,
+    ApiEndpoints.register,
+    ApiEndpoints.forgotPassword,
+    ApiEndpoints.sendOtp,
+    ApiEndpoints.loginWithOtp,
+    ApiEndpoints.verifyEmail,
+    ApiEndpoints.googleLogin,
+    ApiEndpoints.facebookLogin,
+    'auth/sendOtpForLogin',
+    'auth/reset-password',
+    'auth/resetNewPassword',
+    'location/states-by-country',
+    'location/cities-by-state',
+  ];
+
   ApiService() {
     getDeviceId();
     getAppVersion();
@@ -60,8 +79,28 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          final path = options.path;
+          final isPublic = _publicEndpoints.any((e) => path.contains(e));
+
+          final token = getUser().token;
+          final hasValidToken =
+              token != null && token.isNotEmpty && token != 'null';
+
+          if (hasValidToken) {
+            options.headers['Authorization'] = 'Bearer $token';
+          } else if (!isPublic) {
+            // Reject the request immediately — no token, no call
+            // BUT ONLY for protected endpoints
+            return handler.reject(
+              DioException(
+                requestOptions: options,
+                error: 'No valid auth token',
+                type: DioExceptionType.cancel,
+              ),
+            );
+          }
+
           options.headers.addAll({
-            'Authorization': 'Bearer ${getUser().token}',
             'language': locator<UserService>().selectedLanguage,
             'device-id': _deviceId,
             'manager-version': _appVersion,
@@ -115,7 +154,33 @@ class ApiService {
           return handler.next(response);
         },
         onError: (DioException err, handler) async {
-          logError(err);
+          // Silently drop requests we cancelled due to missing token
+          if (err.type == DioExceptionType.cancel) {
+            return handler.next(err);
+          }
+
+          final statusCode = err.response?.statusCode;
+          final token = getUser().token;
+          final hasValidToken =
+              token != null && token.isNotEmpty && token != 'null';
+
+          // Global 401 handler: token exists but is expired/invalid on server
+          // Auto-logout and redirect to login screen
+          if (statusCode == 401 && hasValidToken) {
+            AppLogger.warning(
+              'Token expired — clearing session and redirecting to login',
+            );
+            try {
+              await clearHive();
+              locator<NavigationService>().clearStackAndShow('/login');
+            } catch (_) {}
+            return handler.next(err);
+          }
+
+          // Suppress 401 log spam when there's no valid token (no-token calls)
+          if (statusCode != 401 || hasValidToken) {
+            logError(err);
+          }
           return handler.next(err);
         },
       ),
@@ -363,13 +428,15 @@ class ApiService {
   void _handleApiError(DioException e, {bool showToast = true}) {
     try {
       final statusCode = e.response?.statusCode ?? 0;
-      final responseData = e.response?.data;
 
+      // Never show toast for 401 — handled globally (auto-logout or silent skip)
+      if (statusCode == 401) return;
+
+      final responseData = e.response?.data;
       String errorMessage = _extractErrorMessage(responseData, statusCode);
 
-      AppLogger.error("API Error: $errorMessage (Status: $statusCode)");
-
       if (showToast) {
+        AppLogger.error("API Error: $errorMessage (Status: $statusCode)");
         _showErrorToast(errorMessage, statusCode);
       }
     } catch (ex) {
@@ -489,6 +556,16 @@ class ApiService {
 
   /// Show error toast with appropriate styling
   void _showErrorToast(String message, int statusCode) {
+    // Never show toast for 401 unauthorized errors
+    if (statusCode == 401) return;
+
+    // Also block by message content in case statusCode is 0/missing
+    final lowerMsg = message.toLowerCase();
+    if (lowerMsg.contains('unauthorized') ||
+        lowerMsg.contains('invalid token')) {
+      return;
+    }
+
     Color backgroundColor;
     Color textColor = Colors.white;
 

@@ -8,6 +8,7 @@ import 'package:manager/core/models/ticket.dart';
 import 'package:manager/core/models/ticket_model.dart';
 import 'package:manager/core/models/review_ticket_model.dart';
 import 'package:manager/core/models/ticket_details_model.dart';
+import 'package:manager/core/storage/storage.dart';
 import 'package:manager/core/utils/app_logger.dart';
 import 'package:manager/core/utils/type_def.dart';
 import 'package:manager/services/api.service.dart';
@@ -52,6 +53,11 @@ class TicketService {
     // If already refreshing and not forced, return a failure
     if (_isRefreshing && !forceRefresh) {
       return Left(Failure('Refresh already in progress'));
+    }
+
+    final token = getUser().token;
+    if (token == null || token.isEmpty || token == 'null') {
+      return Left(Failure('No valid token found'));
     }
 
     try {
@@ -198,7 +204,6 @@ class TicketService {
     String? nextPingTime,
   }) async {
     try {
-
       final response = await apiService.put(
         url: '${ApiEndpoints.holdTicket}/$id',
         data: {"status": "OnHold", "reshedule": nextPingTime},
@@ -207,8 +212,7 @@ class TicketService {
       if (response.data['success'] == true) {
         AppLogger.highlight(response.data['data']);
         return Right(Ticket.fromJson(response.data['data']));
-      }
-      else {
+      } else {
         AppLogger.error(response.data['message']);
         return Left(Failure(response.data['message']));
       }
@@ -257,16 +261,13 @@ class TicketService {
 
   ResultFuture<bool> requestResolveTicket({required String id}) async {
     try {
-
       final response = await apiService.put(
         url: '${ApiEndpoints.requestResolveTicket}/$id',
       );
 
-
       if (response.data['success'] == true) {
         return Right(true);
-      }
-      else {
+      } else {
         return Left(
           Failure(
             response.data['message'] ??
@@ -274,7 +275,6 @@ class TicketService {
           ),
         );
       }
-
     } catch (e) {
       if (e is DioException) {
         AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
@@ -328,20 +328,27 @@ class TicketService {
       return Left(Failure('Refresh already in progress'));
     }
 
+    final token = getUser().token;
+    if (token == null || token.isEmpty || token == 'null') {
+      return Left(Failure('No valid token found'));
+    }
+
     try {
       _isRefreshing = true;
 
       final response = await apiService.get(
         url: '${ApiEndpoints.getTicketsByStatus}/$status',
         queryParameters: {'page': page, 'limit': limit},
-          showToast:false
+        showToast: false,
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
         if (data != null) {
           final paginatedResponse = TicketModel.fromJson(data);
-          AppLogger.info("Tickets fetched successfully: ${paginatedResponse.data?.length ?? 0} tickets (Page: ${paginatedResponse.page}/${paginatedResponse.pages})");
+          AppLogger.info(
+            "Tickets fetched successfully: ${paginatedResponse.data?.length ?? 0} tickets (Page: ${paginatedResponse.page}/${paginatedResponse.pages})",
+          );
           return Right(paginatedResponse);
         } else {
           AppLogger.error("Empty response data");
@@ -372,7 +379,9 @@ class TicketService {
   }
 
   /// Get all tickets using the new getAll endpoint (kept for backward compatibility)
-  ResultFuture<List<TicketList>> getAllTickets({bool forceRefresh = false}) async {
+  ResultFuture<List<TicketList>> getAllTickets({
+    bool forceRefresh = false,
+  }) async {
     // If already refreshing and not forced, return a failure
     if (_isRefreshing && !forceRefresh) {
       return Left(Failure('Refresh already in progress'));
@@ -398,7 +407,9 @@ class TicketService {
             // If it's a single object, check if it has a 'data' field
             if (data.containsKey('data') && data['data'] is List) {
               final tickets =
-                  (data['data'] as List).map((e) => TicketList.fromJson(e)).toList();
+                  (data['data'] as List)
+                      .map((e) => TicketList.fromJson(e))
+                      .toList();
               AppLogger.info(
                 "Tickets fetched successfully: ${tickets.length} tickets",
               );

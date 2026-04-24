@@ -82,7 +82,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   final _apiService = locator<ApiService>();
   TicketsListViewModel ticketDetailsViewModel = TicketsListViewModel();
   TextEditingController remarkController = TextEditingController();
-  int initCount=0;
+  int initCount = 0;
   bool _didAutoScrollToLatestOnOpen = false;
 
   String _readFirstNonEmpty(Map data, List<String> keys) {
@@ -144,23 +144,28 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     }
   }
 
-
   _handleCallRecieve() {
     if (widget.incomingCallData != null) {
       final data = widget.incomingCallData ?? {};
       print("notification data:- ${data}");
       final String? roomId =
-          data['room_id']?.toString() ?? data['roomId']?.toString() ?? widget.roomId;
+          data['room_id']?.toString() ??
+          data['roomId']?.toString() ??
+          widget.roomId;
       final bool isGroupCall =
-          _isTrueish(data['isGroupCall']) || widget.screen == ChatRoomScreenType.groupChat;
-      final String senderName = _readFirstNonEmpty(
-        data,
-        ['sender_name', 'senderName'],
-      );
-      final String groupName = _readFirstNonEmpty(
-        data,
-        ['groupTitle', 'groupName', 'group_name', 'title', 'name'],
-      );
+          _isTrueish(data['isGroupCall']) ||
+          widget.screen == ChatRoomScreenType.groupChat;
+      final String senderName = _readFirstNonEmpty(data, [
+        'sender_name',
+        'senderName',
+      ]);
+      final String groupName = _readFirstNonEmpty(data, [
+        'groupTitle',
+        'groupName',
+        'group_name',
+        'title',
+        'name',
+      ]);
       final String displayName =
           isGroupCall && groupName.isNotEmpty ? groupName : senderName;
       final String receiverName = data['receiver_name'] ?? data['name'] ?? "";
@@ -179,7 +184,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
           call_type: callType ?? '',
           flag: flag ?? '',
           onAccept: () {
-            print("notification data accept(${widget.screen })");
+            print("notification data accept(${widget.screen})");
             openVideoChat(
               roomId ?? '',
               status: 'call-accept',
@@ -219,19 +224,27 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     required bool isGroup,
   }) async {
     final chatService = locator<ChatService>();
+    final userData = getUser();
     if (status == 'call-accept') {
       final tokenResponse = await chatService.sendVChatStatus(
-        identity: identity,
+        identity: userData.id.toString(),
         roomName: roomId,
         status: status,
         callType: isVoice ? 'audio' : 'video',
-        name: receiverName,
+        name: userData.name ?? 'User',
         users: userId,
         isGroup: isGroup,
       );
       if (tokenResponse['success']) {
         Get.back();
-        Get.to(() => VideoCallScreen(roomName: roomId, token: tokenResponse['token'], isVoice: isVoice));
+        Get.to(
+          () => VideoCallScreen(
+            roomName: roomId,
+            token: tokenResponse['token'],
+            isVoice: isVoice,
+            name: receiverName,
+          ),
+        );
       }
     } else if (status == 'call-decline') {
       await chatService.sendVChatStatus(
@@ -249,12 +262,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
   // Reschedule functionality
   Future<void> rescheduleTicket(
-      BuildContext context,
-      String ticketId,
-      String rescheduleTime,
-      ) async
-  {
-
+    BuildContext context,
+    String ticketId,
+    String rescheduleTime,
+  ) async {
     final body = {'reschedule_time': rescheduleTime};
 
     final response = await _apiService.put(
@@ -279,7 +290,6 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       );
     }
   }
-
 
   void _handleResolveAction(ChatViewModel model) {
     // Handle resolve action
@@ -330,7 +340,6 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                     context: context,
                     barrierDismissible: true,
                     builder: (BuildContext context) {
-
                       return Dialog(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -342,13 +351,16 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               // Icon
-
                               CircleAvatar(
                                 backgroundColor: Color(
                                   0xFF7C4DFF,
                                 ).withValues(alpha: 0.1),
                                 radius: 30,
-                                child: Image.asset(AppImages.ticketSummary,height: 30,width: 30,),
+                                child: Image.asset(
+                                  AppImages.ticketSummary,
+                                  height: 30,
+                                  width: 30,
+                                ),
                               ),
                               SizedBox(height: 10),
 
@@ -427,7 +439,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                   ElevatedButton(
                                     onPressed: () async {
                                       Navigator.of(context).pop();
-                                      final result = await model.resolveChat(widget.ticketId!, remarkController.text);
+                                      final result = await model.resolveChat(
+                                        widget.ticketId!,
+                                        remarkController.text,
+                                      );
                                       if (result == true) {
                                         Get.back(result: true);
                                       }
@@ -469,7 +484,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                         remarkController.clear();
                       }
                     } else {
-                      AppLogger.info('Dialog closed by barrier dismiss or back button');
+                      AppLogger.info(
+                        'Dialog closed by barrier dismiss or back button',
+                      );
                       remarkController.clear();
                     }
                   });
@@ -509,9 +526,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   color: AppColors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-
                 ),
-
               ),
             ),
           ),
@@ -522,7 +537,8 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               children: [
                 Row(
                   children: [
-                    Expanded( // ✅ IMPORTANT
+                    Expanded(
+                      // ✅ IMPORTANT
                       child: Text(
                         widget.contactName,
                         style: TextStyle(
@@ -543,12 +559,13 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(2),
-                        child: widget.flag != null
-                            ? SvgPicture.network(
-                          (widget.flag ?? '').prefixWithBaseUrl,
-                          fit: BoxFit.cover,
-                        )
-                            : SizedBox(),
+                        child:
+                            widget.flag != null
+                                ? SvgPicture.network(
+                                  (widget.flag ?? '').prefixWithBaseUrl,
+                                  fit: BoxFit.cover,
+                                )
+                                : SizedBox(),
                       ),
                     ),
                   ],
@@ -574,6 +591,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
           onTap: () => _toggleSearch(model),
         ),
         SizedBox(width: 16),
+
         // PopupMenuButton<String>(
         //   icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
         //   menuPadding: EdgeInsets.zero,
@@ -597,308 +615,311 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
         //   color: AppColors.white,
         //   shadowColor: AppColors.black.withValues(alpha: 0.1),
         // ),
+        widget.ticketStatus != "Resolved" && widget.userRole == "organization"
+            ? PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
+              menuPadding: EdgeInsets.zero,
+              offset: Offset(-10, 40),
+              onSelected: (String value) {
+                if (value == 'resolve') {
+                  _handleResolveAction(model);
+                }
+              },
+              itemBuilder:
+                  (BuildContext context) => [
+                    // Reschedule Item
+                    PopupMenuItem<String>(
+                      value: 'reschedule',
+                      height: 100,
+                      child: Container(
+                        width: 300, // Set consistent width
+                        padding: EdgeInsets.only(top: 10, bottom: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header
+                            Text(
+                              LanguageService.get('reschedule'),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            // Dropdown Field
+                            CustomDropdownFormField<String>(
+                              // <-- 1. Specify the type
+                              value: null,
+                              label: LanguageService.get('select_time'),
 
-        widget.ticketStatus != "Resolved" && widget.userRole == "organization"?
- PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
-          menuPadding: EdgeInsets.zero,
-          offset: Offset(-10, 40),
-          onSelected: (String value) {
-            if (value == 'resolve') {
-              _handleResolveAction(model);
-            }
-          },
-          itemBuilder:
-              (BuildContext context) => [
-            // Reschedule Item
-            PopupMenuItem<String>(
-              value: 'reschedule',
-              height: 100,
-              child: Container(
-                width: 300, // Set consistent width
-                padding: EdgeInsets.only(top: 10, bottom: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Text(
-                      LanguageService.get('reschedule'),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                              // 2. Convert the 'items' list to DropdownMenuItems
+                              items: const [
+                                DropdownMenuItem<String>(
+                                  value: "10",
+                                  child: Text("10 Min"),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: "15",
+                                  child: Text("15 Min"),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: "20",
+                                  child: Text("20 Min"),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: "30",
+                                  child: Text("30 Min"),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: "45",
+                                  child: Text("45 Min"),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: "60",
+                                  child: Text("60 Min"),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                rescheduleTicket(
+                                  context,
+                                  widget.ticketId ?? "",
+                                  value ?? "",
+                                );
+                              },
+                              validator: (value) {
+                                return value == null
+                                    ? LanguageService.get('please_select_time')
+                                    : null;
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    SizedBox(height: 5),
-                    // Dropdown Field
-                    CustomDropdownFormField<String>( // <-- 1. Specify the type
-                      value: null,
-                      label: LanguageService.get('select_time'),
 
-                      // 2. Convert the 'items' list to DropdownMenuItems
-                      items: const [
-                        DropdownMenuItem<String>(
-                          value: "10",
-                          child: Text("10 Min"),
+                    // Divider
+                    PopupMenuItem<String>(
+                      enabled: false,
+                      height: 1,
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.grey[200],
+                      ),
+                    ),
+
+                    // Mark As Resolved Item
+                    // PopupMenuItem<String>(
+                    //   value: 'resolve',
+                    //   child: Container(
+                    //     width: 250, // Match width with reschedule item
+                    //     padding: EdgeInsets.only(top: 10, bottom: 10),
+                    //
+                    //     child: Text(
+                    //       'Mark As Resolved',
+                    //       style: TextStyle(
+                    //         fontSize: 14,
+                    //         fontWeight: FontWeight.w600,
+                    //         color: AppColors.textPrimary,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: AppColors.white,
+              shadowColor: AppColors.black.withValues(alpha: 0.1),
+              elevation: 8,
+            )
+            : (widget.screen == ChatRoomScreenType.groupChat)
+            ? PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
+              menuPadding: EdgeInsets.zero,
+              offset: Offset(-10, 40),
+              onSelected: (String value) {
+                if (value == 'resolve') {
+                  _handleResolveAction(model);
+                }
+                if (value == 'Exit Group') {
+                  showExitGroupDialog(context, widget.roomId, model);
+                }
+
+                if (value == 'Group info') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder:
+                          (_) => GroupInfoScreen(
+                            contactName:
+                                widget.contactName.trim().isNotEmpty
+                                    ? widget.contactName
+                                    : 'Group',
+                            contactNumber: widget.contactNumber,
+                            roomId: widget.roomId,
+                          ),
+                    ),
+                  );
+                  // group info open
+                }
+              },
+              itemBuilder:
+                  (BuildContext context) => [
+                    // // Reschedule Item
+                    // PopupMenuItem<String>(
+                    //   value: 'reschedule',
+                    //   height: 100,
+                    //   child: Container(
+                    //     width: 300, // Set consistent width
+                    //     padding: EdgeInsets.only(top: 10, bottom: 10),
+                    //     child: Column(
+                    //       crossAxisAlignment: CrossAxisAlignment.start,
+                    //       children: [
+                    //         // Header
+                    //         Text(
+                    //           LanguageService.get('reschedule'),
+                    //           style: TextStyle(
+                    //             fontSize: 14,
+                    //             fontWeight: FontWeight.w600,
+                    //             color: AppColors.textPrimary,
+                    //           ),
+                    //         ),
+                    //         SizedBox(height: 5),
+                    //         // Dropdown Field
+                    //         CustomDropdownFormField<String>( // <-- 1. Specify the type
+                    //           value: null,
+                    //           label: LanguageService.get('select_time'),
+                    //
+                    //           // 2. Convert the 'items' list to DropdownMenuItems
+                    //           items: const [
+                    //             DropdownMenuItem<String>(
+                    //               value: "10",
+                    //               child: Text("10 Min"),
+                    //             ),
+                    //             DropdownMenuItem<String>(
+                    //               value: "15",
+                    //               child: Text("15 Min"),
+                    //             ),
+                    //             DropdownMenuItem<String>(
+                    //               value: "20",
+                    //               child: Text("20 Min"),
+                    //             ),
+                    //             DropdownMenuItem<String>(
+                    //               value: "30",
+                    //               child: Text("30 Min"),
+                    //             ),
+                    //             DropdownMenuItem<String>(
+                    //               value: "45",
+                    //               child: Text("45 Min"),
+                    //             ),
+                    //             DropdownMenuItem<String>(
+                    //               value: "60",
+                    //               child: Text("60 Min"),
+                    //             ),
+                    //           ],
+                    //           onChanged: (value) {
+                    //             rescheduleTicket(
+                    //               context,
+                    //               widget.ticketId ?? "",
+                    //               value ?? "",
+                    //             );
+                    //           },
+                    //           validator: (value) {
+                    //             return value == null
+                    //                 ? LanguageService.get('please_select_time')
+                    //                 : null;
+                    //           },
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+
+                    // Divider
+                    PopupMenuItem<String>(
+                      enabled: false,
+                      height: 1,
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.grey[200],
+                      ),
+                    ),
+
+                    // Mark As Resolved Item
+                    // PopupMenuItem<String>(
+                    //   value: 'resolve',
+                    //   child: Container(
+                    //     width: 250, // Match width with reschedule item
+                    //     padding: EdgeInsets.only(top: 10, bottom: 10),
+                    //
+                    //     child: Text(
+                    //       'Mark As Resolved',
+                    //       style: TextStyle(
+                    //         fontSize: 14,
+                    //         fontWeight: FontWeight.w600,
+                    //         color: AppColors.textPrimary,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    // Mark As Resolved Item
+                    if (widget.screen == ChatRoomScreenType.groupChat)
+                      PopupMenuItem<String>(
+                        value: 'Group info',
+                        child: Container(
+                          width: 250, // Match width with reschedule item
+                          padding: EdgeInsets.only(top: 10, bottom: 10),
+
+                          child: Text(
+                            'Group Info',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
                         ),
-                        DropdownMenuItem<String>(
-                          value: "15",
-                          child: Text("15 Min"),
+                      ),
+                    // Divider
+                    if (widget.screen == ChatRoomScreenType.groupChat)
+                      PopupMenuItem<String>(
+                        enabled: false,
+                        height: 1,
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors.grey[200],
                         ),
-                        DropdownMenuItem<String>(
-                          value: "20",
-                          child: Text("20 Min"),
+                      ),
+                    // Mark As Resolved Item
+                    PopupMenuItem<String>(
+                      value: 'Exit Group',
+
+                      child: Container(
+                        width: 250, // Match width with reschedule item
+                        padding: EdgeInsets.only(top: 10, bottom: 10),
+
+                        child: Text(
+                          'Exit Group',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.red,
+                          ),
                         ),
-                        DropdownMenuItem<String>(
-                          value: "30",
-                          child: Text("30 Min"),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: "45",
-                          child: Text("45 Min"),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: "60",
-                          child: Text("60 Min"),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        rescheduleTicket(
-                          context,
-                          widget.ticketId ?? "",
-                          value ?? "",
-                        );
-                      },
-                      validator: (value) {
-                        return value == null
-                            ? LanguageService.get('please_select_time')
-                            : null;
-                      },
+                      ),
                     ),
                   ],
-                ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-
-            // Divider
-            PopupMenuItem<String>(
-              enabled: false,
-              height: 1,
-              child: Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey[200],
-              ),
-            ),
-
-            // Mark As Resolved Item
-            // PopupMenuItem<String>(
-            //   value: 'resolve',
-            //   child: Container(
-            //     width: 250, // Match width with reschedule item
-            //     padding: EdgeInsets.only(top: 10, bottom: 10),
-            //
-            //     child: Text(
-            //       'Mark As Resolved',
-            //       style: TextStyle(
-            //         fontSize: 14,
-            //         fontWeight: FontWeight.w600,
-            //         color: AppColors.textPrimary,
-            //       ),
-            //     ),
-            //   ),
-            // ),
-          ],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          color: AppColors.white,
-          shadowColor: AppColors.black.withValues(alpha: 0.1),
-          elevation: 8,
-        ) :
-        ( widget.screen == ChatRoomScreenType.groupChat)? PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: AppColors.white, size: 20),
-          menuPadding: EdgeInsets.zero,
-          offset: Offset(-10, 40),
-          onSelected: (String value) {
-            if (value == 'resolve') {
-              _handleResolveAction(model);
-            }
-            if (value == 'Exit Group') {
-              showExitGroupDialog(context,widget.roomId, model);
-            }
-
-            if (value == 'Group info') {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder:
-                      (_) => GroupInfoScreen(
-                    contactName: widget.contactName.trim().isNotEmpty
-                        ? widget.contactName
-                        : 'Group',
-                    contactNumber: widget.contactNumber,
-                    roomId: widget.roomId,
-                  ),
-                ),
-              );
-              // group info open
-            }
-          },
-          itemBuilder:
-              (BuildContext context) => [
-            // // Reschedule Item
-            // PopupMenuItem<String>(
-            //   value: 'reschedule',
-            //   height: 100,
-            //   child: Container(
-            //     width: 300, // Set consistent width
-            //     padding: EdgeInsets.only(top: 10, bottom: 10),
-            //     child: Column(
-            //       crossAxisAlignment: CrossAxisAlignment.start,
-            //       children: [
-            //         // Header
-            //         Text(
-            //           LanguageService.get('reschedule'),
-            //           style: TextStyle(
-            //             fontSize: 14,
-            //             fontWeight: FontWeight.w600,
-            //             color: AppColors.textPrimary,
-            //           ),
-            //         ),
-            //         SizedBox(height: 5),
-            //         // Dropdown Field
-            //         CustomDropdownFormField<String>( // <-- 1. Specify the type
-            //           value: null,
-            //           label: LanguageService.get('select_time'),
-            //
-            //           // 2. Convert the 'items' list to DropdownMenuItems
-            //           items: const [
-            //             DropdownMenuItem<String>(
-            //               value: "10",
-            //               child: Text("10 Min"),
-            //             ),
-            //             DropdownMenuItem<String>(
-            //               value: "15",
-            //               child: Text("15 Min"),
-            //             ),
-            //             DropdownMenuItem<String>(
-            //               value: "20",
-            //               child: Text("20 Min"),
-            //             ),
-            //             DropdownMenuItem<String>(
-            //               value: "30",
-            //               child: Text("30 Min"),
-            //             ),
-            //             DropdownMenuItem<String>(
-            //               value: "45",
-            //               child: Text("45 Min"),
-            //             ),
-            //             DropdownMenuItem<String>(
-            //               value: "60",
-            //               child: Text("60 Min"),
-            //             ),
-            //           ],
-            //           onChanged: (value) {
-            //             rescheduleTicket(
-            //               context,
-            //               widget.ticketId ?? "",
-            //               value ?? "",
-            //             );
-            //           },
-            //           validator: (value) {
-            //             return value == null
-            //                 ? LanguageService.get('please_select_time')
-            //                 : null;
-            //           },
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
-
-            // Divider
-            PopupMenuItem<String>(
-              enabled: false,
-              height: 1,
-              child: Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey[200],
-              ),
-            ),
-
-            // Mark As Resolved Item
-            // PopupMenuItem<String>(
-            //   value: 'resolve',
-            //   child: Container(
-            //     width: 250, // Match width with reschedule item
-            //     padding: EdgeInsets.only(top: 10, bottom: 10),
-            //
-            //     child: Text(
-            //       'Mark As Resolved',
-            //       style: TextStyle(
-            //         fontSize: 14,
-            //         fontWeight: FontWeight.w600,
-            //         color: AppColors.textPrimary,
-            //       ),
-            //     ),
-            //   ),
-            // ),
-            // Mark As Resolved Item
-            if( widget.screen == ChatRoomScreenType.groupChat)
-              PopupMenuItem<String>(
-                value: 'Group info',
-                child: Container(
-                  width: 250, // Match width with reschedule item
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
-
-                  child: Text(
-                    'Group Info',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            // Divider
-                if( widget.screen == ChatRoomScreenType.groupChat)
-            PopupMenuItem<String>(
-              enabled: false,
-              height: 1,
-              child: Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey[200],
-              ),
-            ),
-            // Mark As Resolved Item
-            PopupMenuItem<String>(
-              value: 'Exit Group',
-
-              child: Container(
-                width: 250, // Match width with reschedule item
-                padding: EdgeInsets.only(top: 10, bottom: 10),
-
-                child: Text(
-                  'Exit Group',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.red,
-                  ),
-                ),
-              ),
-            ),
-          ],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          color: AppColors.white,
-          shadowColor: AppColors.black.withValues(alpha: 0.1),
-          elevation: 8,
-        ):SizedBox(),
+              color: AppColors.white,
+              shadowColor: AppColors.black.withValues(alpha: 0.1),
+              elevation: 8,
+            )
+            : SizedBox(),
       ],
     );
   }
@@ -940,15 +961,15 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
             horizontal: AppSizes.w16,
           ),
           suffixIcon:
-          model.searchController.text.isNotEmpty
-              ? IconButton(
-            icon: Icon(Icons.clear, color: AppColors.gray),
-            onPressed: () {
-              model.searchController.clear();
-              model.clearSearch();
-            },
-          )
-              : null,
+              model.searchController.text.isNotEmpty
+                  ? IconButton(
+                    icon: Icon(Icons.clear, color: AppColors.gray),
+                    onPressed: () {
+                      model.searchController.clear();
+                      model.clearSearch();
+                    },
+                  )
+                  : null,
         ),
       ),
     );
@@ -956,12 +977,16 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
   Uri? _extractLocationUri(String text) {
     final trimmed = text.trim();
-    final match = RegExp(r'https?://maps\.google\.com/\?q=([-0-9.]+),([-0-9.]+)').firstMatch(trimmed);
+    final match = RegExp(
+      r'https?://maps\.google\.com/\?q=([-0-9.]+),([-0-9.]+)',
+    ).firstMatch(trimmed);
     if (match != null) {
       return Uri.tryParse(match.group(0)!);
     }
 
-    final liveLocationMatch = RegExp(r'Live location:\s*(https?://maps\.google\.com/\?q=([-0-9.]+),([-0-9.]+))').firstMatch(trimmed);
+    final liveLocationMatch = RegExp(
+      r'Live location:\s*(https?://maps\.google\.com/\?q=([-0-9.]+),([-0-9.]+))',
+    ).firstMatch(trimmed);
     if (liveLocationMatch != null) {
       return Uri.tryParse(liveLocationMatch.group(1)!);
     }
@@ -975,18 +1000,26 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
 
     try {
       final coordinates = webUri.queryParameters['q']?.split(',');
-      final lat = coordinates != null && coordinates.isNotEmpty ? coordinates[0] : null;
-      final lng = coordinates != null && coordinates.length > 1 ? coordinates[1] : null;
+      final lat =
+          coordinates != null && coordinates.isNotEmpty ? coordinates[0] : null;
+      final lng =
+          coordinates != null && coordinates.length > 1 ? coordinates[1] : null;
 
       if (lat != null && lng != null) {
         final geoUri = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
         if (await canLaunchUrl(geoUri)) {
-          final launched = await launchUrl(geoUri, mode: LaunchMode.externalApplication);
+          final launched = await launchUrl(
+            geoUri,
+            mode: LaunchMode.externalApplication,
+          );
           if (launched) return;
         }
       }
 
-      final launchedWeb = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      final launchedWeb = await launchUrl(
+        webUri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launchedWeb) {
         Fluttertoast.showToast(msg: 'Map open nahi ho pa raha.');
       }
@@ -1013,17 +1046,14 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       return textWidget;
     }
 
-    return InkWell(
-      onTap: () => _openLocationMessage(text),
-      child: textWidget,
-    );
+    return InkWell(onTap: () => _openLocationMessage(text), child: textWidget);
   }
+
   Widget _buildHighlightedText(
-      String text,
-      String searchQuery,
-      bool isSentByMe,
-      )
-  {
+    String text,
+    String searchQuery,
+    bool isSentByMe,
+  ) {
     if (searchQuery.isEmpty) {
       return Text(
         text,
@@ -1055,9 +1085,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     final baseColor = isSentByMe ? AppColors.white : AppColors.textPrimary;
     final highlightColor = isSentByMe ? AppColors.white : AppColors.primary;
     final highlightBackground =
-    isSentByMe
-        ? AppColors.white.withValues(alpha: 0.3)
-        : AppColors.primary.withValues(alpha: 0.2);
+        isSentByMe
+            ? AppColors.white.withValues(alpha: 0.3)
+            : AppColors.primary.withValues(alpha: 0.2);
 
     return RichText(
       text: TextSpan(
@@ -1143,18 +1173,18 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               ),
               child: Row(
                 mainAxisAlignment:
-                message.isSentByMe
-                    ? MainAxisAlignment.end
-                    : MainAxisAlignment.start,
+                    message.isSentByMe
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   // Message content
                   Flexible(
                     child: Column(
                       crossAxisAlignment:
-                      message.isSentByMe
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
+                          message.isSentByMe
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
                       children: [
                         // Message bubble
                         Material(
@@ -1162,31 +1192,31 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                           child: InkWell(
                             onTap: () {},
                             onLongPress:
-                            message.isDeleted
-                                ? null
-                                : () {
-                              _showMessageOptions(
-                                context,
-                                message,
-                                model,
-                              );
-                            },
+                                message.isDeleted
+                                    ? null
+                                    : () {
+                                      _showMessageOptions(
+                                        context,
+                                        message,
+                                        model,
+                                      );
+                                    },
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(AppSizes.v18),
                               topRight: Radius.circular(AppSizes.v18),
                               bottomLeft:
-                              message.isSentByMe
-                                  ? Radius.circular(AppSizes.v18)
-                                  : Radius.circular(0),
+                                  message.isSentByMe
+                                      ? Radius.circular(AppSizes.v18)
+                                      : Radius.circular(0),
                               bottomRight:
-                              message.isSentByMe
-                                  ? Radius.circular(0)
-                                  : Radius.circular(AppSizes.v18),
+                                  message.isSentByMe
+                                      ? Radius.circular(0)
+                                      : Radius.circular(AppSizes.v18),
                             ),
                             child: Container(
                               constraints: BoxConstraints(
                                 maxWidth:
-                                MediaQuery.of(context).size.width * 0.75,
+                                    MediaQuery.of(context).size.width * 0.75,
                               ),
                               padding: EdgeInsets.symmetric(
                                 horizontal: AppSizes.w16,
@@ -1194,366 +1224,399 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                               ),
                               decoration: BoxDecoration(
                                 color:
-                                message.isDeleted
-                                    ? (message.isSentByMe
-                                    ? AppColors.primaryDark.withValues(
-                                  alpha: 0.45,
-                                )
-                                    : AppColors.lightGrey.withValues(
-                                  alpha: 0.5,
-                                ))
-                                    : message.isSentByMe
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight.withValues(
-                                  alpha: 0.1,
-                                ),
+                                    message.isDeleted
+                                        ? (message.isSentByMe
+                                            ? AppColors.primaryDark.withValues(
+                                              alpha: 0.45,
+                                            )
+                                            : AppColors.lightGrey.withValues(
+                                              alpha: 0.5,
+                                            ))
+                                        : message.isSentByMe
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight.withValues(
+                                          alpha: 0.1,
+                                        ),
                                 borderRadius: BorderRadius.only(
                                   topLeft: Radius.circular(AppSizes.v18),
                                   topRight: Radius.circular(AppSizes.v18),
                                   bottomLeft:
-                                  message.isSentByMe
-                                      ? Radius.circular(AppSizes.v18)
-                                      : Radius.circular(0),
+                                      message.isSentByMe
+                                          ? Radius.circular(AppSizes.v18)
+                                          : Radius.circular(0),
                                   bottomRight:
-                                  message.isSentByMe
-                                      ? Radius.circular(0)
-                                      : Radius.circular(AppSizes.v18),
+                                      message.isSentByMe
+                                          ? Radius.circular(0)
+                                          : Radius.circular(AppSizes.v18),
                                 ),
                                 border:
-                                message.isDeleted
-                                    ? Border.all(
-                                  color:
-                                  message.isSentByMe
-                                      ? AppColors.primaryDark
-                                      .withValues(alpha: 0.3)
-                                      : AppColors.lightGrey,
-                                  width: 1,
-                                )
-                                    : null,
+                                    message.isDeleted
+                                        ? Border.all(
+                                          color:
+                                              message.isSentByMe
+                                                  ? AppColors.primaryDark
+                                                      .withValues(alpha: 0.3)
+                                                  : AppColors.lightGrey,
+                                          width: 1,
+                                        )
+                                        : null,
                               ),
                               child:
-                              message.isDeleted
-                                  ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.block_rounded,
-                                    size: 14,
-                                    color:
-                                    message.isSentByMe
-                                        ? AppColors.white
-                                        .withValues(alpha: 0.6)
-                                        : AppColors.textSecondary,
-                                  ),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'This message was deleted',
-                                    style: TextStyle(
-                                      color:
-                                      message.isSentByMe
-                                          ? AppColors.white
-                                          .withValues(
-                                        alpha: 0.65,
-                                      )
-                                          : AppColors.textSecondary,
-                                      fontSize: AppSizes.f13,
-                                      fontStyle: FontStyle.italic,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              )
-                                  : Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                                children: [
-                                  /// 👇 NAME (GROUP CHAT ONLY)
-                                  if (isGroupChat ) ...[
-                                    if(showName)
-                                      Padding(
-                                        padding: EdgeInsets.only(bottom: 4),
-                                        child: Text(
-                                          model.senderDisplayName(message),
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.primaryDark,
-                                          ),
-                                        ),
-                                      ),],
-
-                                  // Reply reference (if this message is a reply)
-                                  if (message.replyTo != null) ...[
-                                    Container(
-                                      margin: EdgeInsets.only(
-                                        bottom: 6,
-                                      ),
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color:
-                                        message.isSentByMe
-                                            ? AppColors.white
-                                            .withValues(
-                                          alpha: 0.15,
-                                        )
-                                            : AppColors.primaryDark
-                                            .withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        borderRadius:
-                                        BorderRadius.circular(8),
-                                        border: Border(
-                                          left: BorderSide(
-                                            color:
-                                            message.isSentByMe
-                                                ? AppColors.white
-                                                .withValues(
-                                              alpha: 0.6,
-                                            )
-                                                : AppColors
-                                                .primaryDark,
-                                            width: 3,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  message.isDeleted
+                                      ? Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            model.senderDisplayName(
-                                              message.replyTo!,
-                                            ),
-                                            style: TextStyle(
-                                              color:
-                                              message.isSentByMe
-                                                  ? AppColors.white
-                                                  .withValues(
-                                                alpha: 0.9,
-                                              )
-                                                  : AppColors
-                                                  .primaryDark,
-                                              fontSize: 12,
-                                              fontWeight:
-                                              FontWeight.w700,
-                                            ),
+                                          Icon(
+                                            Icons.block_rounded,
+                                            size: 14,
+                                            color:
+                                                message.isSentByMe
+                                                    ? AppColors.white
+                                                        .withValues(alpha: 0.6)
+                                                    : AppColors.textSecondary,
                                           ),
-                                          SizedBox(height: 2),
+                                          SizedBox(width: 6),
                                           Text(
-                                            message.replyTo!.previewText,
-                                            maxLines: 2,
-                                            overflow:
-                                            TextOverflow.ellipsis,
+                                            'This message was deleted',
                                             style: TextStyle(
                                               color:
-                                              message.isSentByMe
-                                                  ? AppColors.white
-                                                  .withValues(
-                                                alpha: 0.7,
-                                              )
-                                                  : AppColors
-                                                  .textSecondary,
-                                              fontSize: 12,
-                                              fontWeight:
-                                              FontWeight.w400,
+                                                  message.isSentByMe
+                                                      ? AppColors.white
+                                                          .withValues(
+                                                            alpha: 0.65,
+                                                          )
+                                                      : AppColors.textSecondary,
+                                              fontSize: AppSizes.f13,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.w400,
                                             ),
                                           ),
                                         ],
-                                      ),
-                                    ),
-                                  ],
-                                  // Media attachments (images and videos)
-                                  if (message
-                                      .attachments
-                                      .isNotEmpty) ...[
-                                    ...message.attachments.asMap().entries.map((
-                                        entry,
-                                        ) {
-                                      final attachment = entry.value;
-                                      if (attachment.type == 'image') {
-                                        // Get all image URLs from this message
-                                        final imageUrls =
-                                        message.attachments
-                                            .where(
-                                              (att) =>
-                                          att.type ==
-                                              'image',
-                                        )
-                                            .map((att) => att.url)
-                                            .toList();
-
-                                        return Container(
-                                          constraints: BoxConstraints(
-                                            maxHeight: 250, // 🔥 ye jaruri hai
-                                          ),
-                                          margin: EdgeInsets.only(
-                                            bottom: AppSizes.h8,
-                                          ),
-                                          child: Hero(
-                                            tag:
-                                            'chat_image_${attachment.url}',
-                                            child: ChatCachedImage(
-                                              imageUrl: attachment.url,
-                                              width: 200,
-                                              height: 200,
-
-                                              borderRadius:
-                                              BorderRadius.circular(
-                                                AppSizes.v8,
-                                              ),
-                                              allImageUrls: imageUrls,
-                                              imageIndex: imageUrls
-                                                  .indexOf(
-                                                attachment.url,
-                                              ),
-
-                                              messageContent:
-                                              message
-                                                  .content
-                                                  .isNotEmpty
-                                                  ? message.content
-                                                  : null,
-                                            ),
-                                          ),
-                                        );
-                                      } else if (attachment.type ==
-                                          'video') {
-                                        // Video attachment
-                                        return Container(
-                                          margin: EdgeInsets.only(
-                                            bottom: AppSizes.h8,
-                                          ),
-                                          child: Hero(
-                                            tag:
-                                            'chat_video_${attachment.url}',
-                                            child:
-                                            _buildVideoAttachment(
-                                              attachment.url,
-                                              message
-                                                  .content
-                                                  .isNotEmpty
-                                                  ? message.content
-                                                  : null,
-                                              message.isSentByMe,
-                                            ),
-                                          ),
-                                        );
-                                      } else if (attachment.isAudio) {
-                                        return Container(
-                                          margin: EdgeInsets.only(
-                                            bottom: AppSizes.h8,
-                                          ),
-                                          child: ChatAudioMessageBubble(
-                                            messageId: message.id,
-                                            attachment: attachment,
-                                            isSentByMe: message.isSentByMe,
-                                          ),
-                                        );
-                                      }
-                                      else if (attachment.type == 'document') {
-                                        return Container(
-                                          margin: EdgeInsets.only(bottom: AppSizes.h8),
-                                          padding: EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: message.isSentByMe
-                                                ? Colors.white.withOpacity(0.1)
-                                                : Colors.grey.shade200,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.insert_drive_file,
-                                                color: message.isSentByMe ? Colors.white : Colors.black,
-                                                size: 24,
-                                              ),
-                                              SizedBox(width: 8),
-                                              Expanded(
+                                      )
+                                      : Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          /// 👇 NAME (GROUP CHAT ONLY)
+                                          if (isGroupChat) ...[
+                                            if (showName)
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                  bottom: 4,
+                                                ),
                                                 child: Text(
-                                                  attachment.name ?? 'Document',
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  model.senderDisplayName(
+                                                    message,
+                                                  ),
                                                   style: TextStyle(
-                                                    color: message.isSentByMe
-                                                        ? Colors.white
-                                                        : Colors.black,
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        AppColors.primaryDark,
                                                   ),
                                                 ),
                                               ),
-                                              // SizedBox(width: 8),
-                                              // Icon(
-                                              //   Icons.download,
-                                              //   size: 18,
-                                              //   color: message.isSentByMe ? Colors.white : Colors.black,
-                                              // ),
-                                            ],
-                                          ),
-                                        );
-                                      }
-                                      return SizedBox.shrink();
-                                    }),
-                                  ],
+                                          ],
 
-                                  // Message text (only show if not empty)
-                                  if (message.content.isNotEmpty) ...[
-                                    model.isSearchMode
-                                        ? _buildHighlightedText(
-                                      message.content,
-                                      model.searchQuery,
-                                      message.isSentByMe,
-                                    )
-                                        : _buildMessageText(
-                                      message.isSentByMe
-                                          ? message.content
-                                          : message.translatedContent,
-                                      message.isSentByMe,
-                                    ),
-                                  ],
+                                          // Reply reference (if this message is a reply)
+                                          if (message.replyTo != null) ...[
+                                            Container(
+                                              margin: EdgeInsets.only(
+                                                bottom: 6,
+                                              ),
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    message.isSentByMe
+                                                        ? AppColors.white
+                                                            .withValues(
+                                                              alpha: 0.15,
+                                                            )
+                                                        : AppColors.primaryDark
+                                                            .withValues(
+                                                              alpha: 0.08,
+                                                            ),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border(
+                                                  left: BorderSide(
+                                                    color:
+                                                        message.isSentByMe
+                                                            ? AppColors.white
+                                                                .withValues(
+                                                                  alpha: 0.6,
+                                                                )
+                                                            : AppColors
+                                                                .primaryDark,
+                                                    width: 3,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    model.senderDisplayName(
+                                                      message.replyTo!,
+                                                    ),
+                                                    style: TextStyle(
+                                                      color:
+                                                          message.isSentByMe
+                                                              ? AppColors.white
+                                                                  .withValues(
+                                                                    alpha: 0.9,
+                                                                  )
+                                                              : AppColors
+                                                                  .primaryDark,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 2),
+                                                  Text(
+                                                    message
+                                                        .replyTo!
+                                                        .previewText,
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      color:
+                                                          message.isSentByMe
+                                                              ? AppColors.white
+                                                                  .withValues(
+                                                                    alpha: 0.7,
+                                                                  )
+                                                              : AppColors
+                                                                  .textSecondary,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                          // Media attachments (images and videos)
+                                          if (message
+                                              .attachments
+                                              .isNotEmpty) ...[
+                                            ...message.attachments.asMap().entries.map((
+                                              entry,
+                                            ) {
+                                              final attachment = entry.value;
+                                              if (attachment.type == 'image') {
+                                                // Get all image URLs from this message
+                                                final imageUrls =
+                                                    message.attachments
+                                                        .where(
+                                                          (att) =>
+                                                              att.type ==
+                                                              'image',
+                                                        )
+                                                        .map((att) => att.url)
+                                                        .toList();
 
-                                  // // Translated text if available
-                                  // if (message.content.isNotEmpty) ...[
-                                  //   SizedBox(height: AppSizes.h6),
-                                  //   Container(
-                                  //     padding: EdgeInsets.symmetric(
-                                  //       horizontal: AppSizes.w8,
-                                  //       vertical: AppSizes.h4,
-                                  //     ),
-                                  //     decoration: BoxDecoration(
-                                  //       color:
-                                  //           message.isSentByMe
-                                  //               ? AppColors.white.withValues(
-                                  //                 alpha: 0.15,
-                                  //               )
-                                  //               : AppColors.lightGray
-                                  //                   .withValues(alpha: 0.5),
-                                  //       borderRadius: BorderRadius.circular(
-                                  //         AppSizes.v8,
-                                  //       ),
-                                  //     ),
-                                  //     child: Text(
-                                  //       message.content,
-                                  //       style: TextStyle(
-                                  //         color:
-                                  //             message.isSentByMe
-                                  //                 ? AppColors.white.withValues(
-                                  //                   alpha: 0.9,
-                                  //                 )
-                                  //                 : AppColors.textSecondary,
-                                  //         fontSize: AppSizes.f12,
-                                  //         height: 1.3,
-                                  //         fontStyle: FontStyle.italic,
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ],
-                                ],
-                              ),
+                                                return Container(
+                                                  constraints: BoxConstraints(
+                                                    maxHeight:
+                                                        250, // 🔥 ye jaruri hai
+                                                  ),
+                                                  margin: EdgeInsets.only(
+                                                    bottom: AppSizes.h8,
+                                                  ),
+                                                  child: Hero(
+                                                    tag:
+                                                        'chat_image_${attachment.url}',
+                                                    child: ChatCachedImage(
+                                                      imageUrl: attachment.url,
+                                                      width: 200,
+                                                      height: 200,
+
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            AppSizes.v8,
+                                                          ),
+                                                      allImageUrls: imageUrls,
+                                                      imageIndex: imageUrls
+                                                          .indexOf(
+                                                            attachment.url,
+                                                          ),
+
+                                                      messageContent:
+                                                          message
+                                                                  .content
+                                                                  .isNotEmpty
+                                                              ? message.content
+                                                              : null,
+                                                    ),
+                                                  ),
+                                                );
+                                              } else if (attachment.type ==
+                                                  'video') {
+                                                // Video attachment
+                                                return Container(
+                                                  margin: EdgeInsets.only(
+                                                    bottom: AppSizes.h8,
+                                                  ),
+                                                  child: Hero(
+                                                    tag:
+                                                        'chat_video_${attachment.url}',
+                                                    child:
+                                                        _buildVideoAttachment(
+                                                          attachment.url,
+                                                          message
+                                                                  .content
+                                                                  .isNotEmpty
+                                                              ? message.content
+                                                              : null,
+                                                          message.isSentByMe,
+                                                        ),
+                                                  ),
+                                                );
+                                              } else if (attachment.isAudio) {
+                                                return Container(
+                                                  margin: EdgeInsets.only(
+                                                    bottom: AppSizes.h8,
+                                                  ),
+                                                  child: ChatAudioMessageBubble(
+                                                    messageId: message.id,
+                                                    attachment: attachment,
+                                                    isSentByMe:
+                                                        message.isSentByMe,
+                                                  ),
+                                                );
+                                              } else if (attachment.type ==
+                                                  'document') {
+                                                return Container(
+                                                  margin: EdgeInsets.only(
+                                                    bottom: AppSizes.h8,
+                                                  ),
+                                                  padding: EdgeInsets.all(10),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        message.isSentByMe
+                                                            ? Colors.white
+                                                                .withOpacity(
+                                                                  0.1,
+                                                                )
+                                                            : Colors
+                                                                .grey
+                                                                .shade200,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.insert_drive_file,
+                                                        color:
+                                                            message.isSentByMe
+                                                                ? Colors.white
+                                                                : Colors.black,
+                                                        size: 24,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Text(
+                                                          attachment.name ??
+                                                              'Document',
+                                                          maxLines: 1,
+                                                          overflow:
+                                                              TextOverflow
+                                                                  .ellipsis,
+                                                          style: TextStyle(
+                                                            color:
+                                                                message.isSentByMe
+                                                                    ? Colors
+                                                                        .white
+                                                                    : Colors
+                                                                        .black,
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // SizedBox(width: 8),
+                                                      // Icon(
+                                                      //   Icons.download,
+                                                      //   size: 18,
+                                                      //   color: message.isSentByMe ? Colors.white : Colors.black,
+                                                      // ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }
+                                              return SizedBox.shrink();
+                                            }),
+                                          ],
+
+                                          // Message text (only show if not empty)
+                                          if (message.content.isNotEmpty) ...[
+                                            model.isSearchMode
+                                                ? _buildHighlightedText(
+                                                  message.content,
+                                                  model.searchQuery,
+                                                  message.isSentByMe,
+                                                )
+                                                : _buildMessageText(
+                                                  message.isSentByMe
+                                                      ? message.content
+                                                      : message
+                                                          .translatedContent,
+                                                  message.isSentByMe,
+                                                ),
+                                          ],
+
+                                          // // Translated text if available
+                                          // if (message.content.isNotEmpty) ...[
+                                          //   SizedBox(height: AppSizes.h6),
+                                          //   Container(
+                                          //     padding: EdgeInsets.symmetric(
+                                          //       horizontal: AppSizes.w8,
+                                          //       vertical: AppSizes.h4,
+                                          //     ),
+                                          //     decoration: BoxDecoration(
+                                          //       color:
+                                          //           message.isSentByMe
+                                          //               ? AppColors.white.withValues(
+                                          //                 alpha: 0.15,
+                                          //               )
+                                          //               : AppColors.lightGray
+                                          //                   .withValues(alpha: 0.5),
+                                          //       borderRadius: BorderRadius.circular(
+                                          //         AppSizes.v8,
+                                          //       ),
+                                          //     ),
+                                          //     child: Text(
+                                          //       message.content,
+                                          //       style: TextStyle(
+                                          //         color:
+                                          //             message.isSentByMe
+                                          //                 ? AppColors.white.withValues(
+                                          //                   alpha: 0.9,
+                                          //                 )
+                                          //                 : AppColors.textSecondary,
+                                          //         fontSize: AppSizes.f12,
+                                          //         height: 1.3,
+                                          //         fontStyle: FontStyle.italic,
+                                          //       ),
+                                          //     ),
+                                          //   ),
+                                          // ],
+                                        ],
+                                      ),
                             ),
                           ),
                         ),
@@ -1563,9 +1626,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                             offset: Offset(0, -6),
                             child: Align(
                               alignment:
-                              message.isSentByMe
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
+                                  message.isSentByMe
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
                               child: Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 6,
@@ -1599,9 +1662,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment:
-                            message.isSentByMe
-                                ? MainAxisAlignment.end
-                                : MainAxisAlignment.start,
+                                message.isSentByMe
+                                    ? MainAxisAlignment.end
+                                    : MainAxisAlignment.start,
                             children: [
                               Text(
                                 "${_formatTimestamp(message.createdAt)} •",
@@ -1618,10 +1681,11 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                                     _buildMessageStatus(message),
                                     SizedBox(width: AppSizes.w6),
                                     GestureDetector(
-                                        onTap: () {
-                                          _showRecipientList(message,model);
-                                        },
-                                        child: _buildMessageSeenStatus(message)),
+                                      onTap: () {
+                                        _showRecipientList(message, model);
+                                      },
+                                      child: _buildMessageSeenStatus(message),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -1642,14 +1706,13 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
         );
       },
     );
-
   }
+
   void _showMessageOptions(
-      BuildContext context,
-      ChatMessageModel message,
-      ChatViewModel model,
-      )
-  {
+    BuildContext context,
+    ChatMessageModel message,
+    ChatViewModel model,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1722,14 +1785,14 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               ),
 
               Divider(),
-              if(model.chatRoomScreenType == ChatRoomScreenType.groupChat)
-              _optionTile(Icons.info_outline, "Info", () {
-                Navigator.pop(context);
-                Future.delayed(const Duration(milliseconds: 120), () {
-                  if (!mounted) return;
-                  _showRecipientList(message,model);
-                });
-              }),
+              if (model.chatRoomScreenType == ChatRoomScreenType.groupChat)
+                _optionTile(Icons.info_outline, "Info", () {
+                  Navigator.pop(context);
+                  Future.delayed(const Duration(milliseconds: 120), () {
+                    if (!mounted) return;
+                    _showRecipientList(message, model);
+                  });
+                }),
               _optionTile(Icons.reply, "Reply", () {
                 Navigator.pop(context);
                 model.setReplyMessage(message);
@@ -1751,7 +1814,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                 _optionTile(
                   Icons.delete,
                   "Delete",
-                      () {
+                  () {
                     Navigator.pop(context);
                     model.deleteMessage(message.id);
                   },
@@ -1766,6 +1829,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       },
     );
   }
+
   Widget _buildMessageStatus(ChatMessageModel message) {
     Color statusColor;
 
@@ -1798,7 +1862,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   Widget _buildMessageSeenStatus(ChatMessageModel message) {
     final membersCount =
         int.tryParse(widget.contactNumber.split(" ").first) ?? 0;
-    if (membersCount > 0 && message.readBy.length >= membersCount){
+    if (membersCount > 0 && message.readBy.length >= membersCount) {
       return SizedBox(
         width: 25,
         child: Row(
@@ -1836,7 +1900,6 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                 color: AppColors.primaryLight,
               ),
             ),
-
           ],
         ),
       );
@@ -1857,7 +1920,8 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       return 'Just now';
     }
   }
-  void _showRecipientList(ChatMessageModel message,ChatViewModel model) {
+
+  void _showRecipientList(ChatMessageModel message, ChatViewModel model) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1866,7 +1930,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return RecipientListWidget(message: message, model: model,);
+        return RecipientListWidget(message: message, model: model);
       },
     );
   }
@@ -1877,13 +1941,14 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
     }
     return const SizedBox.shrink();
   }
+
   Widget _optionTile(
-      IconData icon,
-      String title,
-      VoidCallback onTap, {
-        bool showBorder = true,
-        bool isDestructive = false, // 👈 NEW
-      }) {
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    bool showBorder = true,
+    bool isDestructive = false, // 👈 NEW
+  }) {
     final Color textColor = isDestructive ? Colors.red : Colors.black;
 
     return InkWell(
@@ -1891,13 +1956,13 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration:
-        showBorder
-            ? BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.grey.shade300, width: 0.8),
-          ),
-        )
-            : null,
+            showBorder
+                ? BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300, width: 0.8),
+                  ),
+                )
+                : null,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -1947,13 +2012,12 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       );
     }).toList();
   }
-  Widget _reactionEmoji(
-      String emoji,
-      ChatMessageModel message,
-      ChatViewModel model,
-      )
-  {
 
+  Widget _reactionEmoji(
+    String emoji,
+    ChatMessageModel message,
+    ChatViewModel model,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.pop(context);
@@ -1962,8 +2026,8 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       child: Text(emoji, style: TextStyle(fontSize: 20)),
     );
   }
-  Widget _buildMultipleImagePreview(ChatViewModel model)
-  {
+
+  Widget _buildMultipleImagePreview(ChatViewModel model) {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(
@@ -2015,9 +2079,9 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
               itemCount: model.selectedMediaPaths.length,
               itemBuilder: (context, index) {
                 final mediaType =
-                index < model.selectedMediaTypes.length
-                    ? model.selectedMediaTypes[index]
-                    : 'image';
+                    index < model.selectedMediaTypes.length
+                        ? model.selectedMediaTypes[index]
+                        : 'image';
                 return Container(
                   margin: EdgeInsets.only(right: AppSizes.w8),
                   child: Stack(
@@ -2030,34 +2094,34 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                         ),
                         child: Hero(
                           tag:
-                          'preview_${mediaType}_${model.selectedMediaPaths[index]}',
+                              'preview_${mediaType}_${model.selectedMediaPaths[index]}',
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(AppSizes.v8),
                             child:
-                            mediaType == 'video'
-                                ? _buildVideoThumbnail(
-                              model.selectedMediaPaths[index],
-                            )
-                                : Image.file(
-                              File(model.selectedMediaPaths[index]),
-                              fit: BoxFit.cover,
-                              errorBuilder: (
-                                  context,
-                                  error,
-                                  stackTrace,
-                                  ) {
-                                return Container(
-                                  color: AppColors.lightGrey.withValues(
-                                    alpha: 0.3,
-                                  ),
-                                  child: Icon(
-                                    Icons.broken_image,
-                                    color: AppColors.textGrey,
-                                    size: 30,
-                                  ),
-                                );
-                              },
-                            ),
+                                mediaType == 'video'
+                                    ? _buildVideoThumbnail(
+                                      model.selectedMediaPaths[index],
+                                    )
+                                    : Image.file(
+                                      File(model.selectedMediaPaths[index]),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return Container(
+                                          color: AppColors.lightGrey.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            color: AppColors.textGrey,
+                                            size: 30,
+                                          ),
+                                        );
+                                      },
+                                    ),
                           ),
                         ),
                       ),
@@ -2114,10 +2178,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
   }
 
   Widget _buildVideoAttachment(
-      String videoUrl,
-      String? messageContent,
-      bool isSentByMe,
-      ) {
+    String videoUrl,
+    String? messageContent,
+    bool isSentByMe,
+  ) {
     return GestureDetector(
       onTap: () {
         // Navigate to video player or show video in fullscreen
@@ -2249,13 +2313,13 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
           cacheHeight: 200,
           errorBuilder:
               (context, error, stackTrace) => Container(
-            color: AppColors.primarySuperLight.withValues(alpha: 0.1),
-            child: Icon(
-              Icons.videocam,
-              color: AppColors.textGrey,
-              size: 20,
-            ),
-          ),
+                color: AppColors.primarySuperLight.withValues(alpha: 0.1),
+                child: Icon(
+                  Icons.videocam,
+                  color: AppColors.textGrey,
+                  size: 20,
+                ),
+              ),
         );
       },
     );
@@ -2279,17 +2343,26 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
         children: [
           Icon(Icons.info_outline, color: color, size: 20),
           SizedBox(width: 12),
-          Expanded(child: Text(message, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w500))),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-
   Widget _buildMessageInput(ChatViewModel model) {
     final showSendButton =
-        (model.messageController.text.trim().isNotEmpty || model.hasImagePreview) &&
-            !model.isRecordingAudio;
+        (model.messageController.text.trim().isNotEmpty ||
+            model.hasImagePreview) &&
+        !model.isRecordingAudio;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -2314,64 +2387,68 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
-                child: model.isRecordingAudio
-                    ? VoiceRecordingBar(
-                  key: const ValueKey('recording-bar'),
-                  duration: model.recordingDuration,
-                  cancelProgress: model.recordingCancelProgress,
-                  shouldCancel: model.shouldCancelRecording,
-                )
-                    : Container(
-                  key: const ValueKey('message-input'),
-                  decoration: BoxDecoration(
-                    color: AppColors.lightGrey.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(AppSizes.v24),
-                    border: Border.all(
-                      color: _messageFocusNode.hasFocus
-                          ? AppColors.primary.withValues(alpha: 0.3)
-                          : Colors.transparent,
-                      width: 1,
-                    ),
-                  ),
-                  child: CommonTextField(
-                    controller: model.messageController,
-                    placeholder: 'Write Message',
-                    onTapOutside: (event) {},
-                    onChanged: model.onComposerTextChanged,
-                    prefixIcon: GestureDetector(
-                      onTap: model.toggleAttachment,
-                      child: Container(
-                        margin: EdgeInsets.all(8),
-                        padding: EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightGrey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Image.asset(
-                          AppImages.attachment,
-                          width: 20,
-                          height: 20,
-                          color: AppColors.primaryDark,
-                        ),
-                      ),
-                    ),
-                    suffixIcon: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: model.pickImageFromCamera,
-                          child: Image.asset(
-                            AppImages.cameraOutlined,
-                            width: 20,
-                            height: 20,
-                            color: AppColors.textGrey,
+                child:
+                    model.isRecordingAudio
+                        ? VoiceRecordingBar(
+                          key: const ValueKey('recording-bar'),
+                          duration: model.recordingDuration,
+                          cancelProgress: model.recordingCancelProgress,
+                          shouldCancel: model.shouldCancelRecording,
+                        )
+                        : Container(
+                          key: const ValueKey('message-input'),
+                          decoration: BoxDecoration(
+                            color: AppColors.lightGrey.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(AppSizes.v24),
+                            border: Border.all(
+                              color:
+                                  _messageFocusNode.hasFocus
+                                      ? AppColors.primary.withValues(alpha: 0.3)
+                                      : Colors.transparent,
+                              width: 1,
+                            ),
+                          ),
+                          child: CommonTextField(
+                            controller: model.messageController,
+                            placeholder: 'Write Message',
+                            onTapOutside: (event) {},
+                            onChanged: model.onComposerTextChanged,
+                            prefixIcon: GestureDetector(
+                              onTap: model.toggleAttachment,
+                              child: Container(
+                                margin: EdgeInsets.all(8),
+                                padding: EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightGrey.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Image.asset(
+                                  AppImages.attachment,
+                                  width: 20,
+                                  height: 20,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                            ),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: model.pickImageFromCamera,
+                                  child: Image.asset(
+                                    AppImages.cameraOutlined,
+                                    width: 20,
+                                    height: 20,
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                                SizedBox(width: AppSizes.w12),
+                              ],
+                            ),
                           ),
                         ),
-                        SizedBox(width: AppSizes.w12),
-                      ],
-                    ),
-                  ),
-                ),
               ),
             ),
             SizedBox(width: AppSizes.w12),
@@ -2403,6 +2480,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<ChatViewModel>.reactive(
@@ -2410,15 +2488,13 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
       // chat.view.dart — onViewModelReady mein ye add karo:
       onViewModelReady: (model) {
         model.ticketDetailsViewModel.currentOpenTicketStatus.value =
-            widget.ticketStatus ?? '';   // <-- yahan move karo, initCount hata do
+            widget.ticketStatus ?? ''; // <-- yahan move karo, initCount hata do
         model.fetchInitialData(roomId1: widget.roomId, screen: widget.screen);
         model.messageController.addListener(() {
           setState(() {});
         });
       },
-      builder:
-          (context, model, child) {
-
+      builder: (context, model, child) {
         // if(initCount==0) {
         //   model.ticketDetailsViewModel.currentOpenTicketStatus.value =
         //       widget.ticketStatus ?? '';
@@ -2431,19 +2507,18 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
             !model.isTicketDetailsExpanded) {
           _didAutoScrollToLatestOnOpen = true;
 
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted) return;
-              Future.delayed(Duration(milliseconds: 100), () {
-                if (model.scrollController.hasClients) {
-                  model.scrollController.animateTo(
-                    model.scrollController.position.maxScrollExtent,
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                  );
-                }
-              });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            Future.delayed(Duration(milliseconds: 100), () {
+              if (model.scrollController.hasClients) {
+                model.scrollController.animateTo(
+                  model.scrollController.position.maxScrollExtent,
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              }
             });
-
+          });
         }
         return Scaffold(
           appBar: _buildAppBar(context, model),
@@ -2454,15 +2529,15 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   // if(widget.isVisible == true )
-                    PendingStatusCard(
-                      title: widget.updatedAt ?? "N/A",
-                      ticketNumber: widget.contactNumber,
-                      status: widget.ticketStatus,
-                      child: TicketDetailsView(
-                        ticketId: widget.ticketId,
-                        isEmbedded: true,
-                      ),
+                  PendingStatusCard(
+                    title: widget.updatedAt ?? "N/A",
+                    ticketNumber: widget.contactNumber,
+                    status: widget.ticketStatus,
+                    child: TicketDetailsView(
+                      ticketId: widget.ticketId,
+                      isEmbedded: true,
                     ),
+                  ),
                   // PendingStatusCard(
                   //   title: widget.updatedAt ?? "N/A",
                   //   ticketNumber: widget.contactNumber,
@@ -2474,7 +2549,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   //   },
                   // ),
                   if (model.isTicketDetailsExpanded)
-                    SizedBox(height: 10,)
+                    SizedBox(height: 10)
                   //   Expanded(
                   //     child: TicketDetailsView(
                   //       ticketId: widget.ticketId,
@@ -2486,72 +2561,77 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                     SlideTransition(
                       position: _slideAnimation,
                       child:
-                      model.isSearchMode
-                          ? _buildSearchBar(model)
-                          : const SizedBox.shrink(),
+                          model.isSearchMode
+                              ? _buildSearchBar(model)
+                              : const SizedBox.shrink(),
                     ),
                     // Messages list
                     Flexible(
                       child:
-                      model.isLoading
-                          ? ListView.builder(
-                        controller: model.scrollController,
-                        padding: EdgeInsets.only(top: AppSizes.h8),
-                        itemCount: 6,
-                        itemBuilder: (context, index) {
-                          return MessageBubbleShimmer(
-                            isSentByMe: index % 2 == 0,
-                          );
-                        },
-                      )
-                          : NotificationListener<ScrollNotification>(
-                        onNotification: (ScrollNotification scrollInfo) {
-                          if (scrollInfo is ScrollUpdateNotification) {
-                            // Load older messages when user scrolls near the top.
-                            if (scrollInfo.metrics.pixels <=
-                                scrollInfo.metrics.minScrollExtent +
-                                    100 &&
-                                model.hasMoreMessages &&
-                                !model.isLoadingMore) {
-                              model.loadMoreMessages();
-                            }
-                          }
-                          return false;
-                        },
-                        child: ListView.builder(
-                          controller: model.scrollController,
-                          reverse: false,
-                          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                          padding: EdgeInsets.only(
-                            top: AppSizes.h10,
-                            bottom: 20,
-                          ),
-                          itemCount:
-                          model.isSearchMode
-                              ? model.filteredMessages.length
-                              : model.messages.length +
-                              (model.isLoadingMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (!model.isSearchMode &&
-                                model.isLoadingMore &&
-                                index == 0) {
-                              return _buildLoadingIndicator();
-                            }
+                          model.isLoading
+                              ? ListView.builder(
+                                controller: model.scrollController,
+                                padding: EdgeInsets.only(top: AppSizes.h8),
+                                itemCount: 6,
+                                itemBuilder: (context, index) {
+                                  return MessageBubbleShimmer(
+                                    isSentByMe: index % 2 == 0,
+                                  );
+                                },
+                              )
+                              : NotificationListener<ScrollNotification>(
+                                onNotification: (
+                                  ScrollNotification scrollInfo,
+                                ) {
+                                  if (scrollInfo is ScrollUpdateNotification) {
+                                    // Load older messages when user scrolls near the top.
+                                    if (scrollInfo.metrics.pixels <=
+                                            scrollInfo.metrics.minScrollExtent +
+                                                100 &&
+                                        model.hasMoreMessages &&
+                                        !model.isLoadingMore) {
+                                      model.loadMoreMessages();
+                                    }
+                                  }
+                                  return false;
+                                },
+                                child: ListView.builder(
+                                  controller: model.scrollController,
+                                  reverse: false,
+                                  keyboardDismissBehavior:
+                                      ScrollViewKeyboardDismissBehavior.onDrag,
+                                  padding: EdgeInsets.only(
+                                    top: AppSizes.h10,
+                                    bottom: 20,
+                                  ),
+                                  itemCount:
+                                      model.isSearchMode
+                                          ? model.filteredMessages.length
+                                          : model.messages.length +
+                                              (model.isLoadingMore ? 1 : 0),
+                                  itemBuilder: (context, index) {
+                                    if (!model.isSearchMode &&
+                                        model.isLoadingMore &&
+                                        index == 0) {
+                                      return _buildLoadingIndicator();
+                                    }
 
-                            final adjustedIndex =
-                            (!model.isSearchMode && model.isLoadingMore)
-                                ? index - 1
-                                : index;
+                                    final adjustedIndex =
+                                        (!model.isSearchMode &&
+                                                model.isLoadingMore)
+                                            ? index - 1
+                                            : index;
 
-                            final message =
-                            model.isSearchMode
-                                ? model.filteredMessages[adjustedIndex]
-                                : model.messages[adjustedIndex];
+                                    final message =
+                                        model.isSearchMode
+                                            ? model
+                                                .filteredMessages[adjustedIndex]
+                                            : model.messages[adjustedIndex];
 
-                            return _buildMessageBubble(message, model);
-                          },
-                        ),
-                      ),
+                                    return _buildMessageBubble(message, model);
+                                  },
+                                ),
+                              ),
                     ),
                   ],
                   // Image preview
@@ -2559,7 +2639,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   // Reply preview bar (WhatsApp style)
                   if (model.replyMessage != null)
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.lightGrey.withValues(alpha: 0.3),
                         border: Border(
@@ -2586,9 +2669,7 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  model.senderDisplayName(
-                                    model.replyMessage!,
-                                  ),
+                                  model.senderDisplayName(model.replyMessage!),
                                   style: TextStyle(
                                     color: AppColors.primaryDark,
                                     fontSize: 13,
@@ -2626,7 +2707,10 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   // Edit mode banner
                   if (model.isEditMode)
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.08),
                         border: Border(
@@ -2671,14 +2755,23 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   // Message input or status message
                   if (!model.isTicketDetailsExpanded)
                     ValueListenableBuilder<String>(
-                      valueListenable: model.ticketDetailsViewModel.currentOpenTicketStatus,
+                      valueListenable:
+                          model.ticketDetailsViewModel.currentOpenTicketStatus,
 
                       builder: (context, status, _) {
-                        if (model.chatRoomScreenType == ChatRoomScreenType.groupChat) {
+                        if (model.chatRoomScreenType ==
+                            ChatRoomScreenType.groupChat) {
                           return _buildMessageInput(model);
                         }
 
-                        String statusNew = (status == '' ? (widget.ticketStatus ?? '') : model.ticketDetailsViewModel.currentOpenTicketStatus.value).toLowerCase();
+                        String statusNew =
+                            (status == ''
+                                    ? (widget.ticketStatus ?? '')
+                                    : model
+                                        .ticketDetailsViewModel
+                                        .currentOpenTicketStatus
+                                        .value)
+                                .toLowerCase();
 
                         AppLogger.info('''
                     currentOpenTicketStatus = ${model.ticketDetailsViewModel.currentOpenTicketStatus.value}\n
@@ -2687,18 +2780,21 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                     ''');
                         if (statusNew == "resolved") {
                           return SizedBox();
-                        }
-                        else if (statusNew == "on hold") {
-                          return _buildTicketStatusMessage("Ticket is on Hold", AppColors.error);
-                        }
-                        else if (statusNew == "waiting for accept") {
-                          return _buildTicketStatusMessage("Ticket Waiting for Accept", AppColors.warning);
-                        }
-                        else {
+                        } else if (statusNew == "on hold") {
+                          return _buildTicketStatusMessage(
+                            "Ticket is on Hold",
+                            AppColors.error,
+                          );
+                        } else if (statusNew == "waiting for accept") {
+                          return _buildTicketStatusMessage(
+                            "Ticket Waiting for Accept",
+                            AppColors.warning,
+                          );
+                        } else {
                           return _buildMessageInput(model);
                         }
                       },
-                    )
+                    ),
                 ],
               ),
               if (model.showAttachment)
@@ -2706,9 +2802,12 @@ class _ChatViewState extends State<ChatView> with TickerProviderStateMixin {
                   bottom: 80,
                   left: 16,
                   right: 16,
-                  child: AttachmentSheet(model: model,screen: widget.screen??ChatRoomScreenType.contactChat,),
+                  child: AttachmentSheet(
+                    model: model,
+                    screen: widget.screen ?? ChatRoomScreenType.contactChat,
+                    name: widget.contactName,
+                  ),
                 ),
-
             ],
           ),
         );
@@ -2731,14 +2830,14 @@ class MessageBubbleShimmer extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
         child: Row(
           mainAxisAlignment:
-          isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+              isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             Flexible(
               child: Column(
                 crossAxisAlignment:
-                isSentByMe
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
+                    isSentByMe
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
                 children: [
                   // Message bubble shimmer
                   Container(
@@ -2755,13 +2854,13 @@ class MessageBubbleShimmer extends StatelessWidget {
                         topLeft: const Radius.circular(18),
                         topRight: const Radius.circular(18),
                         bottomLeft:
-                        isSentByMe
-                            ? const Radius.circular(18)
-                            : const Radius.circular(0),
+                            isSentByMe
+                                ? const Radius.circular(18)
+                                : const Radius.circular(0),
                         bottomRight:
-                        isSentByMe
-                            ? const Radius.circular(0)
-                            : const Radius.circular(18),
+                            isSentByMe
+                                ? const Radius.circular(0)
+                                : const Radius.circular(18),
                       ),
                     ),
                     child: Column(
@@ -2788,8 +2887,8 @@ class MessageBubbleShimmer extends StatelessWidget {
       ),
     );
   }
-
 }
+
 class PendingStatusCard extends StatefulWidget {
   final String title;
   final String? ticketNumber;
@@ -2821,17 +2920,14 @@ class _PendingStatusCardState extends State<PendingStatusCard>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color:
-        _isResolved
-            ? AppColors.white
-            : AppColors.white,
+        color: _isResolved ? AppColors.white : AppColors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
             spreadRadius: 2,
-          )
+          ),
         ],
       ),
       child: Column(
@@ -2853,39 +2949,39 @@ class _PendingStatusCardState extends State<PendingStatusCard>
                   // Status text
                   Expanded(
                     child:
-                    _isResolved
-                        ? Text(
-                      widget.title.isNotEmpty && widget.title != "N/A"
-                          ? 'Resolved In: ${widget.title}'
-                          : 'Resolved',
-                      style: TextStyle(
-                        color: AppColors.success,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    )
-                        : RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: "Pending Since: ",
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                        _isResolved
+                            ? Text(
+                              widget.title.isNotEmpty && widget.title != "N/A"
+                                  ? 'Resolved In: ${widget.title}'
+                                  : 'Resolved',
+                              style: TextStyle(
+                                color: AppColors.success,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            )
+                            : RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: "Pending Since: ",
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: widget.title,
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: widget.title,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                   AnimatedRotation(
                     turns: _isExpanded ? 0.5 : 0,
@@ -2900,20 +2996,19 @@ class _PendingStatusCardState extends State<PendingStatusCard>
             ),
           ),
           if (_isExpanded && widget.child != null)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: widget.child!,
-            ),
+            Padding(padding: const EdgeInsets.all(12), child: widget.child!),
         ],
       ),
     );
   }
 }
+
 class AttachmentSheet extends StatelessWidget {
   final ChatViewModel model;
   final ChatRoomScreenType screen;
+  final String name;
 
-  const AttachmentSheet({super.key, required this.model,required this.screen});
+  const AttachmentSheet({super.key, required this.model, required this.screen, required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -2926,14 +3021,16 @@ class AttachmentSheet extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
-          )
+          ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28),bottom: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(28),
+          bottom: Radius.circular(28),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           /// drag handle
           Container(
             width: 40,
@@ -2953,9 +3050,8 @@ class AttachmentSheet extends StatelessWidget {
             // childAspectRatio: 0.65,
             // mainAxisSpacing: 12,
             // crossAxisSpacing: 12,
-            physics:  const AlwaysScrollableScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(),
             children: [
-
               _buildAttachmentMenuItem(
                 icon: AppImages.file,
                 label: 'File',
@@ -2983,7 +3079,6 @@ class AttachmentSheet extends StatelessWidget {
                 label: 'Camera',
                 color: AppColors.greenbackground,
                 onTap: () {
-
                   model.toggleAttachmentSelect(false);
                   model.pickImageFromCamera();
                 },
@@ -2998,12 +3093,13 @@ class AttachmentSheet extends StatelessWidget {
                     model.toggleAttachment();
                   }
 
-                  final result = await showModalBottomSheet<_LocationPickerResult>(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => const _LocationPickerSheet(),
-                  );
+                  final result =
+                      await showModalBottomSheet<_LocationPickerResult>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const _LocationPickerSheet(),
+                      );
 
                   if (result == null) return;
 
@@ -3020,7 +3116,7 @@ class AttachmentSheet extends StatelessWidget {
                 label: 'Video Call',
                 color: AppColors.backgroundlightgreen,
                 onTap: () {
-                  model.openVideoChat(screen);
+                  model.openVideoChat(screen, name);
                 },
               ),
 
@@ -3029,7 +3125,7 @@ class AttachmentSheet extends StatelessWidget {
                 label: 'Voice Call',
                 color: AppColors.colorFFB141,
                 onTap: () {
-                  model.openAudioChat(screen);
+                  model.openAudioChat(screen, name);
                 },
               ),
 
@@ -3049,6 +3145,7 @@ class AttachmentSheet extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildAttachmentMenuItem({
     required String icon,
     required String label,
@@ -3066,12 +3163,7 @@ class AttachmentSheet extends StatelessWidget {
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Image.asset(
-              icon,
-              width: 20,
-              height: 20,
-              color: color,
-            ),
+            child: Image.asset(icon, width: 20, height: 20, color: color),
           ),
 
           SizedBox(height: 4),
@@ -3079,16 +3171,12 @@ class AttachmentSheet extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
-          )
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
   }
-
 }
 
 class _LocationPickerResult {
@@ -3136,7 +3224,7 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
 
       _hasLocationPermission =
           permission == LocationPermission.always ||
-              permission == LocationPermission.whileInUse;
+          permission == LocationPermission.whileInUse;
 
       if (!_hasLocationPermission) {
         if (!mounted) return;
@@ -3244,101 +3332,105 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
                     const Spacer(),
                     IconButton(
                       onPressed: _loadLocation,
-                      icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
               ),
               Expanded(
-                child: _isLoading
-                    ? const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                )
-                    : _error != null
-                    ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.location_off_rounded,
-                          color: Colors.white70,
-                          size: 42,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadLocation,
-                          child: const Text('Try again'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                    : ListView(
-                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Current location',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
+                child:
+                    _isLoading
+                        ? const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        )
+                        : _error != null
+                        ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.location_off_rounded,
+                                  color: Colors.white70,
+                                  size: 42,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _loadLocation,
+                                  child: const Text('Try again'),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _formatCoordinates(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                        )
+                        : ListView(
+                          padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Current location',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    _formatCoordinates(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _formatAccuracy(),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _formatAccuracy(),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
+                            const SizedBox(height: 16),
+                            _LocationActionTile(
+                              icon: Icons.my_location_rounded,
+                              title: 'Send your current location',
+                              subtitle: 'Send exact coordinates in chat',
+                              onTap: () => _submit(isLiveLocation: false),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _LocationActionTile(
-                      icon: Icons.my_location_rounded,
-                      title: 'Send your current location',
-                      subtitle: 'Send exact coordinates in chat',
-                      onTap: () => _submit(isLiveLocation: false),
-                    ),
-                    const SizedBox(height: 10),
-                    _LocationActionTile(
-                      icon: Icons.share_location_rounded,
-                      title: 'Share live location',
-                      subtitle: 'Send live location link in chat',
-                      onTap: () => _submit(isLiveLocation: true),
-                    ),
-                  ],
-                ),
+                            const SizedBox(height: 10),
+                            _LocationActionTile(
+                              icon: Icons.share_location_rounded,
+                              title: 'Share live location',
+                              subtitle: 'Send live location link in chat',
+                              onTap: () => _submit(isLiveLocation: true),
+                            ),
+                          ],
+                        ),
               ),
             ],
           ),
@@ -3418,7 +3510,8 @@ class _LocationActionTile extends StatelessWidget {
     );
   }
 }
-void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
+
+void showExitGroupDialog(BuildContext context, roomId, ChatViewModel model) {
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -3426,7 +3519,9 @@ void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
     builder: (context) {
       return Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20), // screen margin
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+        ), // screen margin
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
           decoration: BoxDecoration(
@@ -3436,7 +3531,6 @@ void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               /// icon
               Container(
                 padding: const EdgeInsets.all(16),
@@ -3456,10 +3550,7 @@ void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
               /// title
               const Text(
                 "Exit Group",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
 
               const SizedBox(height: 10),
@@ -3467,12 +3558,9 @@ void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
               /// description
               Text(
                 "Are you sure you want to exit this group?\n"
-                    "You will no longer receive updates or be part of this conversation.",
+                "You will no longer receive updates or be part of this conversation.",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
 
               const SizedBox(height: 22),
@@ -3480,12 +3568,10 @@ void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
               /// buttons
               Row(
                 children: [
-
                   /// cancel button
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-
                         Navigator.pop(context);
                       },
                       style: OutlinedButton.styleFrom(
@@ -3526,15 +3612,15 @@ void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
                       child: const Text(
                         "Yes, Exit Group",
                         style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
                         ),
                       ),
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -3542,11 +3628,16 @@ void showExitGroupDialog(BuildContext context,roomId,ChatViewModel model) {
     },
   );
 }
+
 class RecipientListWidget extends StatefulWidget {
   final ChatMessageModel message;
   final ChatViewModel model;
 
-  const RecipientListWidget({super.key, required this.message, required this.model});
+  const RecipientListWidget({
+    super.key,
+    required this.message,
+    required this.model,
+  });
 
   @override
   State<RecipientListWidget> createState() => _RecipientListWidgetState();
@@ -3611,8 +3702,7 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
   }
 
   // Active tab ke hisaab se list
-  List<SeenBy> get _currentList =>
-      _selectedTab == 0 ? _unseenList : _seenList;
+  List<SeenBy> get _currentList => _selectedTab == 0 ? _unseenList : _seenList;
 
   int get _unreadTabDisplayCount =>
       _unseenList.isNotEmpty ? _unseenList.length : _apiUnreadCount;
@@ -3711,16 +3801,19 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       itemCount: list.length,
-      separatorBuilder: (_, __) =>
-          Divider(height: 0, thickness: 1, color: Colors.grey.shade200),
+      separatorBuilder:
+          (_, __) =>
+              Divider(height: 0, thickness: 1, color: Colors.grey.shade200),
       itemBuilder: (context, index) {
         final user = list[index];
         final displayName =
-        user.fullName.trim().isNotEmpty ? user.fullName : 'Unknown User';
+            user.fullName.trim().isNotEmpty ? user.fullName : 'Unknown User';
 
         return ListTile(
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 4,
+            vertical: 0,
+          ),
           leading: CircleAvatar(
             radius: 22,
             backgroundColor: AppColors.appBarBackground,
@@ -3738,15 +3831,16 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
               color: AppColors.textPrimary,
             ),
           ),
-          subtitle: user.seenAt != null
-              ? Text(
-            user.seenAt!.toLocal().toString().substring(0, 16),
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          )
-              : null,
+          subtitle:
+              user.seenAt != null
+                  ? Text(
+                    user.seenAt!.toLocal().toString().substring(0, 16),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  )
+                  : null,
         );
       },
     );
@@ -3768,9 +3862,10 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
               AnimatedAlign(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
-                alignment: _selectedTab == 0
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
+                alignment:
+                    _selectedTab == 0
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
                 child: Container(
                   width: (constraints.maxWidth - 8) / 2,
                   decoration: BoxDecoration(
@@ -3816,9 +3911,10 @@ class _RecipientListWidgetState extends State<RecipientListWidget> {
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
         // Tab switch pe sirf setState — no API call
-        onTap: index == _selectedTab
-            ? null
-            : () => setState(() => _selectedTab = index),
+        onTap:
+            index == _selectedTab
+                ? null
+                : () => setState(() => _selectedTab = index),
         child: Center(
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 220),

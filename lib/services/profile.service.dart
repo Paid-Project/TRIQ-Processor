@@ -29,7 +29,7 @@ class ProfileService {
   Future<void> initializeProfile() async {
     // Only initialize once
 
-    chatLanguage =  getChatSelectedLanguage();
+    chatLanguage = getChatSelectedLanguage();
     if (_isInitialized) {
       AppLogger.info('Profile already initialized, skipping...');
       return;
@@ -42,7 +42,12 @@ class ProfileService {
     _isInitialized = true;
     AppLogger.info('Profile initialization completed');
   }
+
   Future<void> getInvitePeopleAPI() async {
+    final token = getUser().token;
+    if (token == null || token.isEmpty || token == 'null') {
+      return;
+    }
     try {
       final response = await apiService.get(url: ApiEndpoints.links);
       print("response:-$response");
@@ -74,10 +79,21 @@ class ProfileService {
       AppLogger.error('Error fetching profile from API: $e');
     }
   }
+
   // Fetch profile data from API
   Future<void> _fetchFromAPI() async {
+    final token = getUser().token;
+    if (token == null || token.isEmpty || token == 'null') {
+      AppLogger.info(
+        'ProfileService: No valid token found, skipping _fetchFromAPI',
+      );
+      return;
+    }
     try {
-      final response = await apiService.get(url: ApiEndpoints.getProfile);
+      final response = await apiService.get(
+        url: ApiEndpoints.getProfile,
+        showToast: false,
+      );
 
       if (response.statusCode == 200) {
         Map<String, dynamic> responseData;
@@ -92,15 +108,16 @@ class ProfileService {
 
         // Parse profile data
         ProfileModel profile;
-        AppLogger.info('Profile fetched from API :${responseData['completionPercentage']}');
+        AppLogger.info(
+          'Profile fetched from API :${responseData['completionPercentage']}',
+        );
         profile = ProfileModel.fromJson(responseData);
 
-        if((profile.profile?.chatLanguage ?? "").isNotEmpty) {
+        if ((profile.profile?.chatLanguage ?? "").isNotEmpty) {
           saveSelectedChatLanguage(profile.profile?.chatLanguage ?? "en");
         }
 
         _globalProfileModel = profile;
-
       } else {
         AppLogger.error('Failed to fetch profile: ${response.statusMessage}');
       }
@@ -162,10 +179,18 @@ class ProfileService {
 
   // Refresh profile data from API
   Future<void> refreshProfile() async {
+    final token = getUser().token;
+    if (token == null || token.isEmpty || token == 'null') {
+      AppLogger.info('ProfileService: No valid token found, skipping refresh');
+      return;
+    }
     try {
       AppLogger.info('ProfileService: Refreshing profile data from API...');
 
-      final response = await apiService.get(url: ApiEndpoints.getProfile);
+      final response = await apiService.get(
+        url: ApiEndpoints.getProfile,
+        showToast: false,
+      );
 
       AppLogger.info(
         'ProfileService: API response status: ${response.statusCode}',
@@ -187,12 +212,13 @@ class ProfileService {
         ProfileModel profile;
         profile = ProfileModel.fromJson(responseData);
 
-        if((profile.profile?.chatLanguage ?? "").isNotEmpty) {
+        if ((profile.profile?.chatLanguage ?? "").isNotEmpty) {
           saveSelectedChatLanguage(profile.profile?.chatLanguage ?? "en");
         }
 
         // Update global profile model
-        _fetchFromAPI();
+        _globalProfileModel = profile;
+        _isInitialized = true;
         AppLogger.info('ProfileService: Profile refreshed successfully');
       } else {
         AppLogger.error(

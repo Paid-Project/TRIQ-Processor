@@ -18,7 +18,8 @@ class AppLanguageView extends StatefulWidget {
   State<AppLanguageView> createState() => _AppLanguageViewState();
 }
 
-class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProviderStateMixin {
+class _AppLanguageViewState extends State<AppLanguageView>
+    with SingleTickerProviderStateMixin {
   final controller = Get.put(LanguageController());
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -27,6 +28,9 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    // Delete controller so next visit always gets a fresh instance
+    // (prevents isLoading stuck = true if Dart VM persists after Restart.restartApp())
+    Get.delete<LanguageController>(force: true);
     super.dispose();
   }
 
@@ -36,12 +40,19 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
       backgroundColor: AppColors.white,
       appBar: _buildAppBar(context),
       bottomNavigationBar: _buildSaveButton(context),
-      body: Column(children: [_buildSearchBar(context), Expanded(child: _buildLanguageList(context))]),
+      body: Column(
+        children: [
+          _buildSearchBar(context),
+          Expanded(child: _buildLanguageList(context)),
+        ],
+      ),
     );
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return GradientAppBar(titleKey: widget.chatLanguage ? "chat_language" : "app_language");
+    return GradientAppBar(
+      titleKey: widget.chatLanguage ? "chat_language" : "app_language",
+    );
   }
 
   Widget _buildSearchBar(BuildContext context) {
@@ -49,7 +60,13 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: AppColors.white,
-        boxShadow: [BoxShadow(color: AppColors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: CommonTextField(
         controller: _searchController,
@@ -59,18 +76,23 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
         },
         prefixIcon: Padding(
           padding: const EdgeInsets.all(12),
-          child: Image.asset(AppImages.search, height: 17, width: 17, color: AppColors.black),
+          child: Image.asset(
+            AppImages.search,
+            height: 17,
+            width: 17,
+            color: AppColors.black,
+          ),
         ),
         suffixIcon:
-        _searchController.text.isNotEmpty
-            ? IconButton(
-          icon: Icon(Icons.clear, color: AppColors.gray),
-          onPressed: () {
-            _searchController.clear();
-            controller.updateSearch('');
-          },
-        )
-            : null,
+            _searchController.text.isNotEmpty
+                ? IconButton(
+                  icon: Icon(Icons.clear, color: AppColors.gray),
+                  onPressed: () {
+                    _searchController.clear();
+                    controller.updateSearch('');
+                  },
+                )
+                : null,
         contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       ),
     );
@@ -85,7 +107,10 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
         color: AppColors.white,
         child: ListView.separated(
           separatorBuilder: (BuildContext context, int index) {
-            return Divider(height: 20, color: AppColors.textGrey.withValues(alpha: 0.1));
+            return Divider(
+              height: 20,
+              color: AppColors.textGrey.withValues(alpha: 0.1),
+            );
           },
           padding: EdgeInsets.symmetric(horizontal: 13, vertical: 16),
           itemCount: filteredList.length,
@@ -110,55 +135,40 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
                       borderRadius: BorderRadius.circular(12),
                       color: AppColors.softGray.withOpacity(0.1),
                     ),
-                    child: Center(child: Text(lang.flag, style: TextStyle(fontSize: 24))),
+                    child: Center(
+                      child: Text(lang.flag, style: TextStyle(fontSize: 24)),
+                    ),
                   ),
                   SizedBox(width: 10),
                   // Language info
                   Expanded(
                     child: Text(
                       lang.displayName,
-                      style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   // Radio button - Using Obx for app language, ValueListenableBuilder for chat language
                   widget.chatLanguage
                       ? ValueListenableBuilder<LanguageModel>(
-                          valueListenable: controller.selectedChatLanguage,
-                          builder: (context, chatLang, _) {
-                            final isSelected = chatLang.name == lang.name;
-
-                            return Container(
-                              padding: EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected ? AppColors.primaryLight : AppColors.textGrey.withValues(alpha: 0.1),
-                                  width: 1.5,
-                                ),
-                                color: AppColors.white,
-                              ),
-                              child: Center(
-                                child: Container(
-                                  width: 9,
-                                  height: 9,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isSelected ? AppColors.primaryLight : AppColors.transparent,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                      : Obx(() {
-                          final isSelected = controller.selectedLanguageCode.value == lang.name;
+                        valueListenable: controller.selectedChatLanguage,
+                        builder: (context, chatLang, _) {
+                          final isSelected = chatLang.name == lang.name;
 
                           return Container(
                             padding: EdgeInsets.all(2),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isSelected ? AppColors.primaryLight : AppColors.textGrey.withValues(alpha: 0.1),
+                                color:
+                                    isSelected
+                                        ? AppColors.primaryLight
+                                        : AppColors.textGrey.withValues(
+                                          alpha: 0.1,
+                                        ),
                                 width: 1.5,
                               ),
                               color: AppColors.white,
@@ -169,12 +179,50 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
                                 height: 9,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isSelected ? AppColors.primaryLight : AppColors.transparent,
+                                  color:
+                                      isSelected
+                                          ? AppColors.primaryLight
+                                          : AppColors.transparent,
                                 ),
                               ),
                             ),
                           );
-                        }),
+                        },
+                      )
+                      : Obx(() {
+                        final isSelected =
+                            controller.selectedLanguageCode.value == lang.name;
+
+                        return Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color:
+                                  isSelected
+                                      ? AppColors.primaryLight
+                                      : AppColors.textGrey.withValues(
+                                        alpha: 0.1,
+                                      ),
+                              width: 1.5,
+                            ),
+                            color: AppColors.white,
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 9,
+                              height: 9,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    isSelected
+                                        ? AppColors.primaryLight
+                                        : AppColors.transparent,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                 ],
               ),
             );
@@ -190,24 +238,32 @@ class _AppLanguageViewState extends State<AppLanguageView> with SingleTickerProv
       margin: EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: AppColors.white,
-        boxShadow: [BoxShadow(color: AppColors.black.withOpacity(0.1), offset: const Offset(0, 2), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withOpacity(0.1),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: Obx(
-            () => CommonElevatedButton(
+        () => CommonElevatedButton(
           height: 48,
-          label: controller.isLoading.value ? 'Saving...' : LanguageService.get('save_changes'),
+          label:
+              controller.isLoading.value
+                  ? 'Saving...'
+                  : LanguageService.get('save_changes'),
           onPressed:
-          controller.isLoading.value
-              ? null
-              : () async {
-
-            if (widget.chatLanguage) {
-              await controller.saveChatLanguage();
-            } else {
-              await controller.saveLanguage();
-            }
-            // App will restart automatically, no need to navigate back
-          },
+              controller.isLoading.value
+                  ? null
+                  : () async {
+                    if (widget.chatLanguage) {
+                      await controller.saveChatLanguage();
+                    } else {
+                      await controller.saveLanguage();
+                    }
+                    // App will restart automatically, no need to navigate back
+                  },
           backgroundColor: AppColors.primaryDark,
           textColor: AppColors.white,
           borderRadius: 45,

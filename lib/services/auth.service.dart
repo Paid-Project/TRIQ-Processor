@@ -4,6 +4,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
 import 'package:manager/api_endpoints.dart';
 import 'package:manager/core/locator.dart';
 import 'package:manager/core/storage/storage.dart';
@@ -23,6 +24,54 @@ class AuthService {
   final apiService = locator<ApiService>();
   final _navigationService = locator<NavigationService>();
   final _dialogService = locator<DialogService>();
+
+
+
+
+  Future<String?> getIpAddress() async {
+    try {
+      final response = await  http.get(
+        Uri.parse("https://checkip.amazonaws.com/"),
+      );
+
+      if (response.statusCode == 200) {
+        String ip = response.body.trim();
+        print("IP Address: $ip");
+        return ip;
+      } else {
+        print("Failed to get IP. Status: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error: $e");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getLocationFromIp(String ip) async {
+    try {
+      final response = await apiService.get(
+        url: "json/$ip",
+        baseUrl: "http://ip-api.com/",
+        queryParameters: {
+          "fields": "status,country,regionName,city,lat,lon,query"
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        print("Location Data: $data");
+        return data;
+      } else {
+        print("Failed: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error: $e");
+      return null;
+    }
+  }
+
 
   ResultFuture<String> register({
     required String fullName,
