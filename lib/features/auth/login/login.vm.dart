@@ -157,7 +157,7 @@ class LoginViewModel extends ReactiveViewModel {
   int get resendTimer => _resendTimer;
   Timer? _timer;
 
-  void init() async {
+  Future<void> init() async {
     _applyLanguageBasedPhoneDefaults();
     await loadIp();
     emailController.addListener(_updateFormValidity);
@@ -610,18 +610,18 @@ class LoginViewModel extends ReactiveViewModel {
 
   void updatePhoneNumber(PhoneNumber phoneNumber) {
     _fullPhoneNumber = phoneNumber.number;
-    _countryCode = phoneNumber.countryCode;
+    _countryCode = phoneNumber.countryCode.replaceAll("+", "").trim();
     _updateFormValidity();
   }
 
   void updateForgotPhoneNumber(PhoneNumber phoneNumber) {
     _forgotFullPhoneNumber = phoneNumber.number;
-    _forgotCountryCode = phoneNumber.countryCode;
+    _forgotCountryCode = phoneNumber.countryCode.replaceAll("+", "").trim();
     // notifyListeners();
   }
 
   set countryCode(String value) {
-    _countryCode = value;
+    _countryCode = value.replaceAll("+", "").trim();
     notifyListeners(); // agar Provider use kar rahe ho
   }
 
@@ -725,9 +725,12 @@ class LoginViewModel extends ReactiveViewModel {
     _clearOtpDigits();
     await _handleOtpSend();
   }
+
   String? ipAddress;
+
   Future<void> loadIp() async {
     try {
+      ipAddress = await authService.getIpAddress();
       ipAddress = await authService.getIpAddress();
       print("Your IP: $ipAddress");
       await fetchLocation();
@@ -744,7 +747,11 @@ class LoginViewModel extends ReactiveViewModel {
       return;
     }
     final result = await authService.getLocationFromIp(ipAddress!.trim());
-    _defaultCountryIso = getCountryIso(result?['country']);
+    final countryCode = result?['countryCode']?.toString().trim();
+    _defaultCountryIso =
+        countryCode != null && countryCode.isNotEmpty
+            ? countryCode.toUpperCase()
+            : getCountryIso(result?['country']);
     print("country: $_defaultCountryIso");
     print(result?['city']);
   }
@@ -1142,12 +1149,16 @@ class LoginViewModel extends ReactiveViewModel {
 
   ResultFuture<User> login() async {
     AppLogger.warning("login");
+    final loginValue =
+        _loginMode == LoginMode.phone
+            ? (_fullPhoneNumber.trim().isNotEmpty
+                ? _fullPhoneNumber.trim()
+                : phoneController.text.trim())
+            : emailController.text.trim();
+
     return await authService.login(
       countryCode: countryCode,
-      value:
-          _loginMode == LoginMode.phone
-              ? phoneController.text
-              : emailController.text,
+      value: loginValue,
       password: passwordController.text,
       role: "processor",
       isMobile: _loginMode == LoginMode.phone,
@@ -1178,8 +1189,12 @@ class LoginViewModel extends ReactiveViewModel {
     await _navigationService.navigateTo(Routes.register);
   }
 }
-String getCountryIso(String country) {
-  switch (country.toLowerCase()) {
+String getCountryIso(String? country) {
+  final normalizedCountry = country?.trim().toLowerCase();
+  if (normalizedCountry == null || normalizedCountry.isEmpty) {
+    return 'IN';
+  }
+  switch (normalizedCountry) {
     case 'india':
       return 'IN';
     case 'united states':

@@ -22,9 +22,19 @@ class LoginView extends StatelessWidget {
   Widget build(BuildContext context) {
     return ViewModelBuilder<LoginViewModel>.reactive(
       viewModelBuilder: () => LoginViewModel(),
-      onViewModelReady: (LoginViewModel model) => model.init(),
+      onViewModelReady: (LoginViewModel model) async {
+        await model.init();
+      },
       disposeViewModel: false,
       builder: (BuildContext context, LoginViewModel model, Widget? child) {
+        if (!model.isGeoReady) {
+          return Scaffold(
+            backgroundColor: AppColors.white,
+            body: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          );
+        }
         return Scaffold(
           backgroundColor: AppColors.white,
           body: Container(

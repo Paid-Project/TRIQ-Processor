@@ -164,4 +164,5 @@ abstract class ApiEndpoints {
   
   // Machine Assignment Response endpoint (NEW - for machine request notifications)
   static const String respondMachineAssignment = 'customers/respond-machine-assignment';
+  static const String ipAddressCheckGet = 'https://checkip.amazonaws.com/';
 }

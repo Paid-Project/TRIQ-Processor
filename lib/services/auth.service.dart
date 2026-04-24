@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
@@ -50,28 +51,46 @@ class AuthService {
 
   Future<Map<String, dynamic>?> getLocationFromIp(String ip) async {
     try {
-      final response = await apiService.get(
-        url: "json/$ip",
-        baseUrl: "http://ip-api.com/",
-        queryParameters: {
-          "fields": "status,country,regionName,city,lat,lon,query"
-        },
+      print("Location Data: 1");
+      final response = await http.get(
+        Uri.parse("https://ipwho.is/$ip"),
       );
+      print("Location Data: ${response.statusCode}");
 
-      if (response.statusCode == 200) {
-        final data = response.data;
-        print("Location Data: $data");
-        return data;
-      } else {
+      if (response.statusCode != 200) {
         print("Failed: ${response.statusCode}");
         return null;
       }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        print("Invalid location payload: ${response.body}");
+        return null;
+      }
+
+      if (decoded['success'] == false) {
+        print("Location lookup failed: ${decoded['message']}");
+        return null;
+      }
+
+      final data = <String, dynamic>{
+        'status': 'success',
+        'country': decoded['country'],
+        'countryCode': decoded['country_code'],
+        'regionName': decoded['region'],
+        'city': decoded['city'],
+        'lat': decoded['latitude'],
+        'lon': decoded['longitude'],
+        'query': decoded['ip'] ?? ip,
+      };
+
+      print("Location Data: $data");
+      return data;
     } catch (e) {
       print("Error: $e");
       return null;
     }
   }
-
 
   ResultFuture<String> register({
     required String fullName,
@@ -369,7 +388,6 @@ class AuthService {
     required bool isMobile,
   }) async {
     try {
-
       // Get FCM token
       String? fcmToken;
       try {
@@ -379,11 +397,14 @@ class AuthService {
         AppLogger.error('Failed to get FCM token: $e');
       }
 
+      final sanitizedCountryCode = countryCode.replaceAll("+", "").trim();
+      final sanitizedValue = value.trim();
+
       final response = await apiService.post(
         url: ApiEndpoints.login,
         data: {
-          "countryCode":countryCode??"",
-          isMobile?"phone":'email': value,
+          "countryCode": isMobile ? sanitizedCountryCode : "",
+          isMobile ? "phone" : 'email': sanitizedValue,
           'password': password,
           'role': role,
           if (fcmToken != null) 'fcmToken': fcmToken,
@@ -426,9 +447,22 @@ class AuthService {
       }
     } catch (e) {
       if (e is DioException) {
-        AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
+        final responseData = e.response?.data;
+        final serverMessage =
+            responseData is Map<String, dynamic>
+                ? (responseData['message'] ??
+                        responseData['msg'] ??
+                        responseData['error'])
+                    ?.toString()
+                : null;
+        final errorMessage =
+            serverMessage ??
+            e.message ??
+            e.error?.toString() ??
+            'Something went wrong';
+        AppLogger.error(errorMessage);
         return Left(
-          Failure(e.response?.data?['message'] ?? 'Something went wrong'),
+          Failure(errorMessage),
         );
       }
     }
