@@ -27,17 +27,17 @@ class ControlBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildControlButton(
-            svgIcon: isMicOn ?AppImages.vc_microphone :null,
-            icon: isMicOn ?null: Icons.mic_off,
+            svgIcon: isMicOn ? AppImages.vc_microphone : null,
+            icon: isMicOn ? null : Icons.mic_off,
             onPressed: onMicPressed,
-            backgroundColor:  AppColors.primarySuperLight.withOpacity(0.1),
+            backgroundColor: AppColors.primarySuperLight.withOpacity(0.1),
             iconColor: Colors.black,
           ),
           _buildControlButton(
-            svgIcon: isVideoOn ? AppImages.vc_video:null,
-            icon: isVideoOn ?null: Icons.videocam_off_outlined,
+            svgIcon: isVideoOn ? AppImages.vc_video : null,
+            icon: isVideoOn ? null : Icons.videocam_off_outlined,
             onPressed: onVideoPressed,
-            backgroundColor:  AppColors.primarySuperLight.withOpacity(0.1),
+            backgroundColor: AppColors.primarySuperLight.withOpacity(0.1),
             iconColor: Colors.black,
           ),
           // _buildControlButton(
@@ -61,7 +61,7 @@ class ControlBar extends StatelessWidget {
             ),
             child: IconButton(
               icon: const Icon(Icons.call_end, color: Colors.white),
-              onPressed:onEndCallPressed,
+              onPressed: onEndCallPressed,
             ),
           ),
         ],
@@ -83,18 +83,15 @@ class ControlBar extends StatelessWidget {
         backgroundColor: backgroundColor,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: svgIcon != null
-              ? SvgPicture.asset(
-            svgIcon,
-            color: iconColor,
-            height: 28,
-            width: 28,
-          )
-              : Icon(
-            icon,
-            color: iconColor,
-            size: 28,
-          ),
+          child:
+              svgIcon != null
+                  ? SvgPicture.asset(
+                    svgIcon,
+                    color: iconColor,
+                    height: 28,
+                    width: 28,
+                  )
+                  : Icon(icon, color: iconColor, size: 28),
         ),
       ),
     );

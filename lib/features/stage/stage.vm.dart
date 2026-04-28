@@ -4,7 +4,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:manager/configs.dart';
 import 'package:manager/core/storage/storage.dart';
 import 'package:manager/core/utils/app_logger.dart';
-import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
+import 'package:manager/features/chat/video_chat/video_call/call_screen.dart';
 import 'package:manager/features/home/organization_home/organization_home.view.dart';
 import 'package:manager/features/profile/home/profile.view.dart';
 import 'package:manager/features/stage/stage.view.dart';

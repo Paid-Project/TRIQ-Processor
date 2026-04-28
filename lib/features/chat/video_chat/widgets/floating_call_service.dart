@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:manager/features/chat/video_chat/demo/call_view_model.dart';
+import 'package:manager/features/chat/video_chat/video_call/call_view_model.dart';
 import 'package:manager/features/chat/video_chat/widgets/control_bar.dart';
 import 'package:manager/features/chat/video_chat/widgets/participant_grid.dart';
 import 'package:manager/features/chat/video_chat/widgets/participant_tile.dart';
@@ -44,15 +44,16 @@ class FloatingCallService {
     _isVoice = isVoice;
 
     _overlayEntry = OverlayEntry(
-      builder: (ctx) => FloatingCallWidget(
-        viewModel: viewModel,
-        isVoice: isVoice,
-        onTap: () => _openFullScreen(),
-        onClose: () {
-          viewModel.disconnect();
-          removeFloatingCall();
-        },
-      ),
+      builder:
+          (ctx) => FloatingCallWidget(
+            viewModel: viewModel,
+            isVoice: isVoice,
+            onTap: () => _openFullScreen(),
+            onClose: () {
+              viewModel.disconnect();
+              removeFloatingCall();
+            },
+          ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -69,7 +70,7 @@ class FloatingCallService {
     removeFloatingCall();
 
     Get.to(
-          () => VideoCallScreenFromFloating(
+      () => VideoCallScreenFromFloating(
         viewModel: viewModel,
         isVoice: isVoice,
         roomName: roomName,
@@ -280,9 +281,16 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (!widget.viewModel.isMicOn)
-                                      _buildStatusIcon(Icons.mic_off, Colors.red),
-                                    if (!widget.isVoice && !widget.viewModel.isVideoOn)
-                                      _buildStatusIcon(Icons.videocam_off, Colors.red),
+                                      _buildStatusIcon(
+                                        Icons.mic_off,
+                                        Colors.red,
+                                      ),
+                                    if (!widget.isVoice &&
+                                        !widget.viewModel.isVideoOn)
+                                      _buildStatusIcon(
+                                        Icons.videocam_off,
+                                        Colors.red,
+                                      ),
                                   ],
                                 );
                               },
@@ -471,16 +479,16 @@ class _VideoCallScreenFromFloatingState
         widget.isVoice
             ? _buildVoiceControlBar(viewModel)
             : ControlBar(
-          isMicOn: viewModel.isMicOn,
-          isVideoOn: viewModel.isVideoOn,
-          onMicPressed: viewModel.toggleMic,
-          onVideoPressed: viewModel.toggleVideo,
-          onEndCallPressed: () {
-            _floatingService.clearAll();
-            viewModel.disconnect();
-            Navigator.pop(context);
-          },
-        ),
+              isMicOn: viewModel.isMicOn,
+              isVideoOn: viewModel.isVideoOn,
+              onMicPressed: viewModel.toggleMic,
+              onVideoPressed: viewModel.toggleVideo,
+              onEndCallPressed: () {
+                _floatingService.clearAll();
+                viewModel.disconnect();
+                Navigator.pop(context);
+              },
+            ),
       ],
     );
   }
@@ -537,24 +545,23 @@ class _VideoCallScreenFromFloatingState
     final otherParticipants = viewModel.otherParticipants;
 
     if (viewModel.participants.isEmpty) {
-      return const Center(
-        child: Text('Waiting for participants...'),
-      );
+      return const Center(child: Text('Waiting for participants...'));
     }
 
     return Column(
       children: [
         Expanded(
           flex: 3,
-          child: mainParticipantState != null
-              ? ParticipantTile(participantState: mainParticipantState)
-              : Container(
-            decoration: BoxDecoration(
-              color: AppColors.primarySuperLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(child: Text('Main view')),
-          ),
+          child:
+              mainParticipantState != null
+                  ? ParticipantTile(participantState: mainParticipantState)
+                  : Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySuperLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(child: Text('Main view')),
+                  ),
         ),
         const SizedBox(height: 12),
         Expanded(

@@ -103,7 +103,9 @@ class ChatListViewModel extends BaseViewModel {
   }
 
   /// Extracts contact list for departmental/external tabs from various shapes.
-  List<dynamic> _extractContactsListFromResponse(Map<String, dynamic> response) {
+  List<dynamic> _extractContactsListFromResponse(
+    Map<String, dynamic> response,
+  ) {
     final rootData = response['data'];
     if (rootData is List) return rootData;
 
@@ -114,9 +116,15 @@ class ChatListViewModel extends BaseViewModel {
 
       // Most likely shapes based on other calls: data.externals / data.departmentals
       final preferredKeys =
-      currentTab == 'department'
-          ? const ['departmentals', 'departmental', 'departments', 'data', 'contacts']
-          : const ['externals', 'external', 'data', 'contacts'];
+          currentTab == 'department'
+              ? const [
+                'departmentals',
+                'departmental',
+                'departments',
+                'data',
+                'contacts',
+              ]
+              : const ['externals', 'external', 'data', 'contacts'];
 
       for (final key in preferredKeys) {
         final val = dataMap[key];
@@ -156,7 +164,8 @@ class ChatListViewModel extends BaseViewModel {
   // Archived count methods
   int get archivedTicketChatsCount => getArchivedTicketChats().length;
 
-  int get archivedDepartmentalChatsCount => getArchivedDepartmentalChats().length;
+  int get archivedDepartmentalChatsCount =>
+      getArchivedDepartmentalChats().length;
 
   int get archivedExternalChatsCount => getArchivedExternalChats().length;
 
@@ -167,24 +176,21 @@ class ChatListViewModel extends BaseViewModel {
 
   String get searchQuery => _searchQuery;
   String currentTab = 'ticket';
-  Map<String,int> _currentPage = {
-    'department':1,
-    'external':1,
-    'ticket':1
-  };
+  Map<String, int> _currentPage = {'department': 1, 'external': 1, 'ticket': 1};
 
-  void setTab(int index){
-    if(index == 0){
+  void setTab(int index) {
+    if (index == 0) {
       currentTab = 'ticket';
       getChatRooms();
-    }else if(index == 1){
+    } else if (index == 1) {
       currentTab = 'department';
       getOtherChatRooms();
-    }else{
+    } else {
       currentTab = 'external';
       getOtherChatRooms();
     }
   }
+
   void updateSearchQuery(String query) {
     _searchQuery = query.toLowerCase();
     notifyListeners();
@@ -202,8 +208,10 @@ class ChatListViewModel extends BaseViewModel {
 
     return tickets
         .where(
-          (chat) => _getChatTitle(chat).toLowerCase().contains(_searchQuery) || _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
-    )
+          (chat) =>
+              _getChatTitle(chat).toLowerCase().contains(_searchQuery) ||
+              _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
+        )
         .toList();
   }
 
@@ -213,8 +221,10 @@ class ChatListViewModel extends BaseViewModel {
 
     return departmental
         .where(
-          (chat) => _getChatTitle(chat).toLowerCase().contains(_searchQuery) || _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
-    )
+          (chat) =>
+              _getChatTitle(chat).toLowerCase().contains(_searchQuery) ||
+              _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
+        )
         .toList();
   }
 
@@ -224,8 +234,10 @@ class ChatListViewModel extends BaseViewModel {
 
     return external
         .where(
-          (chat) => _getChatTitle(chat).toLowerCase().contains(_searchQuery) || _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
-    )
+          (chat) =>
+              _getChatTitle(chat).toLowerCase().contains(_searchQuery) ||
+              _getLastMessagePreview(chat).toLowerCase().contains(_searchQuery),
+        )
         .toList();
   }
 
@@ -263,7 +275,6 @@ class ChatListViewModel extends BaseViewModel {
         _socketService.on('updateChatList', (data) {
           _handleChatListUpdate(data);
         });
-
       },
     );
     AppLogger.info("Socket listener 'updateChatList' setup.");
@@ -317,13 +328,10 @@ class ChatListViewModel extends BaseViewModel {
       AppLogger.error("Failed to parse socket chat update: $e");
     }
   }
+
   Future<void> getChatRooms() async {
     // + Reset pagination
-    _currentPage = {
-      'department':1,
-      'external':1,
-      'ticket':1,
-    };
+    _currentPage = {'department': 1, 'external': 1, 'ticket': 1};
     _isLastPage = false;
 
     // + UI ko batayein ki initial loading ho rahi hai
@@ -335,15 +343,12 @@ class ChatListViewModel extends BaseViewModel {
       final result = await _chatService.getAllChats(page: 1, limit: _limit);
 
       result.fold(
-            (failure) {
+        (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
           _allChats = []; // Failure par list empty karein
-          Fluttertoast.showToast(
-            msg: "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
-            // ... (baki toast properties)
-          );
         },
-            (response) { // 'response' ab Map<String, dynamic> hai
+        (response) {
+          // 'response' ab Map<String, dynamic> hai
           final responseData = _extractChatsListFromResponse(response);
           _allChats =
               responseData
@@ -351,14 +356,21 @@ class ChatListViewModel extends BaseViewModel {
                   .map((e) => Chats.fromJson(Map<String, dynamic>.from(e)))
                   .toList();
 
-          _currentPage[currentTab] = _intFrom(response['page'] ?? response['currentPage'], 1);
-          _totalPages = _intFrom(
-            response['totalPages'] ?? response['pages'] ?? response['total_pages'],
+          _currentPage[currentTab] = _intFrom(
+            response['page'] ?? response['currentPage'],
             1,
           );
-          _isLastPage = (_currentPage[currentTab] ?? 1)>= _totalPages;
+          _totalPages = _intFrom(
+            response['totalPages'] ??
+                response['pages'] ??
+                response['total_pages'],
+            1,
+          );
+          _isLastPage = (_currentPage[currentTab] ?? 1) >= _totalPages;
 
-          AppLogger.info('Successfully loaded ${_allChats.length} chats for tab $currentTab (Page: ${_currentPage[currentTab]}/$_totalPages)');
+          AppLogger.info(
+            'Successfully loaded ${_allChats.length} chats for tab $currentTab (Page: ${_currentPage[currentTab]}/$_totalPages)',
+          );
         },
       );
     } catch (e) {
@@ -378,47 +390,50 @@ class ChatListViewModel extends BaseViewModel {
 
     notifyListeners();
   }
+
   Future<void> getOtherChatRooms() async {
     // + Reset pagination
-    _currentPage = {
-      'department':1,
-      'external':1,
-      'ticket':1,
-    };
+    _currentPage = {'department': 1, 'external': 1, 'ticket': 1};
     _isLastPage = false;
 
     _isLoading = true;
     notifyListeners();
 
     try {
-
-      final result = await _chatContactService.getAllContact(page: 1, limit: _limit,tab: currentTab,screen: 'chat');
+      final result = await _chatContactService.getAllContact(
+        page: 1,
+        limit: _limit,
+        tab: currentTab,
+        screen: 'chat',
+      );
       result.fold(
-            (failure) {
+        (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
           _allChats.clear();
-          Fluttertoast.showToast(
-            msg: "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
-          );
         },
-            (response) { // 'response' ab Map<String, dynamic> hai
+        (response) {
+          // 'response' ab Map<String, dynamic> hai
           final responseData = _extractContactsListFromResponse(response);
 
           final contactChats =
-          responseData
-              .whereType<Map>()
-              .map((e) => ContactChat.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
+              responseData
+                  .whereType<Map>()
+                  .map(
+                    (e) => ContactChat.fromJson(Map<String, dynamic>.from(e)),
+                  )
+                  .toList();
 
           _allChats =
-              contactChats
-                  .map((contactChat) {
+              contactChats.map((contactChat) {
                 final lastMessageAt =
-                    DateTime.tryParse(contactChat.chatRoom.lastMessageTime ?? '') ??
-                        DateTime.now();
+                    DateTime.tryParse(
+                      contactChat.chatRoom.lastMessageTime ?? '',
+                    ) ??
+                    DateTime.now();
 
                 final contactRoomId = contactChat.chatRoom.roomId ?? '';
-                final safeRoomId = contactRoomId.trim().isEmpty ? '' : contactRoomId;
+                final safeRoomId =
+                    contactRoomId.trim().isEmpty ? '' : contactRoomId;
 
                 return Chats(
                   id: contactChat.id,
@@ -476,17 +491,23 @@ class ChatListViewModel extends BaseViewModel {
                   members: const [],
                   updatedAt: lastMessageAt,
                 );
-              })
-                  .toList();
+              }).toList();
 
-          _currentPage[currentTab] = _intFrom(response['page'] ?? response['currentPage'], 1);
-          _totalPages = _intFrom(
-            response['totalPages'] ?? response['pages'] ?? response['total_pages'],
+          _currentPage[currentTab] = _intFrom(
+            response['page'] ?? response['currentPage'],
             1,
           );
-          _isLastPage = (_currentPage[currentTab] ?? 1)>= _totalPages;
+          _totalPages = _intFrom(
+            response['totalPages'] ??
+                response['pages'] ??
+                response['total_pages'],
+            1,
+          );
+          _isLastPage = (_currentPage[currentTab] ?? 1) >= _totalPages;
 
-          AppLogger.info('Successfully loaded ${_allChats.length} chats for tab $currentTab (Page: ${_currentPage[currentTab]}/$_totalPages)');
+          AppLogger.info(
+            'Successfully loaded ${_allChats.length} chats for tab $currentTab (Page: ${_currentPage[currentTab]}/$_totalPages)',
+          );
         },
       );
     } catch (e) {
@@ -506,6 +527,7 @@ class ChatListViewModel extends BaseViewModel {
 
     notifyListeners();
   }
+
   Future<void> loadArchivedChats() async {
     _isLoading = true;
     notifyListeners();
@@ -516,8 +538,10 @@ class ChatListViewModel extends BaseViewModel {
       final result = Right<Failure, List<Chats>>([]);
 
       result.fold(
-            (failure) {
-          AppLogger.error('Failed to get archived chat rooms: ${failure.message}');
+        (failure) {
+          AppLogger.error(
+            'Failed to get archived chat rooms: ${failure.message}',
+          );
           _archivedChatRooms = [];
 
           Fluttertoast.showToast(
@@ -528,9 +552,11 @@ class ChatListViewModel extends BaseViewModel {
             textColor: AppColors.white,
           );
         },
-            (response) {
+        (response) {
           _archivedChatRooms = response;
-          AppLogger.info('Successfully loaded ${response.length} archived chat rooms');
+          AppLogger.info(
+            'Successfully loaded ${response.length} archived chat rooms',
+          );
         },
       );
     } catch (e) {
@@ -578,7 +604,8 @@ class ChatListViewModel extends BaseViewModel {
     }
 
     final id = chat.id.trim();
-    final safePrefix = id.isEmpty ? 'unknown' : id.substring(0, id.length < 6 ? id.length : 6);
+    final safePrefix =
+        id.isEmpty ? 'unknown' : id.substring(0, id.length < 6 ? id.length : 6);
     return "${LanguageService.get("chat")} #$safePrefix";
   }
 
@@ -610,60 +637,71 @@ class ChatListViewModel extends BaseViewModel {
     AppLogger.info('Refreshing chats for type: $chatType');
     await getChatRooms();
   }
+
   Future<void> loadMoreChatRooms() async {
     if (_isLoadingMore || _isLastPage || _isLoading) return;
 
     _isLoadingMore = true;
     notifyListeners();
 
-    _currentPage[currentTab]=(_currentPage[currentTab]??1)+1;
+    _currentPage[currentTab] = (_currentPage[currentTab] ?? 1) + 1;
 
     try {
-      final result = await _chatService.getAllChats(page:(_currentPage[currentTab]??1) , limit: _limit);
+      final result = await _chatService.getAllChats(
+        page: (_currentPage[currentTab] ?? 1),
+        limit: _limit,
+      );
 
       result.fold(
-            (failure) {
+        (failure) {
           AppLogger.error('Failed to load more chats: ${failure.message}');
-          _currentPage[currentTab]=(_currentPage[currentTab]??1)-1;
+          _currentPage[currentTab] = (_currentPage[currentTab] ?? 1) - 1;
         },
-            (response) {
+        (response) {
           final List<dynamic> responseData = response['data'] ?? [];
           final newChats = responseData.map((e) => Chats.fromJson(e)).toList();
 
           _allChats.addAll(newChats);
-          _currentPage[currentTab]  = response['page'] ?? _currentPage;
+          _currentPage[currentTab] = response['page'] ?? _currentPage;
           _totalPages = response['totalPages'] ?? 1;
-          _isLastPage = (_currentPage[currentTab] ?? 1)>= _totalPages;
+          _isLastPage = (_currentPage[currentTab] ?? 1) >= _totalPages;
 
           AppLogger.info('Successfully loaded ${newChats.length} more chats');
         },
       );
     } catch (e) {
       AppLogger.error('Error loading more chats: $e');
-      _currentPage[currentTab]=(_currentPage[currentTab]??1)-1;
+      _currentPage[currentTab] = (_currentPage[currentTab] ?? 1) - 1;
     } finally {
       _isLoadingMore = false;
     }
 
     notifyListeners();
   }
+
   void onScanFromCamera(BuildContext context) async {
-    final result = await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => ScanCodeView(
-      attributes: ScanCodeViewAttributes(
-        screen: ScanScreenType.externalContact,
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (context) => ScanCodeView(
+              attributes: ScanCodeViewAttributes(
+                screen: ScanScreenType.externalContact,
+              ),
+            ),
       ),
-    )));
+    );
 
     // If customer was edited from scan code, refresh the customers list
     if (result == true) {
       // await _loadCustomers();
     }
   }
+
   void onSearchByPhone(BuildContext context) async {
     final result = await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const SearchExternalContactView()),
+      MaterialPageRoute(
+        builder: (context) => const SearchExternalContactView(),
+      ),
     );
 
     // If customer was edited from search organization, refresh the customers list

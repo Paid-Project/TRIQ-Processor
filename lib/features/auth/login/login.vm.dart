@@ -105,9 +105,7 @@ class LoginViewModel extends ReactiveViewModel {
   bool _willRemember = true;
 
   bool get willRemember => _willRemember;
-  bool _isGeoReady = false;
 
-  bool get isGeoReady => _isGeoReady;
   bool _obscurePassword = true;
 
   bool get obscurePassword => _obscurePassword;
@@ -157,9 +155,8 @@ class LoginViewModel extends ReactiveViewModel {
   int get resendTimer => _resendTimer;
   Timer? _timer;
 
-  Future<void> init() async {
+  void init() async {
     _applyLanguageBasedPhoneDefaults();
-    await loadIp();
     emailController.addListener(_updateFormValidity);
     passwordController.addListener(_updateFormValidity);
     otpController.addListener(_updateFormValidity);
@@ -250,114 +247,114 @@ class LoginViewModel extends ReactiveViewModel {
   void _applyLanguageBasedPhoneDefaults() {
     final String selectedLanguage = getSelectedLanguage();
 
-    // switch (selectedLanguage) {
-    //   case 'English (UK)':
-    //     _defaultCountryIso = 'GB';
-    //     _countryCode = '44';
-    //     _forgotCountryCode = '44';
-    //     break;
-    //   case 'Hindi':
-    //     _defaultCountryIso = 'IN';
-    //     _countryCode = '91';
-    //     _forgotCountryCode = '91';
-    //     break;
-    //   case 'Chinese (Simplified)':
-    //     _defaultCountryIso = 'CN';
-    //     _countryCode = '86';
-    //     _forgotCountryCode = '86';
-    //     break;
-    //   case 'Japanese':
-    //     _defaultCountryIso = 'JP';
-    //     _countryCode = '81';
-    //     _forgotCountryCode = '81';
-    //     break;
-    //   case 'German':
-    //     _defaultCountryIso = 'DE';
-    //     _countryCode = '49';
-    //     _forgotCountryCode = '49';
-    //     break;
-    //   case 'French':
-    //     _defaultCountryIso = 'FR';
-    //     _countryCode = '33';
-    //     _forgotCountryCode = '33';
-    //     break;
-    //   case 'Spanish':
-    //     _defaultCountryIso = 'ES';
-    //     _countryCode = '34';
-    //     _forgotCountryCode = '34';
-    //     break;
-    //   case 'Portuguese':
-    //     _defaultCountryIso = 'BR';
-    //     _countryCode = '55';
-    //     _forgotCountryCode = '55';
-    //     break;
-    //   case 'Russian':
-    //     _defaultCountryIso = 'RU';
-    //     _countryCode = '7';
-    //     _forgotCountryCode = '7';
-    //     break;
-    //   case 'Arabic':
-    //     _defaultCountryIso = 'SA';
-    //     _countryCode = '966';
-    //     _forgotCountryCode = '966';
-    //     break;
-    //   case 'Bengali':
-    //     _defaultCountryIso = 'BD';
-    //     _countryCode = '880';
-    //     _forgotCountryCode = '880';
-    //     break;
-    //   case 'Turkish':
-    //     _defaultCountryIso = 'TR';
-    //     _countryCode = '90';
-    //     _forgotCountryCode = '90';
-    //     break;
-    //   case 'Italian':
-    //     _defaultCountryIso = 'IT';
-    //     _countryCode = '39';
-    //     _forgotCountryCode = '39';
-    //     break;
-    //   case 'Korean':
-    //     _defaultCountryIso = 'KR';
-    //     _countryCode = '82';
-    //     _forgotCountryCode = '82';
-    //     break;
-    //   case 'Vietnamese':
-    //     _defaultCountryIso = 'VN';
-    //     _countryCode = '84';
-    //     _forgotCountryCode = '84';
-    //     break;
-    //   case 'Thai':
-    //     _defaultCountryIso = 'TH';
-    //     _countryCode = '66';
-    //     _forgotCountryCode = '66';
-    //     break;
-    //   case 'Dutch':
-    //     _defaultCountryIso = 'NL';
-    //     _countryCode = '31';
-    //     _forgotCountryCode = '31';
-    //     break;
-    //   case 'Polish':
-    //     _defaultCountryIso = 'PL';
-    //     _countryCode = '48';
-    //     _forgotCountryCode = '48';
-    //     break;
-    //   case 'Malay/Indonesian':
-    //     _defaultCountryIso = 'ID';
-    //     _countryCode = '62';
-    //     _forgotCountryCode = '62';
-    //     break;
-    //   case 'Ukrainian':
-    //     _defaultCountryIso = 'UA';
-    //     _countryCode = '380';
-    //     _forgotCountryCode = '380';
-    //     break;
-    //   case 'English':
-    //   default:
-    //     _defaultCountryIso = 'US';
-    //     _countryCode = '1';
-    //     _forgotCountryCode = '1';
-    //     break;
-    // }
+    switch (selectedLanguage) {
+      case 'English (UK)':
+        _defaultCountryIso = 'GB';
+        _countryCode = '44';
+        _forgotCountryCode = '44';
+        break;
+      case 'Hindi':
+        _defaultCountryIso = 'IN';
+        _countryCode = '91';
+        _forgotCountryCode = '91';
+        break;
+      case 'Chinese (Simplified)':
+        _defaultCountryIso = 'CN';
+        _countryCode = '86';
+        _forgotCountryCode = '86';
+        break;
+      case 'Japanese':
+        _defaultCountryIso = 'JP';
+        _countryCode = '81';
+        _forgotCountryCode = '81';
+        break;
+      case 'German':
+        _defaultCountryIso = 'DE';
+        _countryCode = '49';
+        _forgotCountryCode = '49';
+        break;
+      case 'French':
+        _defaultCountryIso = 'FR';
+        _countryCode = '33';
+        _forgotCountryCode = '33';
+        break;
+      case 'Spanish':
+        _defaultCountryIso = 'ES';
+        _countryCode = '34';
+        _forgotCountryCode = '34';
+        break;
+      case 'Portuguese':
+        _defaultCountryIso = 'BR';
+        _countryCode = '55';
+        _forgotCountryCode = '55';
+        break;
+      case 'Russian':
+        _defaultCountryIso = 'RU';
+        _countryCode = '7';
+        _forgotCountryCode = '7';
+        break;
+      case 'Arabic':
+        _defaultCountryIso = 'SA';
+        _countryCode = '966';
+        _forgotCountryCode = '966';
+        break;
+      case 'Bengali':
+        _defaultCountryIso = 'BD';
+        _countryCode = '880';
+        _forgotCountryCode = '880';
+        break;
+      case 'Turkish':
+        _defaultCountryIso = 'TR';
+        _countryCode = '90';
+        _forgotCountryCode = '90';
+        break;
+      case 'Italian':
+        _defaultCountryIso = 'IT';
+        _countryCode = '39';
+        _forgotCountryCode = '39';
+        break;
+      case 'Korean':
+        _defaultCountryIso = 'KR';
+        _countryCode = '82';
+        _forgotCountryCode = '82';
+        break;
+      case 'Vietnamese':
+        _defaultCountryIso = 'VN';
+        _countryCode = '84';
+        _forgotCountryCode = '84';
+        break;
+      case 'Thai':
+        _defaultCountryIso = 'TH';
+        _countryCode = '66';
+        _forgotCountryCode = '66';
+        break;
+      case 'Dutch':
+        _defaultCountryIso = 'NL';
+        _countryCode = '31';
+        _forgotCountryCode = '31';
+        break;
+      case 'Polish':
+        _defaultCountryIso = 'PL';
+        _countryCode = '48';
+        _forgotCountryCode = '48';
+        break;
+      case 'Malay/Indonesian':
+        _defaultCountryIso = 'ID';
+        _countryCode = '62';
+        _forgotCountryCode = '62';
+        break;
+      case 'Ukrainian':
+        _defaultCountryIso = 'UA';
+        _countryCode = '380';
+        _forgotCountryCode = '380';
+        break;
+      case 'English':
+      default:
+        _defaultCountryIso = 'US';
+        _countryCode = '1';
+        _forgotCountryCode = '1';
+        break;
+    }
   }
   void onForgotOtpDigitChanged(int index, String value) {
     if (value.isNotEmpty && index < 5) {
@@ -610,18 +607,18 @@ class LoginViewModel extends ReactiveViewModel {
 
   void updatePhoneNumber(PhoneNumber phoneNumber) {
     _fullPhoneNumber = phoneNumber.number;
-    _countryCode = phoneNumber.countryCode.replaceAll("+", "").trim();
+    _countryCode = phoneNumber.countryCode;
     _updateFormValidity();
   }
 
   void updateForgotPhoneNumber(PhoneNumber phoneNumber) {
     _forgotFullPhoneNumber = phoneNumber.number;
-    _forgotCountryCode = phoneNumber.countryCode.replaceAll("+", "").trim();
+    _forgotCountryCode = phoneNumber.countryCode;
     // notifyListeners();
   }
 
   set countryCode(String value) {
-    _countryCode = value.replaceAll("+", "").trim();
+    _countryCode = value;
     notifyListeners(); // agar Provider use kar rahe ho
   }
 
@@ -726,35 +723,6 @@ class LoginViewModel extends ReactiveViewModel {
     await _handleOtpSend();
   }
 
-  String? ipAddress;
-
-  Future<void> loadIp() async {
-    try {
-      ipAddress = await authService.getIpAddress();
-      ipAddress = await authService.getIpAddress();
-      print("Your IP: $ipAddress");
-      await fetchLocation();
-    } catch (e) {
-      AppLogger.error('IP bootstrap failed: $e');
-    } finally {
-      _isGeoReady = true;
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchLocation() async {
-    if (ipAddress == null || ipAddress!.trim().isEmpty) {
-      return;
-    }
-    final result = await authService.getLocationFromIp(ipAddress!.trim());
-    final countryCode = result?['countryCode']?.toString().trim();
-    _defaultCountryIso =
-        countryCode != null && countryCode.isNotEmpty
-            ? countryCode.toUpperCase()
-            : getCountryIso(result?['country']);
-    print("country: $_defaultCountryIso");
-    print(result?['city']);
-  }
   // Forgot password functionality
   Future<void> sendPasswordResetOtp() async {
     AppLogger.warning("sendPasswordResetOtp");
@@ -1149,16 +1117,12 @@ class LoginViewModel extends ReactiveViewModel {
 
   ResultFuture<User> login() async {
     AppLogger.warning("login");
-    final loginValue =
-        _loginMode == LoginMode.phone
-            ? (_fullPhoneNumber.trim().isNotEmpty
-                ? _fullPhoneNumber.trim()
-                : phoneController.text.trim())
-            : emailController.text.trim();
-
     return await authService.login(
       countryCode: countryCode,
-      value: loginValue,
+      value:
+          _loginMode == LoginMode.phone
+              ? phoneController.text
+              : emailController.text,
       password: passwordController.text,
       role: "processor",
       isMobile: _loginMode == LoginMode.phone,
@@ -1187,33 +1151,5 @@ class LoginViewModel extends ReactiveViewModel {
 
   Future<void> navigateToRegister() async {
     await _navigationService.navigateTo(Routes.register);
-  }
-}
-String getCountryIso(String? country) {
-  final normalizedCountry = country?.trim().toLowerCase();
-  if (normalizedCountry == null || normalizedCountry.isEmpty) {
-    return 'IN';
-  }
-  switch (normalizedCountry) {
-    case 'india':
-      return 'IN';
-    case 'united states':
-      return 'US';
-    case 'china':
-      return 'CN';
-    case 'japan':
-      return 'JP';
-    case 'germany':
-      return 'DE';
-    case 'france':
-      return 'FR';
-    case 'brazil':
-      return 'BR';
-    case 'russia':
-      return 'RU';
-    case 'saudi arabia':
-      return 'SA';
-    default:
-      return 'IN'; // fallback
   }
 }

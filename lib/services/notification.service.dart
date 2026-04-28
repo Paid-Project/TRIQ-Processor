@@ -6,6 +6,7 @@ import "package:firebase_messaging/firebase_messaging.dart";
 import "package:flutter/foundation.dart";
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import "package:manager/api_endpoints.dart";
+import "package:manager/core/utils/app_logger.dart";
 import "package:manager/routes/routes.dart";
 import "package:manager/core/storage/storage.dart";
 import "package:stacked_services/stacked_services.dart";
@@ -16,17 +17,17 @@ import "../features/chat/chat_view.dart";
 import "../features/tickets/ticket_details/ticket_details.view.dart";
 import "api.service.dart";
 
-
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+    FlutterLocalNotificationsPlugin();
 
 const String _defaultChannelId = "triq_custom_sound_channel";
 const String _defaultChannelName = "Triq Notifications";
-const String _defaultChannelDescription = "Channel for Triq manager notifications";
+const String _defaultChannelDescription =
+    "Channel for Triq manager notifications";
 
 void onDidReceiveNotificationResponse(
-    NotificationResponse notificationResponse,
-    ) async {
+  NotificationResponse notificationResponse,
+) async {
   var payload = notificationResponse.payload;
   if (kDebugMode) {
     print("onDidReceiveNotificationResponse: $payload");
@@ -49,9 +50,7 @@ final List<String> _soundList = [
 ];
 
 @pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(
-    RemoteMessage message,
-    ) async {
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Isolate me Firebase ko initialize karna zaroori hai
   await Firebase.initializeApp();
   await _initializeLocalNotifications(isBackground: true);
@@ -78,12 +77,14 @@ Future<void> _initializeLocalNotifications({bool isBackground = false}) async {
   await flutterLocalNotificationsPlugin.initialize(
     initSettings,
     onDidReceiveNotificationResponse:
-    isBackground ? null : onDidReceiveNotificationResponse,
+        isBackground ? null : onDidReceiveNotificationResponse,
   );
 
-  final androidPlugin = flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>();
+  final androidPlugin =
+      flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
   // 1. Default Channel
   var defaultChannel = const AndroidNotificationChannel(
@@ -114,8 +115,6 @@ Future<void> _initializeLocalNotifications({bool isBackground = false}) async {
   }
 }
 
-
-
 class FirebaseNotificationService {
   static FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
   static var isSound = false;
@@ -137,7 +136,7 @@ class FirebaseNotificationService {
 
     _pendingNavigationRetryTimer = Timer.periodic(
       const Duration(milliseconds: 250),
-          (timer) async {
+      (timer) async {
         attempts++;
         if (_pendingNavigationData == null) {
           timer.cancel();
@@ -155,7 +154,7 @@ class FirebaseNotificationService {
           if (kDebugMode) {
             print(
               'Notification navigation: gave up waiting for navigator '
-                  '(${maxAttempts * 250}ms).',
+              '(${maxAttempts * 250}ms).',
             );
           }
         }
@@ -202,7 +201,9 @@ class FirebaseNotificationService {
 
       String? apnsToken;
       if (Platform.isIOS) {
-        apnsToken = await _waitForApnsToken(timeout: const Duration(seconds: 6));
+        apnsToken = await _waitForApnsToken(
+          timeout: const Duration(seconds: 6),
+        );
       }
 
       if (!Platform.isIOS || (apnsToken != null && apnsToken.isNotEmpty)) {
@@ -243,12 +244,14 @@ class FirebaseNotificationService {
   }
 
   static showNotification(RemoteMessage message) async {
-
     String soundName = message.data['sound'] ?? 'default';
     if (soundName == 'noification') soundName = 'notification';
 
     // Title/Body Data se lein
-    String title = message.data['title'] ?? message.notification?.title ?? 'New Notification';
+    String title =
+        message.data['title'] ??
+        message.notification?.title ??
+        'New Notification';
     String body = message.data['body'] ?? message.notification?.body ?? '';
 
     String? iosSound = (soundName == 'default') ? 'default' : '$soundName.aiff';
@@ -269,10 +272,7 @@ class FirebaseNotificationService {
       playSound: true,
     );
 
-    var iOS = DarwinNotificationDetails(
-      sound: iosSound,
-      presentSound: true,
-    );
+    var iOS = DarwinNotificationDetails(sound: iosSound, presentSound: true);
 
     var platform = NotificationDetails(android: android, iOS: iOS);
     var jsonData = jsonEncode(message.data);
@@ -311,6 +311,9 @@ class FirebaseNotificationService {
     }
 
     if (!_isNavigatorReady) {
+      AppLogger.warning(
+        'Notification received but Navigator not ready. Deferring...',
+      );
       if (deferIfNavigatorUnavailable) {
         _pendingNavigationData = normalizedData;
         schedulePendingNavigationUntilReady();
@@ -318,18 +321,24 @@ class FirebaseNotificationService {
       return;
     }
 
+    AppLogger.info('Processing Notification Navigation: $normalizedData');
+
     if (_shouldSkipDuplicateNavigation(normalizedData)) {
       return;
     }
 
-    final screenName = _readValue(
-      normalizedData,
-      ['screenName', 'screen', 'targetScreen', 'route'],
-    );
-    final notificationType = _readValue(
-      normalizedData,
-      ['type', 'notificationType', 'notification_type', 'chatType'],
-    );
+    final screenName = _readValue(normalizedData, [
+      'screenName',
+      'screen',
+      'targetScreen',
+      'route',
+    ]);
+    final notificationType = _readValue(normalizedData, [
+      'type',
+      'notificationType',
+      'notification_type',
+      'chatType',
+    ]);
     final roomId = _readRoomId(normalizedData);
     final isTicketDetailsScreen = _isTicketDetailsScreen(screenName);
     final isCallScreen = _isCallScreen(screenName);
@@ -348,14 +357,18 @@ class FirebaseNotificationService {
     if (isCallScreen) {
       final ticketStatus = _readValue(normalizedData, ['ticketStatus']);
       final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
-      final senderName = _readValue(
-        normalizedData,
-        ['sender_name', 'senderName', 'contactName', 'title'],
-      );
-      final groupName = _readValue(
-        normalizedData,
-        ['groupTitle', 'groupName', 'group_name', 'name'],
-      );
+      final senderName = _readValue(normalizedData, [
+        'sender_name',
+        'senderName',
+        'contactName',
+        'title',
+      ]);
+      final groupName = _readValue(normalizedData, [
+        'groupTitle',
+        'groupName',
+        'group_name',
+        'name',
+      ]);
       final isGroupId = _readValue(normalizedData, ['isGroupCall']);
 
       final flag = _readValue(normalizedData, ['flag']);
@@ -374,9 +387,10 @@ class FirebaseNotificationService {
             roomId: roomId,
             ticketStatus: ticketStatus,
             ticketId: ticketId.isEmpty ? null : ticketId,
-            screen: isGroupId == "true"
-                ? ChatRoomScreenType.groupChat
-                : ChatRoomScreenType.contactChat,
+            screen:
+                isGroupId == "true"
+                    ? ChatRoomScreenType.groupChat
+                    : ChatRoomScreenType.contactChat,
             flag: flag.isEmpty ? null : flag,
             incomingCallData: normalizedData,
           ),
@@ -396,56 +410,59 @@ class FirebaseNotificationService {
     final shouldOpenChat = roomId.isNotEmpty && chatScreenType != null;
 
     if (shouldOpenChat) {
-      final contactName = _readValue(
-        normalizedData,
-        ['contactName', 'sender_name', 'senderName', 'name', 'title'],
-      );
-      final contactNumber = _readValue(
-        normalizedData,
-        ['contactNumber', 'ticketNumber', 'phone', 'mobile', 'email'],
-      );
-      final ticketStatus = _readValue(
-        normalizedData,
-        ['ticketStatus', 'status'],
-      );
-      final ticketId = _readValue(
-        normalizedData,
-        ['ticketId', 'ticket_id'],
-      );
+      final contactName = _readValue(normalizedData, [
+        'contactName',
+        'sender_name',
+        'senderName',
+        'name',
+        'title',
+      ]);
+      final contactNumber = _readValue(normalizedData, [
+        'contactNumber',
+        'ticketNumber',
+        'phone',
+        'mobile',
+        'email',
+      ]);
+      final ticketStatus = _readValue(normalizedData, [
+        'ticketStatus',
+        'status',
+      ]);
+      final ticketId = _readValue(normalizedData, ['ticketId', 'ticket_id']);
       final flag = _readValue(normalizedData, ['flag', 'countryFlag']);
 
       if (roomId.isNotEmpty) {
         final resolvedContactName =
-        contactName.isNotEmpty
-            ? contactName
-            : (chatScreenType == ChatRoomScreenType.groupChat
-            ? 'Group'
-            : 'Chat');
+            contactName.isNotEmpty
+                ? contactName
+                : (chatScreenType == ChatRoomScreenType.groupChat
+                    ? 'Group'
+                    : 'Chat');
         await _navigationService.navigateToView(
           ChatView(
             isVisible: chatScreenType == ChatRoomScreenType.mainChat,
             contactName: resolvedContactName,
             contactNumber:
-            contactNumber.isNotEmpty
-                ? contactNumber
-                : (chatScreenType == ChatRoomScreenType.groupChat
-                ? 'Group'
-                : ''),
+                contactNumber.isNotEmpty
+                    ? contactNumber
+                    : (chatScreenType == ChatRoomScreenType.groupChat
+                        ? 'Group'
+                        : ''),
             contactInitials: resolvedContactName.substring(0, 1).toUpperCase(),
             roomId: roomId,
             ticketStatus:
-            chatScreenType == ChatRoomScreenType.mainChat
-                ? ticketStatus
-                : null,
+                chatScreenType == ChatRoomScreenType.mainChat
+                    ? ticketStatus
+                    : null,
             ticketId:
-            chatScreenType == ChatRoomScreenType.mainChat &&
-                ticketId.isNotEmpty
-                ? ticketId
-                : null,
+                chatScreenType == ChatRoomScreenType.mainChat &&
+                        ticketId.isNotEmpty
+                    ? ticketId
+                    : null,
             flag:
-            chatScreenType == ChatRoomScreenType.groupChat || flag.isEmpty
-                ? null
-                : flag,
+                chatScreenType == ChatRoomScreenType.groupChat || flag.isEmpty
+                    ? null
+                    : flag,
             screen: chatScreenType,
           ),
         );
@@ -458,9 +475,9 @@ class FirebaseNotificationService {
 
   static Future<void> _captureInitialNotificationTap() async {
     final localLaunchDetails =
-    await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+        await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
     final localPayload =
-    localLaunchDetails?.notificationResponse?.payload?.trim();
+        localLaunchDetails?.notificationResponse?.payload?.trim();
 
     if (localLaunchDetails?.didNotificationLaunchApp == true &&
         localPayload != null &&
@@ -517,10 +534,7 @@ class FirebaseNotificationService {
     return normalized;
   }
 
-  static String _readValue(
-      Map<String, dynamic> data,
-      List<String> keys,
-      ) {
+  static String _readValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
       final rawValue = data[key];
       if (rawValue == null) continue;
@@ -534,10 +548,16 @@ class FirebaseNotificationService {
   }
 
   static String _readRoomId(Map<String, dynamic> data) {
-    final directRoomId = _readValue(
-      data,
-      ['room_id', 'roomId', 'chatRoomId', 'chat_room_id'],
-    );
+    final directRoomId = _readValue(data, [
+      'room_id',
+      'roomId',
+      'chatRoomId',
+      'chat_room_id',
+      'user_id',
+      'userId',
+      'sender_id',
+      'senderId',
+    ]);
     if (directRoomId.isNotEmpty) {
       return directRoomId;
     }
@@ -545,7 +565,9 @@ class FirebaseNotificationService {
     for (final key in const ['data', 'payload', 'notificationData']) {
       final nestedValue = data[key];
       if (nestedValue is Map) {
-        final nestedRoomId = _readRoomId(Map<String, dynamic>.from(nestedValue));
+        final nestedRoomId = _readRoomId(
+          Map<String, dynamic>.from(nestedValue),
+        );
         if (nestedRoomId.isNotEmpty) {
           return nestedRoomId;
         }
@@ -560,8 +582,7 @@ class FirebaseNotificationService {
 
   static bool _isTicketDetailsScreen(String screenName) {
     final normalized = _normalizeIdentifier(screenName);
-    return normalized == 'ticketdetailsview' ||
-        normalized == 'ticketdetails';
+    return normalized == 'ticketdetailsview' || normalized == 'ticketdetails';
   }
 
   static bool _isCallScreen(String screenName) {
@@ -648,10 +669,7 @@ class FirebaseNotificationService {
     return false;
   }
 
-
-
   static Future<String?> _waitForApnsToken({required Duration timeout}) async {
-
     try {
       final immediate = await firebaseMessaging.getAPNSToken();
       if (immediate != null && immediate.isNotEmpty) return immediate;
@@ -668,13 +686,12 @@ class FirebaseNotificationService {
         }
       });
       return completer.future;
-    }
-    catch (e) {
+    } catch (e) {
       return null;
     }
-
   }
 }
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -688,7 +705,9 @@ class NotificationService {
   Future<int> getUnreadNotificationCount() async {
     try {
       final apiService = locator<ApiService>();
-      final response = await apiService.get(url: ApiEndpoints.getUnreadNotificationCount);
+      final response = await apiService.get(
+        url: ApiEndpoints.getUnreadNotificationCount,
+      );
 
       if (response.statusCode == 200) {
         // Check if response.data is a Map with unreadCount
@@ -698,9 +717,11 @@ class NotificationService {
         // Fallback: if response.data is a List, count manually
         else if (response.data is List) {
           final List<dynamic> notificationList = response.data;
-          final unreadCount = notificationList.where((notification) {
-            return notification['isRead'] == false || notification['isRead'] == null;
-          }).length;
+          final unreadCount =
+              notificationList.where((notification) {
+                return notification['isRead'] == false ||
+                    notification['isRead'] == null;
+              }).length;
           return unreadCount;
         }
       }
@@ -711,13 +732,14 @@ class NotificationService {
     }
   }
 
-
   // notification read
   // Get unread notification count
   Future<int> getUnReadMarkNotificationAsRead({String? id}) async {
     try {
       final apiService = locator<ApiService>();
-      final response = await apiService.get(url: "${ApiEndpoints.getMarkNotificationAsRead}/$id");
+      final response = await apiService.get(
+        url: "${ApiEndpoints.getMarkNotificationAsRead}/$id",
+      );
       print("response:- ${response}");
 
       if (response.statusCode == 200) {
@@ -740,33 +762,46 @@ class NotificationService {
       return 0;
     }
   }
-  Future<String?> getToken({Duration waitTimeout = const Duration(seconds: 10)}) async {
+
+  Future<String?> getToken({
+    Duration waitTimeout = const Duration(seconds: 10),
+  }) async {
     final firebase = FirebaseNotificationService.firebaseMessaging;
 
     final Completer<String?> tokenCompleter = Completer();
     StreamSubscription<String>? refreshSub;
-    refreshSub = firebase.onTokenRefresh.listen((newToken) {
-      if (!tokenCompleter.isCompleted) {
-        tokenCompleter.complete(newToken);
-      }
-    }, onError: (err) {
-      if (!tokenCompleter.isCompleted) tokenCompleter.completeError(err);
-    });
+    refreshSub = firebase.onTokenRefresh.listen(
+      (newToken) {
+        if (!tokenCompleter.isCompleted) {
+          tokenCompleter.complete(newToken);
+        }
+      },
+      onError: (err) {
+        if (!tokenCompleter.isCompleted) tokenCompleter.completeError(err);
+      },
+    );
 
     try {
       // On iOS, ensure APNs token is available; otherwise getToken() will throw.
       if (Platform.isIOS) {
         final apns = await firebase.getAPNSToken();
         if (apns == null || apns.isEmpty) {
-          if (kDebugMode) print('APNs token not available yet — waiting up to $waitTimeout for FCM token via onTokenRefresh.');
+          if (kDebugMode)
+            print(
+              'APNs token not available yet — waiting up to $waitTimeout for FCM token via onTokenRefresh.',
+            );
 
           // Wait for onTokenRefresh (tokenCompleter) or timeout
           String? fallbackToken;
           try {
-            fallbackToken = await tokenCompleter.future.timeout(waitTimeout, onTimeout: () {
-              if (kDebugMode) print('Timed out waiting for token via onTokenRefresh.');
-              return null;
-            });
+            fallbackToken = await tokenCompleter.future.timeout(
+              waitTimeout,
+              onTimeout: () {
+                if (kDebugMode)
+                  print('Timed out waiting for token via onTokenRefresh.');
+                return null;
+              },
+            );
           } catch (e) {
             if (kDebugMode) print('Error while waiting for onTokenRefresh: $e');
             fallbackToken = null;
@@ -775,12 +810,14 @@ class NotificationService {
           }
 
           if (fallbackToken != null) {
-            if (kDebugMode) print('Received token from onTokenRefresh: $fallbackToken');
+            if (kDebugMode)
+              print('Received token from onTokenRefresh: $fallbackToken');
             return fallbackToken;
           }
 
           // If still no token, return null (avoid calling getToken() now)
-          if (kDebugMode) print('No token available (APNs missing). Returning null.');
+          if (kDebugMode)
+            print('No token available (APNs missing). Returning null.');
           return null;
         }
       }
@@ -793,13 +830,18 @@ class NotificationService {
         return token;
       } catch (e) {
         // If getToken throws apns-token-not-set, fallback to waiting for onTokenRefresh
-        if (kDebugMode) print('getToken() threw: $e — falling back to onTokenRefresh wait.');
+        if (kDebugMode)
+          print('getToken() threw: $e — falling back to onTokenRefresh wait.');
         try {
-          final fallback = await tokenCompleter.future.timeout(waitTimeout, onTimeout: () {
-            if (kDebugMode) print('Timed out waiting for fallback token.');
-            return null;
-          });
-          if (kDebugMode) print('Fallback token from onTokenRefresh: $fallback');
+          final fallback = await tokenCompleter.future.timeout(
+            waitTimeout,
+            onTimeout: () {
+              if (kDebugMode) print('Timed out waiting for fallback token.');
+              return null;
+            },
+          );
+          if (kDebugMode)
+            print('Fallback token from onTokenRefresh: $fallback');
           return fallback;
         } finally {
           await refreshSub?.cancel();
@@ -810,6 +852,4 @@ class NotificationService {
       await refreshSub?.cancel();
     }
   }
-
-
 }

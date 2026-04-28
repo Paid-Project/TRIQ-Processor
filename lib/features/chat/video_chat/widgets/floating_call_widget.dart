@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:manager/features/chat/video_chat/demo/call_view_model.dart';
+import 'package:manager/features/chat/video_chat/video_call/call_view_model.dart';
 import 'package:manager/features/chat/video_chat/widgets/participant_grid.dart';
 import 'package:manager/features/chat/video_chat/widgets/participant_tile.dart';
 import 'package:manager/resources/app_resources/app_resources.dart';
@@ -71,15 +71,16 @@ class FloatingCallService {
     _flag = flag;
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => FloatingCallWidget(
-        viewModel: viewModel,
-        isVoice: isVoice,
-        onTap: () => _returnToFullScreen(context),
-        onClose: () {
-          viewModel.disconnect();
-          removeFloatingCall();
-        },
-      ),
+      builder:
+          (context) => FloatingCallWidget(
+            viewModel: viewModel,
+            isVoice: isVoice,
+            onTap: () => _returnToFullScreen(context),
+            onClose: () {
+              viewModel.disconnect();
+              removeFloatingCall();
+            },
+          ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -95,7 +96,7 @@ class FloatingCallService {
     if (viewModel != null) {
       // Navigate to full screen with existing viewModel
       Get.to(
-            () => VideoCallScreenFromFloating(
+        () => VideoCallScreenFromFloating(
           viewModel: viewModel,
           isVoice: isVoice,
           roomName: _roomName ?? '',
@@ -229,9 +230,10 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: widget.isVoice
-                      ? [const Color(0xFF1E3A5F), const Color(0xFF0D2137)]
-                      : [Colors.grey[850]!, Colors.grey[900]!],
+                  colors:
+                      widget.isVoice
+                          ? [const Color(0xFF1E3A5F), const Color(0xFF0D2137)]
+                          : [Colors.grey[850]!, Colors.grey[900]!],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
@@ -320,9 +322,16 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (!widget.viewModel.isMicOn)
-                                      _buildStatusIcon(Icons.mic_off, Colors.red),
-                                    if (!widget.isVoice && !widget.viewModel.isVideoOn)
-                                      _buildStatusIcon(Icons.videocam_off, Colors.red),
+                                      _buildStatusIcon(
+                                        Icons.mic_off,
+                                        Colors.red,
+                                      ),
+                                    if (!widget.isVoice &&
+                                        !widget.viewModel.isVideoOn)
+                                      _buildStatusIcon(
+                                        Icons.videocam_off,
+                                        Colors.red,
+                                      ),
                                   ],
                                 );
                               },
@@ -414,8 +423,7 @@ class _FloatingCallWidgetState extends State<FloatingCallWidget>
       builder: (context, _) {
         final mainParticipant = widget.viewModel.mainParticipant;
 
-        if (mainParticipant?.videoTrack != null &&
-            widget.viewModel.isVideoOn) {
+        if (mainParticipant?.videoTrack != null && widget.viewModel.isVideoOn) {
           return VideoTrackRenderer(
             mainParticipant!.videoTrack!,
             fit: VideoViewFit.cover,
@@ -502,9 +510,10 @@ class _VideoCallScreenFromFloatingState
     return ChangeNotifierProvider.value(
       value: widget.viewModel,
       child: Scaffold(
-        backgroundColor: widget.isVoice
-            ? AppColors.primaryDark
-            : AppColors.scaffoldBackground,
+        backgroundColor:
+            widget.isVoice
+                ? AppColors.primaryDark
+                : AppColors.scaffoldBackground,
         body: SafeArea(
           child: Consumer<CallViewModel>(
             builder: (context, viewModel, child) {
@@ -529,9 +538,7 @@ class _VideoCallScreenFromFloatingState
     return Column(
       children: [
         _buildVoiceTopBar(viewModel),
-        Expanded(
-          child: _buildVoiceContent(viewModel),
-        ),
+        Expanded(child: _buildVoiceContent(viewModel)),
         _buildVoiceControlBar(viewModel),
         const SizedBox(height: 40),
       ],
@@ -584,16 +591,13 @@ class _VideoCallScreenFromFloatingState
 
     if (participants.isEmpty) {
       return const Center(
-        child: Text(
-          'Connecting...',
-          style: TextStyle(color: Colors.white),
-        ),
+        child: Text('Connecting...', style: TextStyle(color: Colors.white)),
       );
     }
 
     if (participants.length <= 2) {
       final remoteParticipant = participants.firstWhere(
-            (p) => p.participant != viewModel.room?.localParticipant,
+        (p) => p.participant != viewModel.room?.localParticipant,
         orElse: () => participants.first,
       );
 
@@ -624,9 +628,10 @@ class _VideoCallScreenFromFloatingState
                 Text(
                   remoteParticipant.isMuted ? 'Muted' : 'Speaking',
                   style: TextStyle(
-                    color: remoteParticipant.isMuted
-                        ? Colors.white54
-                        : Colors.greenAccent,
+                    color:
+                        remoteParticipant.isMuted
+                            ? Colors.white54
+                            : Colors.greenAccent,
                   ),
                 ),
               ],
@@ -641,10 +646,7 @@ class _VideoCallScreenFromFloatingState
         const SizedBox(height: 20),
         Text(
           '${participants.length} Participants',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-          ),
+          style: const TextStyle(color: Colors.white, fontSize: 16),
         ),
         const SizedBox(height: 20),
         Expanded(
@@ -668,9 +670,9 @@ class _VideoCallScreenFromFloatingState
   }
 
   Widget _buildVoiceParticipantCard(
-      CallParticipant participant,
-      CallViewModel viewModel,
-      ) {
+    CallParticipant participant,
+    CallViewModel viewModel,
+  ) {
     final isLocal = participant.participant == viewModel.room?.localParticipant;
 
     return Column(
@@ -680,10 +682,7 @@ class _VideoCallScreenFromFloatingState
         const SizedBox(height: 8),
         Text(
           isLocal ? 'You' : (participant.participant.identity ?? 'Unknown'),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white, fontSize: 12),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -697,7 +696,10 @@ class _VideoCallScreenFromFloatingState
     );
   }
 
-  Widget _buildParticipantAvatar(CallParticipant participant, {double size = 80}) {
+  Widget _buildParticipantAvatar(
+    CallParticipant participant, {
+    double size = 80,
+  }) {
     final isSpeaking = !participant.isMuted;
 
     return Container(
@@ -783,13 +785,7 @@ class _VideoCallScreenFromFloatingState
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
       ],
     );
   }
@@ -816,13 +812,7 @@ class _VideoCallScreenFromFloatingState
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'End',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
-        ),
+        const Text('End', style: TextStyle(color: Colors.white, fontSize: 12)),
       ],
     );
   }
@@ -915,15 +905,16 @@ class _VideoCallScreenFromFloatingState
       children: [
         Expanded(
           flex: 3,
-          child: mainParticipantState != null
-              ? ParticipantTile(participantState: mainParticipantState)
-              : Container(
-            decoration: BoxDecoration(
-              color: AppColors.primarySuperLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(child: Text('Main view')),
-          ),
+          child:
+              mainParticipantState != null
+                  ? ParticipantTile(participantState: mainParticipantState)
+                  : Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySuperLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(child: Text('Main view')),
+                  ),
         ),
         const SizedBox(height: 12),
         Expanded(

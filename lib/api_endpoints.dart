@@ -11,7 +11,6 @@
 /// ### **Available Endpoints:**
 /// - **`user`** → `user` (Endpoint for user-related operations)
 abstract class ApiEndpoints {
-
   static const String image_base = 'https://live.triqinnovations.com/';
   static const String register = 'auth/register';
   static const String verifyEmail = 'auth/verify-email';
@@ -95,8 +94,10 @@ abstract class ApiEndpoints {
   static const String getAllTickets = 'ticket/getAll';
   static const String getTicketsByStatus = 'ticket/getticket';
   static const String getTicketSummary = 'ticket/getTicketSummary';
-    static const String getUnreadNotificationCount = 'notification/unreadnotificationcount';
-    static const String getMarkNotificationAsRead = 'notification/markNotificationAsRead';
+  static const String getUnreadNotificationCount =
+      'notification/unreadnotificationcount';
+  static const String getMarkNotificationAsRead =
+      'notification/markNotificationAsRead';
 
   // Service Pricing endpoints
   static const String createServicePricing = 'servicePricing/create';
@@ -114,12 +115,14 @@ abstract class ApiEndpoints {
   static const String updateProfile = 'profile/update-profile';
   static const String links = 'links';
   // Notification endpoints
-  static const String sendOrganizationRequest = 'notification/sendorganizationrequest';
+  static const String sendOrganizationRequest =
+      'notification/sendorganizationrequest';
   static const String getNotifications = 'notification/getnotification';
   static const String deleteNotification = 'notification/deleteNotification';
-  static const String updateNotification = 'notification/updateticketnotification';
-  static const String sendCreateNotification = 'ticket/sendCreatedTicketNotification';
-
+  static const String updateNotification =
+      'notification/updateticketnotification';
+  static const String sendCreateNotification =
+      'ticket/sendCreatedTicketNotification';
 
   // Task Endpoints
   static const String getAllTasks = 'task/getAllTask';
@@ -127,16 +130,17 @@ abstract class ApiEndpoints {
   static const String soundSettingsUpdate = 'notificationsound/updateSound';
   static const String soundSettingsGet = 'notificationsound/getSound';
 
-
   // Employee
   static const String getAllEmployee = 'employee/getAllEmployee';
   static const String addEmployee = 'employee/add';
   static const String searchEmployee = 'employee/searchEmployee';
   static const String getEmployeeById = 'employee/getEmployeeById';
   static const String updateEmployeeById = 'employee/update/';
-  static const String getCustomDesignation = 'designation/getAllDepartment';
+  static const String getCustomDesignation =
+      'designation/getAllDesignationByDepartment';
   static const String addCustomDesignation = 'designation/add';
-  static const String getEligibleReportToList = 'employee/getEligibleReportToList';
+  static const String getEligibleReportToList =
+      'employee/getEligibleReportToList';
   static const String getEmployeeHierarchy = 'employee/getEmployeeHierarchy';
 
   // Team Module
@@ -147,8 +151,10 @@ abstract class ApiEndpoints {
   static const String getAllContact = 'contact/getAllContact/';
   static const String addContact = 'contact/add';
   static const String searchContact = 'contact/searchContacts';
-  static const String sendExternalChatRequest = 'contact/sendExternalEmployeeRequest';
-  static const String getAllContactChatMessages = 'contactChat/getContactChatMessages';
+  static const String sendExternalChatRequest =
+      'contact/sendExternalEmployeeRequest';
+  static const String getAllContactChatMessages =
+      'contactChat/getContactChatMessages';
   static const String uploadChatContactFile = 'chat/upload/contactChat';
 
   //Video Audio chat
@@ -159,10 +165,12 @@ abstract class ApiEndpoints {
   static const String getCitiesByState = 'location/cities-by-state';
 
   // Notification Action endpoints (NEW - for organization requests)
-  static const String acceptOrganizationRequest = 'notification/accept-organization-request';
-  static const String rejectOrganizationRequest = 'notification/reject-organization-request';
-  
+  static const String acceptOrganizationRequest =
+      'notification/accept-organization-request';
+  static const String rejectOrganizationRequest =
+      'notification/reject-organization-request';
+
   // Machine Assignment Response endpoint (NEW - for machine request notifications)
-  static const String respondMachineAssignment = 'customers/respond-machine-assignment';
-  static const String ipAddressCheckGet = 'https://checkip.amazonaws.com/';
+  static const String respondMachineAssignment =
+      'customers/respond-machine-assignment';
 }

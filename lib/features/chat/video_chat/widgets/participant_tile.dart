@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:manager/features/chat/video_chat/demo/call_view_model.dart';
+import 'package:manager/features/chat/video_chat/video_call/call_view_model.dart';
 import 'package:manager/resources/app_resources/app_resources.dart';
 import 'package:provider/provider.dart';
 
@@ -10,7 +10,11 @@ class ParticipantTile extends StatelessWidget {
   final CallParticipant participantState;
   final String? displayName;
 
-  const ParticipantTile({super.key, required this.participantState, this.displayName});
+  const ParticipantTile({
+    super.key,
+    required this.participantState,
+    this.displayName,
+  });
 
   String _participantName(BuildContext context) {
     final p = participantState.participant;
@@ -39,7 +43,8 @@ class ParticipantTile extends StatelessWidget {
       value: participantState,
       child: Consumer<CallParticipant>(
         builder: (context, state, _) {
-          bool isVideoAvailable = state.videoTrack != null && !state.videoTrack!.muted;
+          bool isVideoAvailable =
+              state.videoTrack != null && !state.videoTrack!.muted;
 
           return ClipRRect(
             borderRadius: BorderRadius.circular(12.0),
@@ -55,10 +60,8 @@ class ParticipantTile extends StatelessWidget {
                       fit: VideoViewFit.cover,
                     )
                   else
-                  // Center mein 60x60 placeholder
-                    Center(
-                      child: _buildPlaceholder(),
-                    ),
+                    // Center mein 60x60 placeholder
+                    Center(child: _buildPlaceholder()),
 
                   // Bottom info bar
                   Align(
@@ -76,20 +79,21 @@ class ParticipantTile extends StatelessWidget {
                                 vertical: 4.0,
                               ),
                               decoration: BoxDecoration(
-                                color: isVideoAvailable
-                                    ? Colors.black.withOpacity(0.3)
-                                    : Colors.transparent,
+                                color:
+                                    isVideoAvailable
+                                        ? Colors.black.withOpacity(0.3)
+                                        : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               child: Text(
                                 _participantName(context),
                                 style: TextStyle(
-                                  color: isVideoAvailable
-                                      ? Colors.white
-                                      : Colors.black87,
+                                  color:
+                                      isVideoAvailable
+                                          ? Colors.white
+                                          : Colors.black87,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -99,23 +103,25 @@ class ParticipantTile extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(4.0),
                               decoration: BoxDecoration(
-                                color: isVideoAvailable
-                                    ? Colors.black.withOpacity(0.3)
-                                    : Colors.transparent,
+                                color:
+                                    isVideoAvailable
+                                        ? Colors.black.withOpacity(0.3)
+                                        : Colors.transparent,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.mic_off,
-                                color: isVideoAvailable
-                                    ? Colors.white
-                                    : Colors.black54,
+                                color:
+                                    isVideoAvailable
+                                        ? Colors.white
+                                        : Colors.black54,
                                 size: 16,
                               ),
                             ),
                         ],
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -140,7 +146,7 @@ class ParticipantTile extends StatelessWidget {
               spreadRadius: 2,
               blurRadius: 5,
               offset: const Offset(0, 3),
-            )
+            ),
           ],
         ),
         child: ClipOval(

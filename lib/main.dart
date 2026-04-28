@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:manager/core/storage/storage.dart';
 import 'package:manager/core/utils/app_logger.dart';
-import 'package:manager/services/appService.dart';
 import 'package:manager/services/bottom_sheets.service.dart';
 import 'package:manager/services/dialogs.service.dart';
 import 'package:manager/services/language.service.dart';
@@ -23,7 +22,7 @@ void main() async {
   ]);
 
   // await dotenv.load(fileName: ".env");
-  locator.registerLazySingleton(() => AppConfigService());
+
   await Firebase.initializeApp();
 
   // await initPrefs();

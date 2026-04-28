@@ -12,10 +12,7 @@ import '../routes/routes.dart';
 class AppViewModel extends ReactiveViewModel {
   final _ticketsListViewModel = locator<TicketsListViewModel>();
   void init() {
-    if (getUser().token?.isNotEmpty == true) {
-      _ticketsListViewModel.init();
-    }
-    // _ticketsListViewModel.init();
+    _ticketsListViewModel.init();
     ScreenUtil.instance.init();
   }
 

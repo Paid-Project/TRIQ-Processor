@@ -29,8 +29,7 @@ class ChatService {
     if (!_isRefreshing) {
       _refreshController.add(true);
       AppLogger.highlight("Refresh triggered from external source");
-    }
-    else {
+    } else {
       AppLogger.warning("Refresh already in progress, ignoring trigger");
     }
   }
@@ -47,27 +46,29 @@ class ChatService {
     required String name,
     required String identity,
     required String users,
-    required bool isGroup ,
+    required bool isGroup,
   }) async {
     try {
+      final payload = {
+        'roomName': roomName,
+        'eventType': status,
+        'name': name,
+        'users': users,
+        'identity': identity,
+        'callType': callType,
+        'isGroupCall': isGroup,
+      };
+      AppLogger.info('sendVChatStatus Request: $payload');
+
       final response = await _apiService.post(
         url: '${ApiEndpoints.sendVChatStatus}',
-        data: {
-          'roomName': roomName,
-          'eventType': status,
-          'name': name,
-          'users': users,
-          'identity':identity,
-          'callType':callType,
-          'isGroupCall':isGroup
-        },
+        data: payload,
       );
 
-      if (response.data['status']==1) {
-        return {
-          'success': true,
-          ...response.data
-        };
+      AppLogger.info('sendVChatStatus Response: ${response.data}');
+
+      if (response.data['status'] == 1) {
+        return {'success': true, ...response.data};
       } else {
         return {
           'success': false,
@@ -81,19 +82,12 @@ class ChatService {
           'success': false,
           'message': e.response?.data?['message'] ?? 'Something went wrong',
         };
-      }}
-    return {
-      'success': false,
-      'message': 'Something went wrong',
-    };
+      }
+    }
+    return {'success': false, 'message': 'Something went wrong'};
   }
-  ResultFuture<Map<String, dynamic>> getViewers({
 
-    required String msgId,
-
-
-  }) async
-  {
+  ResultFuture<Map<String, dynamic>> getViewers({required String msgId}) async {
     try {
       final response = await _apiService.get(
         url: "${ApiEndpoints.getViewers}$msgId",
@@ -118,6 +112,7 @@ class ChatService {
       return Left(Failure('Failed to get all chats: $e'));
     }
   }
+
   ResultFuture<List<ChatMessageModel>> getAllChatMessages({
     required String roomId,
   }) async {
@@ -128,9 +123,9 @@ class ChatService {
 
       if (response.statusCode == 200) {
         List<ChatMessageModel> messageList =
-        (response.data as List)
-            .map((e) => ChatMessageModel.fromJson(e))
-            .toList();
+            (response.data as List)
+                .map((e) => ChatMessageModel.fromJson(e))
+                .toList();
         return Right(messageList);
       } else {
         return Left(
@@ -156,16 +151,14 @@ class ChatService {
     required String screen,
   }) async {
     try {
-
-      String apiUrl='';
+      String apiUrl = '';
       print("screen:-${screen}");
-      if(screen=='groupChat'){
-        apiUrl='${ApiEndpoints.getGroupChatMessage}/$roomId';
-      }else
-      if(screen=='contactChat'){
-        apiUrl='${ApiEndpoints.getAllContactChatMessages}/$roomId';
-      }else{
-        apiUrl='${ApiEndpoints.getAllChatMessages}/$roomId';
+      if (screen == 'groupChat') {
+        apiUrl = '${ApiEndpoints.getGroupChatMessage}/$roomId';
+      } else if (screen == 'contactChat') {
+        apiUrl = '${ApiEndpoints.getAllContactChatMessages}/$roomId';
+      } else {
+        apiUrl = '${ApiEndpoints.getAllChatMessages}/$roomId';
       }
       final response = await _apiService.get(
         url: apiUrl,
@@ -197,7 +190,10 @@ class ChatService {
     try {
       final response = await _apiService.get(
         url: ApiEndpoints.getAllChats,
-        queryParameters: {'page': page, 'limit': limit}, // Pagination parameters
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        }, // Pagination parameters
       );
 
       if (response.statusCode == 200) {
@@ -218,6 +214,7 @@ class ChatService {
       return Left(Failure('Failed to get all chats: $e'));
     }
   }
+
   Future<Map<String, dynamic>> editChat({
     required String messageId,
     required String content,
@@ -226,63 +223,46 @@ class ChatService {
       print("🎯 editChat called with:qqq ");
       final response = await _apiService.post(
         url: '${ApiEndpoints.editMessages}/$messageId',
-        data: {
-          "content": content,
-        },
+        data: {"content": content},
       );
       print("🎯 editChat called with: ${response.statusCode == 200}");
       if (response.statusCode == 200) {
-
-      } else {
-
-      }
+      } else {}
     } catch (e) {
       if (e is DioException) {
         AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
-
-      }}
-    return {
-      'success': false,
-      'message': 'Something went wrong',
-    };
+      }
+    }
+    return {'success': false, 'message': 'Something went wrong'};
   }
-  Future<Map<String, dynamic>> deleteChat({
-    required String messageId,
 
-  }) async {
+  Future<Map<String, dynamic>> deleteChat({required String messageId}) async {
     try {
       final response = await _apiService.post(
         url: '${ApiEndpoints.deleteMessages}/$messageId',
-
       );
       print("🎯 deleteChat called with: ${response.statusCode == 200}");
       if (response.statusCode == 200) {
-
-      } else {
-
-      }
+      } else {}
     } catch (e) {
       if (e is DioException) {
         AppLogger.error(e.response?.data?['message'] ?? 'Something went wrong');
-
-      }}
-    return {
-      'success': false,
-      'message': 'Something went wrong',
-    };
+      }
+    }
+    return {'success': false, 'message': 'Something went wrong'};
   }
+
   /// Upload files for chat
   ResultFuture<Map<String, dynamic>> uploadChatFiles(
-      List<String> filePaths,
-      String screen,
-
-      ) async {
+    List<String> filePaths,
+    String screen,
+  ) async {
     try {
-      String apiUrl='';
-      if(screen=='contactChat'){
-        apiUrl='${ApiEndpoints.uploadChatContactFile}';
-      }else{
-        apiUrl='${ApiEndpoints.uploadChatFile}';
+      String apiUrl = '';
+      if (screen == 'contactChat') {
+        apiUrl = '${ApiEndpoints.uploadChatContactFile}';
+      } else {
+        apiUrl = '${ApiEndpoints.uploadChatFile}';
       }
       final List<MultipartFile> files = [];
 
@@ -316,9 +296,7 @@ class ChatService {
     }
   }
 
-  ResultFuture<bool> leaveGroup({
-    required String groupId,
-  }) async {
+  ResultFuture<bool> leaveGroup({required String groupId}) async {
     try {
       final response = await _apiService.put(
         url: "${ApiEndpoints.leaveGroup}$groupId",
@@ -327,7 +305,9 @@ class ChatService {
       if (response.data['success'] == true) {
         return Right(true);
       } else {
-        return Left(Failure(response.data['message'] ?? 'Failed to leave group'));
+        return Left(
+          Failure(response.data['message'] ?? 'Failed to leave group'),
+        );
       }
     } catch (e) {
       if (e is DioException) {
@@ -340,6 +320,7 @@ class ChatService {
 
     return Left(Failure('Failed to leave group'));
   }
+
   ResultFuture<String> addMember({
     required String groupId,
     required List<String> memberIds,
@@ -347,15 +328,15 @@ class ChatService {
     try {
       final response = await _apiService.put(
         url: "${ApiEndpoints.addMembers}$groupId",
-        data: {
-          "members": memberIds,
-        },
+        data: {"members": memberIds},
       );
 
       if (response.data['success'] == true) {
         return Right(response.data['message'] ?? "Members added successfully");
       } else {
-        return Left(Failure(response.data['message'] ?? "Something went wrong"));
+        return Left(
+          Failure(response.data['message'] ?? "Something went wrong"),
+        );
       }
     } catch (e) {
       if (e is DioException) {
@@ -367,13 +348,10 @@ class ChatService {
     }
   }
 
-  ResultFuture<AttachmentsModel> getAttachments(
-      {
-        required String roomId,
-        // required int limit,
-      }
-      ) async
-  {
+  ResultFuture<AttachmentsModel> getAttachments({
+    required String roomId,
+    // required int limit,
+  }) async {
     try {
       final response = await _apiService.get(
         url: "${ApiEndpoints.getAttachments}/$roomId",

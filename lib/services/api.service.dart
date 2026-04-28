@@ -427,10 +427,6 @@ class ApiService {
   /// Enhanced error handling with status code mapping and toast support
   void _handleApiError(DioException e, {bool showToast = true}) {
     try {
-      if (e.type == DioExceptionType.cancel) {
-        return;
-      }
-
       final statusCode = e.response?.statusCode ?? 0;
 
       // Never show toast for 401 — handled globally (auto-logout or silent skip)
@@ -438,12 +434,6 @@ class ApiService {
 
       final responseData = e.response?.data;
       String errorMessage = _extractErrorMessage(responseData, statusCode);
-
-      // Skip noisy toasts/logs for local auth-guard cancellation
-      final errorText = e.error?.toString().toLowerCase() ?? '';
-      if (errorText.contains('no valid auth token')) {
-        return;
-      }
 
       if (showToast) {
         AppLogger.error("API Error: $errorMessage (Status: $statusCode)");

@@ -13,7 +13,7 @@ import 'package:manager/configs.dart';
 import 'package:manager/core/models/viewers_model.dart';
 import 'package:manager/core/storage/storage.dart';
 import 'package:manager/core/utils/app_logger.dart';
-import 'package:manager/features/chat/video_chat/demo/call_screen.dart';
+import 'package:manager/features/chat/video_chat/video_call/call_screen.dart';
 import 'package:manager/features/tickets/tickets_list/tickets_list.vm.dart';
 import 'package:manager/routes/routes.dart';
 import 'package:path/path.dart' as path;
@@ -33,7 +33,7 @@ import '../../services/socket_service.dart';
 import '../../widgets/dialogs/loader/loader_dialog.view.dart';
 import '../../resources/enums/chat_enum.dart';
 import 'model/chat_message_model.dart';
-import 'video_chat/demo/location_service.dart';
+import 'video_chat/video_call/location_service.dart';
 
 enum ChatRoomScreenType { mainChat, contactChat, groupChat }
 
@@ -266,11 +266,6 @@ class ChatViewModel extends ReactiveViewModel {
         (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
           _allViewers = [];
-
-          Fluttertoast.showToast(
-            msg:
-                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
-          );
         },
         (response) {
           final split = ViewersListsSplit.fromApi(response);
@@ -320,10 +315,7 @@ class ChatViewModel extends ReactiveViewModel {
     return result.fold(
       (failure) {
         AppLogger.error('Failed to get viewers: ${failure.message}');
-        Fluttertoast.showToast(
-          msg:
-              "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
-        );
+
         return <SeenBy>[];
       },
       (response) {
@@ -640,6 +632,9 @@ class ChatViewModel extends ReactiveViewModel {
     _socketService.off('messageReacted');
     _socketService.off('seenMessage');
     _socketService.off('error');
+    AppLogger.info(
+      'ChatViewModel: Fetching initial data for roomId: $roomId1, screen: $screen',
+    );
     _chatRoomScreenType = screen ?? ChatRoomScreenType.mainChat;
     roomId = roomId1 ?? roomId;
     await Future.wait([initializeSocket(), loadMessages()]);
@@ -831,14 +826,6 @@ class ChatViewModel extends ReactiveViewModel {
       result.fold(
         (failure) {
           AppLogger.error('Failed to fetch messages: ${failure.message}');
-          Fluttertoast.showToast(
-            msg:
-                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: AppColors.error,
-            textColor: AppColors.white,
-          );
         },
         (response) {
           final List<dynamic> messagesData = response['messages'] ?? [];
@@ -913,15 +900,6 @@ class ChatViewModel extends ReactiveViewModel {
         (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
           _messages.clear();
-
-          Fluttertoast.showToast(
-            msg:
-                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: AppColors.error,
-            textColor: AppColors.white,
-          );
         },
         (response) {
           final result =
@@ -1590,14 +1568,21 @@ class ChatViewModel extends ReactiveViewModel {
   }
 
   Future<void> openVideoChat(screen, String name) async {
+    final bool isGroup = ChatRoomScreenType.groupChat == screen;
+    final String recipientId = isGroup ? (userData.id ?? '') : roomId;
+
+    AppLogger.info(
+      'Initiating Video Call: roomName=$roomId, recipient=$recipientId, isGroup=$isGroup',
+    );
+
     final tokenResponse = await _chatService.sendVChatStatus(
       roomName: roomId,
       status: 'call-request',
       callType: 'video',
       identity: userData.id.toString(),
       name: userData.name ?? 'User',
-      users: userData.id ?? '',
-      isGroup: ChatRoomScreenType.groupChat == screen ? true : false,
+      users: recipientId,
+      isGroup: isGroup,
     );
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
@@ -1608,18 +1593,30 @@ class ChatViewModel extends ReactiveViewModel {
           name: name,
         ),
       );
+    } else {
+      final errorMsg =
+          tokenResponse['message'] ?? 'Failed to initiate video call';
+      AppLogger.error('Video Call Initiation Failed: $errorMsg');
+      Fluttertoast.showToast(msg: errorMsg, backgroundColor: AppColors.error);
     }
   }
 
   Future<void> openAudioChat(screen, String name) async {
+    final bool isGroup = ChatRoomScreenType.groupChat == screen;
+    final String recipientId = isGroup ? (userData.id ?? '') : roomId;
+
+    AppLogger.info(
+      'Initiating Audio Call: roomName=$roomId, recipient=$recipientId, isGroup=$isGroup',
+    );
+
     final tokenResponse = await _chatService.sendVChatStatus(
       roomName: roomId,
       status: 'call-request',
       callType: 'audio',
       name: userData.name ?? 'User',
       identity: userData.id.toString(),
-      users: userData.id ?? '',
-      isGroup: ChatRoomScreenType.groupChat == screen ? true : false,
+      users: recipientId,
+      isGroup: isGroup,
     );
 
     if (tokenResponse['success'] && tokenResponse['token'] != null) {
@@ -1631,6 +1628,11 @@ class ChatViewModel extends ReactiveViewModel {
           name: name,
         ),
       );
+    } else {
+      final errorMsg =
+          tokenResponse['message'] ?? 'Failed to initiate audio call';
+      AppLogger.error('Audio Call Initiation Failed: $errorMsg');
+      Fluttertoast.showToast(msg: errorMsg, backgroundColor: AppColors.error);
     }
   }
 

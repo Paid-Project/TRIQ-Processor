@@ -259,10 +259,6 @@ class ContactListViewModel extends BaseViewModel {
         (failure) {
           AppLogger.error('Failed to get all chats: ${failure.message}');
           _allChats = []; // Failure par list empty karein
-          Fluttertoast.showToast(
-            msg:
-                "${LanguageService.get("failed_to_load_chats")}: ${failure.message}",
-          );
         },
         (response) {
           // 'response' ab Map<String, dynamic> hai
